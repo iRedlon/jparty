@@ -15,6 +15,7 @@ import { fileURLToPath } from "url";
 
 dotenv.config();
 
+// Hello, world!
 const app = express();
 const server = createServer(app);
 export const io = new Server(server);
