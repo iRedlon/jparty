@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "target": "es2022",
+        "module": "es2022",
+        "moduleResolution": "node",
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "esnext"
+        ],
+        "allowJs": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "noFallthroughCasesInSwitch": true,
+        "resolveJsonModule": true,
+        "strictPropertyInitialization": false,
+        "isolatedModules": true,
+        "noEmit": true,
+        "jsx": "react-jsx"
+    },
+    "include": [
+        "src"
+    ]
+}

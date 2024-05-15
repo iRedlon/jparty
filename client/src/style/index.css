@@ -1,0 +1,39 @@
+html {
+    background-color: darkblue !important;
+}
+
+body {
+    margin: 0;
+    text-align: center;
+    overflow-x: auto;
+    overflow-y: auto;
+    background-color: darkblue !important;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+.blink-slow {
+    animation-name: blink;
+    animation-duration: 0.5s;
+    animation-timing-function: ease-in;
+    animation-iteration-count: Infinite;
+}
+
+.blink-fast {
+    animation-name: blink;
+    animation-duration: 0.2s;
+    animation-timing-function: ease-in;
+    animation-iteration-count: Infinite;
+}

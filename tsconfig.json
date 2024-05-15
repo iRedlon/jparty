@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "es2022",
+        "module": "es2022",
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "outDir": "build",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "strictPropertyInitialization": false,
+        "skipLibCheck": true,
+        "jsx": "react-jsx"
+    }
+}

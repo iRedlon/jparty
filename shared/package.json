@@ -1,0 +1,7 @@
+{
+    "name": "jparty-shared",
+    "version": "1.0.0",
+    "author": "Isaac Redlon",
+    "type": "module",
+    "main": "index.ts"
+}

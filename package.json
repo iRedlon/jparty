@@ -1,0 +1,37 @@
+{
+    "name": "jparty-server",
+    "version": "1.0.0",
+    "author": "Isaac Redlon",
+    "type": "module",
+    "heroku-run-build-script": true,
+    "scripts": {
+        "postinstall": "cd client && npm install",
+        "build": "tsc",
+        "heroku-postbuild": "npm run build && cd client && npm run build",
+        "build-all": "npm run heroku-postbuild",
+        "debug": "cross-env DEBUG_MODE=true npx tsx ./build/src/controller.js",
+        "prod": "npx tsx ./build/src/controller.js"
+    },
+    "dependencies": {
+        "@types/express": "^4.17.21",
+        "@types/node": "^20.10.6",
+        "@types/nodemailer": "^6.4.14",
+        "@types/react-dom": "^18.2.25",
+        "clean-text-utils": "^1.1.17",
+        "cross-env": "^7.0.3",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "jparty-shared": "file:./shared",
+        "mongodb": "^6.3.0",
+        "no-profanity": "^1.5.1",
+        "nodemailer": "^6.9.13",
+        "openai": "^4.24.1",
+        "random-words": "^2.0.1",
+        "socket.io": "^4.7.3",
+        "tsx": "^4.7.0",
+        "typescript": "^5.4.5"
+    },
+    "engines": {
+        "node": "20.x"
+    }
+}
