@@ -11,6 +11,7 @@ import {
     SoundEffect, VoiceLineType, VoiceLineVariable
 } from "jparty-shared";
 import { Socket } from "socket.io";
+import { getOpenAITTS } from "../api-requests/tts.js";
 
 const SESSION_EXPIRATION_PERIOD_MS = 10 * 60 * 1000;
 const SESSION_EXPIRATION_CHECK_INTERVAL_MS = 1 * 60 * 1000;
@@ -270,7 +271,7 @@ export function showAnnouncement(sessionName: string, announcement: SessionAnnou
     });
 }
 
-export function playSoundEffect(sessionName: string, soundEffect: SoundEffect, voiceLine?: any) {
+export function playSoundEffect(sessionName: string, soundEffect: SoundEffect, voiceLine?: string) {
     let session = getSession(sessionName);
     if (!session) {
         return;
@@ -279,7 +280,7 @@ export function playSoundEffect(sessionName: string, soundEffect: SoundEffect, v
     io.to(Object.keys(session.hosts)).emit(ServerSocket.PlaySoundEffect, soundEffect, voiceLine);
 }
 
-export function playVoiceLine(sessionName: string, type: VoiceLineType) {
+export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
     let session = getSession(sessionName);
     if (!session) {
         return;
@@ -361,7 +362,9 @@ export function playVoiceLine(sessionName: string, type: VoiceLineType) {
 
     debugLog(DebugLogType.Voice, `sending final voice line to client: \"${voiceLine}\"`);
 
-    playSoundEffect(sessionName, SoundEffect.Voice, formatSpokenVoiceLine(voiceLine, type));
+    const audioBase64 = await getOpenAITTS(voiceLine);
+
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayHostVoice, audioBase64);
 }
 
 export function emitStateUpdate(sessionName: string) {

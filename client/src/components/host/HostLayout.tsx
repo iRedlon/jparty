@@ -23,6 +23,7 @@ export default function HostLayout() {
     const [displayCorrectAnswer, setDisplayCorrectAnswer] = useState(true);
 
     useEffect(() => {
+        socket.on(HostServerSocket.PlayHostVoice, handlePlayHostVoice)
         socket.on(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         socket.on(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
@@ -45,6 +46,13 @@ export default function HostLayout() {
 
     const handleRevealClueDecision = (displayCorrectAnswer: boolean) => {
         setDisplayCorrectAnswer(displayCorrectAnswer);
+    }
+
+    const handlePlayHostVoice = (audioBase64: string) => {
+        const audioBlob = new Blob([Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0))], { type: 'audio/mpeg' }); //  Converts the Base64 string back into a binary Blob
+        const audioUrl = URL.createObjectURL(audioBlob); // URL for the Blob so it can be used as a source
+        const audio = new Audio(audioUrl);
+        audio.play().catch(error => console.error(`Audio playback failed: ${error.message}`));
     }
 
     const getHostComponent = () => {

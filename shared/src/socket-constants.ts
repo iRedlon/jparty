@@ -92,7 +92,8 @@ export type HostSocketCallback = {
 export enum HostServerSocket {
     UpdateGameSettingsPreset = "host_server_update_game_settings_preset",
     UpdateNumSubmittedResponders = "host_server_update_num_submitted_responders",
-    RevealClueDecision = "host_server_reveal_clue_decision"
+    RevealClueDecision = "host_server_reveal_clue_decision",
+    PlayHostVoice = "host_server_play_host_voice"
 }
 
 export enum PlayerSocket {
