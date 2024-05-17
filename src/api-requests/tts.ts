@@ -9,41 +9,37 @@ if (!process.env.OPENAI_SECRET_KEY) {
     throw new Error(formatDebugLog("attempted to connect to OpenAI without API key"));
 }
 
-const OPENAI_API_KEY = process.env.OPENAI_SECRET_KEY
+export async function getVoiceBase64Audio(voiceLine: string) {
+    if (!process.env.USE_OPENAI_TTS) {
+        return;
+    }
 
-
-export async function getOpenAITTS(text: string) {
-    debugLog(DebugLogType.Server, `voiceLine: ${text}`);
-
-    
-    const response = await fetch('https://api.openai.com/v1/audio/speech', {
-        method: 'POST',
+    const response = await fetch("https://api.openai.com/v1/audio/speech", {
+        method: "POST",
         headers: {
-            'Authorization': `Bearer ${OPENAI_API_KEY}`,
-            'Content-Type': 'application/json'
+            "Authorization": `Bearer ${process.env.OPENAI_SECRET_KEY}`,
+            "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            model: 'tts-1', // Model used
-            voice: 'onyx', // Preset voice
-            input: text
+            model: "tts-1",
+            voice: "onyx",
+            input: voiceLine
         })
     });
 
+    debugLog(DebugLogType.Voice, "making audio request to OpenAI for spoken voice line");
+
     if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to fetch TTS audio from OpenAI: ${errorText}`);
+        throw new Error(formatDebugLog(`failed to fetch TTS audio from OpenAI: ${errorText}`));
     }
 
-
     try {
-        const arrayBuffer = await response.arrayBuffer(); // Binary Data
-        const base64Audio = Buffer.from(arrayBuffer).toString('base64'); // Convert ArrayBuffer to a Base64 encoded string
-        return base64Audio;// This encoded string can be sent over the web socket to a client, which can then decode it back into binary data to play the audio.
-    } catch (error) {
-        if (error instanceof Error) {
-            throw new Error(`Failed to parse response: ${error.message}`);
-        } else {
-            throw new Error('An unknown error occurred');
-        }
+        const arrayBuffer = await response.arrayBuffer(); // binary data
+        const base64Audio = Buffer.from(arrayBuffer).toString("base64"); // convert array buffer to a base64 encoded string
+        return base64Audio; // this encoded string will be converted back into binary data on the client, before being played as audio
+    } 
+    catch (e) {
+        throw e;
     }
 }

@@ -3,14 +3,14 @@ import { getClueDecision } from "../api-requests/clue-decision.js";
 import { generateTriviaGame } from "../api-requests/generate-trivia-game.js";
 
 import {
-    AttemptReconnectResult, getEnumSize, getEsimatedVoiceDurationMs, getRandomChoice, getSortedSessionPlayerIDs, Host, Player, PlayerResponseType, PlayerState,
+    AttemptReconnectResult, getEnumSize, getRandomChoice, getSortedSessionPlayerIDs, getVoiceDurationMs, Host, Player, PlayerResponseType, PlayerState,
     SessionAnnouncement, SessionHosts, SessionPlayers, SessionState, SessionTimeout, SocketID,
     TriviaClue, TriviaClueBonus, TriviaClueDecision, TriviaClueDecisionInfo,
     TriviaGame, TriviaGameSettings, TriviaGameSettingsPreset
 } from "jparty-shared";
 
 // store timeouts in their own container so we can cancel a timeout early and still trigger its callback
-class TimeoutInfo {
+export class TimeoutInfo {
     timeout: NodeJS.Timeout;
     callback: Function;
     durationMs: number;
@@ -351,14 +351,14 @@ export class Session {
         switch (timeout) {
             case SessionTimeout.Announcement:
                 {
-                    durationMs = getEsimatedVoiceDurationMs(this.currentVoiceLine);
+                    durationMs = getVoiceDurationMs(this.currentVoiceLine);
                 }
                 break;
             case SessionTimeout.ReadingClue:
                 {
                     const currentQuestion = this.getCurrentClue()?.question;
                     if (currentQuestion) {
-                        durationMs = getEsimatedVoiceDurationMs(currentQuestion);
+                        durationMs = getVoiceDurationMs(currentQuestion);
                     }
                 }
                 break;
@@ -402,6 +402,14 @@ export class Session {
     stopAllTimeouts() {
         for (let timeout = 0; timeout < getEnumSize(SessionTimeout); timeout++) {
             this.stopTimeout(timeout);
+        }
+    }
+
+    restartTimeout(timeout: SessionTimeout, newDurationMs: number) {
+        let timeoutInfo = this.timeoutInfo[timeout];
+        if (timeoutInfo) {
+            this.stopTimeout(timeout);
+            this.timeoutInfo[timeout] = new TimeoutInfo(timeoutInfo.callback, newDurationMs);
         }
     }
 
@@ -778,7 +786,7 @@ export class Session {
         const clueResponse = responder.responses[PlayerResponseType.Clue];
 
         try {
-            decision = await getClueDecision(currentCategory.name, currentClue, clueResponse);
+            decision = await getClueDecision(currentClue, clueResponse);
         }
         catch (e) {
             throw e;
@@ -848,7 +856,7 @@ export class Session {
         responder.clueDecisionInfo = new TriviaClueDecisionInfo(responder.clueDecisionInfo.categoryName, responder.clueDecisionInfo.clue, responder.clueDecisionInfo.response, newDecision, responder.clueDecisionInfo.clueValue, true);
 
         let clueValue = responder.clueDecisionInfo.clueValue;
-        
+
         // double the previous clue value to account for the value that was wrongfully awarded/deducted by the previous decision
         let clueValueModifier = 2;
 

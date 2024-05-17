@@ -114,15 +114,15 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
 
                 handleDebugCommand(DebugCommand.UpdateSessionState, SessionState.ClueTossup);
 
-                const triviaRound = TriviaRound.clone(PLACEHOLDER_TRIVIA_ROUND);
-                const triviaCategory = triviaRound.categories[args[0]];
-                const triviaClue = triviaCategory.clues[args[1]];
+                // const triviaRound = TriviaRound.clone(PLACEHOLDER_TRIVIA_ROUND);
+                // const triviaCategory = triviaRound.categories[args[0]];
+                // const triviaClue = triviaCategory.clues[args[1]];
 
-                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.PlaySoundEffect, {
-                    detail: {
-                        params: [SoundEffect.Voice, triviaClue.question]
-                    }
-                }));
+                // mockSocket.dispatchEvent(new CustomEvent(HostServerSocket.PlayVoice, {
+                //     detail: {
+                //         params: [triviaClue.question]
+                //     }
+                // }));
             }
             break;
         case DebugCommand.StartTimeout:

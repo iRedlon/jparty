@@ -138,8 +138,8 @@ export default function Layout() {
         location.reload();
     }
 
-    const handlePlaySoundEffect = (effect: SoundEffect, voiceLine?: string) => {
-        playSoundEffect(effect, voiceLine);
+    const handlePlaySoundEffect = (effect: SoundEffect) => {
+        playSoundEffect(effect);
     }
 
     const handleUpdateSessionName = (sessionName: string) => {
