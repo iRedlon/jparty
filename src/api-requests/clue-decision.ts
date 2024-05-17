@@ -20,7 +20,7 @@ if (!process.env.OPENAI_ASSISTANT_ID) {
 const openai = new OpenAI({ apiKey: process.env.OPENAI_SECRET_KEY });
 
 // players can reverse false positives/negatives manually, so always deal with unexpected situations by returning decision: incorrect
-export async function getClueDecision(categoryName: string, clue: TriviaClue, response: string) {
+export async function getClueDecision(clue: TriviaClue, response: string) {
     try {
         if (process.env.DEBUG_MODE) {
             if (response === "correct") {

@@ -3,7 +3,7 @@ import { LayoutContext } from "../common/Layout";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
 import { getClientID } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
-import { playSoundEffect } from "../../misc/sound-fx";
+import { playSpeechSynthesisVoice } from "../../misc/sound-fx";
 
 import { Box, Button, Divider, Heading, Input, Stack, Tooltip } from "@chakra-ui/react";
 import { getSortedSessionPlayerIDs, HostServerSocket, HostSocket, SocketID, SoundEffect, TriviaGameSettingsPreset } from "jparty-shared";
@@ -47,7 +47,7 @@ export default function HostLobby() {
         setSoundEnabled(enabled);
 
         if (enabled) {
-            playSoundEffect(SoundEffect.Voice);
+            playSpeechSynthesisVoice("");
         }
     }
 

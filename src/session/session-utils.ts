@@ -1,5 +1,6 @@
 
-import { Session } from "./session.js";
+import { Session, TimeoutInfo } from "./session.js";
+import { getVoiceBase64Audio } from "../api-requests/tts.js";
 import { io } from "../controller.js";
 import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
 import { formatSpokenVoiceLine } from "../misc/text-utils.js";
@@ -7,7 +8,7 @@ import { formatSpokenVoiceLine } from "../misc/text-utils.js";
 import {
     AttemptReconnectResult, ClientSocket, ClientSocketCallback, DISPLAY_CORRECT_ANSWER_VOICE_LINES,
     getEnumSize, getRandomChoice, HostServerSocket, REVEAL_CLUE_DECISION_VOICE_LINES,
-    ServerSocket, ServerSocketMessage, SessionAnnouncement, SESSION_ANNOUNCEMENT_VOICE_LINES, SessionState, SessionTimeout, 
+    ServerSocket, ServerSocketMessage, SessionAnnouncement, SESSION_ANNOUNCEMENT_VOICE_LINES, SessionState, SessionTimeout,
     SoundEffect, VoiceLineType, VoiceLineVariable
 } from "jparty-shared";
 import { Socket } from "socket.io";
@@ -79,8 +80,7 @@ export function joinSession(socket: Socket, sessionName: string) {
             continue;
         }
 
-        // we can only display (and thus only store) one timeout at once, so the first active timeout we can find must be the right one
-        socket.emit(ServerSocket.StartTimeout, timeout, sessionTimeout.getRemainingDurationMs());
+        emitTimeoutUpdate(sessionName, timeout);
         break;
     }
 
@@ -215,15 +215,7 @@ export function startTimeout(sessionName: string, timeout: SessionTimeout, cb: F
         }
     });
 
-    // only send this timeout to the client when seeing the timer countdown is relevant for players
-    switch (timeout) {
-        case SessionTimeout.ReadingClue:
-        case SessionTimeout.BuzzWindow:
-        case SessionTimeout.ResponseWindow:
-            {
-                io.in(session.name).emit(ServerSocket.StartTimeout, timeout, session.timeoutInfo[timeout].durationMs);
-            }
-    }
+    emitTimeoutUpdate(sessionName, timeout);
 }
 
 export function stopTimeout(sessionName: string, timeout: SessionTimeout) {
@@ -233,6 +225,24 @@ export function stopTimeout(sessionName: string, timeout: SessionTimeout) {
     }
 
     session.stopTimeout(timeout);
+}
+
+function emitTimeoutUpdate(sessionName: string, timeout: SessionTimeout) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    const timeoutInfo = session.timeoutInfo[timeout];
+    if (!timeoutInfo) {
+        return;
+    }
+
+    const displayTimeout = (timeout === SessionTimeout.BuzzWindow) || (timeout === SessionTimeout.ResponseWindow);
+
+    if (process.env.DEBUG_MODE || displayTimeout) {
+        io.in(session.name).emit(ServerSocket.StartTimeout, timeout, timeoutInfo.getRemainingDurationMs());
+    }
 }
 
 export function showAnnouncement(sessionName: string, announcement: SessionAnnouncement, callback: Function) {
@@ -270,16 +280,16 @@ export function showAnnouncement(sessionName: string, announcement: SessionAnnou
     });
 }
 
-export function playSoundEffect(sessionName: string, soundEffect: SoundEffect, voiceLine?: any) {
+export function playSoundEffect(sessionName: string, soundEffect: SoundEffect) {
     let session = getSession(sessionName);
     if (!session) {
         return;
     }
 
-    io.to(Object.keys(session.hosts)).emit(ServerSocket.PlaySoundEffect, soundEffect, voiceLine);
+    io.to(Object.keys(session.hosts)).emit(ServerSocket.PlaySoundEffect, soundEffect);
 }
 
-export function playVoiceLine(sessionName: string, type: VoiceLineType) {
+export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
     let session = getSession(sessionName);
     if (!session) {
         return;
@@ -331,6 +341,8 @@ export function playVoiceLine(sessionName: string, type: VoiceLineType) {
         return;
     }
 
+    voiceLine = voiceLine.replace(VoiceLineVariable.RoundNumber, `${session.roundIndex + 1}`);
+
     const categoryName = session.getCurrentCategory()?.name;
     if (categoryName) {
         voiceLine = voiceLine.replace(VoiceLineVariable.CategoryName, categoryName);
@@ -357,11 +369,26 @@ export function playVoiceLine(sessionName: string, type: VoiceLineType) {
         voiceLine = voiceLine.replace(VoiceLineVariable.LeaderName, leader.name);
     }
 
+    // if we use this voice line as display text on client, we don't want it to be formatted for being spoken aloud
+    // so, set it as session data first so it can be accessed in its text form, then apply spoken formatting afterwards
     session.setCurrentVoiceLine(voiceLine);
 
-    debugLog(DebugLogType.Voice, `sending final voice line to client: \"${voiceLine}\"`);
+    voiceLine = formatSpokenVoiceLine(voiceLine, type);
 
-    playSoundEffect(sessionName, SoundEffect.Voice, formatSpokenVoiceLine(voiceLine, type));
+    debugLog(DebugLogType.Voice, `final spoken voice line: \"${voiceLine}\"`);
+
+    let voiceBase64Audio = undefined;
+
+    try {
+        voiceBase64Audio = await getVoiceBase64Audio(voiceLine);
+    }
+    catch (e) {
+        // normally we'd go through handleServerError, but if our external TTS request fails we can just fall back on the speech synthesis voice instead
+        // no need to recover the session; nothing's broken
+        console.error(e);
+    }
+
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayVoice, voiceLine, voiceBase64Audio);
 }
 
 export function emitStateUpdate(sessionName: string) {

@@ -11,6 +11,7 @@ import ServerMessageAlert from "../common/ServerMessage";
 import Timer from "../common/Timer";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
+import { playOpenAIVoice, playSpeechSynthesisVoice } from "../../misc/sound-fx";
 
 import { Box, Center, Flex, Text } from "@chakra-ui/react";
 import { HostServerSocket, SessionState } from "jparty-shared";
@@ -23,6 +24,7 @@ export default function HostLayout() {
     const [displayCorrectAnswer, setDisplayCorrectAnswer] = useState(true);
 
     useEffect(() => {
+        socket.on(HostServerSocket.PlayVoice, handlePlayVoice)
         socket.on(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         socket.on(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
@@ -37,6 +39,15 @@ export default function HostLayout() {
             removeMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
         }
     }, []);
+
+    const handlePlayVoice = (voiceLine: string, audioBase64?: string) => {
+        if (audioBase64) {
+            playOpenAIVoice(audioBase64);
+        }
+        else {
+            playSpeechSynthesisVoice(voiceLine);
+        }
+    }
 
     const handleUpdateNumSubmittedResponders = (numSubmittedResponders: number, numResponders: number) => {
         setNumSubmittedResponders(numSubmittedResponders);

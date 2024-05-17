@@ -2,7 +2,10 @@
 import { createSession, deleteSession, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost } from "./session-utils.js";
 import { debugLog, DebugLogType } from "../misc/log.js";
 
-import { HostServerSocket, HostSocket, HostSocketCallback, ServerSocket, ServerSocketMessage, TriviaGameSettings, TriviaGameSettingsPreset } from "jparty-shared";
+import { 
+    HostServerSocket, HostSocket, HostSocketCallback, ServerSocket, ServerSocketMessage, SessionState, SessionTimeout,
+    TriviaGameSettings, TriviaGameSettingsPreset 
+} from "jparty-shared";
 import { generate as generateRandomWord } from "random-words";
 import { Socket } from "socket.io";
 
@@ -26,6 +29,33 @@ function handleUpdateGameSettingsPreset(socket: Socket, sessionName: string, gam
     session.triviaGameSettingsPreset = gameSettingsPreset;
 }
 
+function handleUpdateVoiceDuration(socket: Socket, sessionName: string, durationSec: number) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    if (socket.id !== session.creatorSocketID) {
+        return;
+    }
+
+    // an estimated voice duration timeout will have already started, but now that we know exactly how long it will take...
+    // we can restart the timeout with a much more accurate duration
+    debugLog(DebugLogType.Voice, `got a new duration for OpenAI voice line: ${durationSec} seconds`);
+
+    if (session.currentAnnouncement) {
+        session.restartTimeout(SessionTimeout.Announcement, durationSec * 1000);
+    }
+
+    switch (session.state) {
+        case SessionState.ReadingClue:
+            {
+                session.restartTimeout(SessionTimeout.ReadingClue, durationSec * 1000);
+            }
+            break;
+    }
+}
+
 function handleAttemptSpectate(socket: Socket, sessionName: string, clientID: string) {
     let session = getSession(sessionName);
     if (!session) {
@@ -40,7 +70,7 @@ function handleAttemptSpectate(socket: Socket, sessionName: string, clientID: st
 
     session.connectHost(socket.id, clientID);
     joinSessionAsHost(socket, sessionName);
-    
+
     socket.emit(ServerSocket.Message, new ServerSocketMessage(`Joined session: ${sessionName} as spectator`));
 
     // we're moving to a new session. make sure our current session knows we're leaving
@@ -98,6 +128,7 @@ function handlePlayAgain(socket: Socket, sessionName: string) {
 const handlers: Record<HostSocket, Function> = {
     [HostSocket.Connect]: handleConnect,
     [HostSocket.UpdateGameSettingsPreset]: handleUpdateGameSettingsPreset,
+    [HostSocket.UpdateVoiceDuration]: handleUpdateVoiceDuration,
     [HostSocket.AttemptSpectate]: handleAttemptSpectate,
     [HostSocket.LeaveSession]: handleLeaveSession,
     [HostSocket.GenerateCustomGame]: handleGenerateCustomGame,
