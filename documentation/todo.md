@@ -6,8 +6,13 @@
   - Hook up volume control settings to local storage variables
   - New sound: applause when clearing a category
   - New sound: "you control the board ____" when the board controller changes
+  - Maybe bring up the default host voice volume a bit
+- Do some hardcore multiplayer testing in all available modes (including spectation)
 - Overall UI face lift (margins, fonts, colors, get the placeholder state to the best place it can possibly go without a proper artistic design)
-- Animation idea: UI elements always slightly moving like Balatro
+  - UI for clue selection where you see each board column individually and swipe between them
+  - Margins/spacing/fonts/colors, small tweaks like that
+  - A background with some texture, not just a solid color
+  - Basic animations: constant idle motion like Balatro, an effect for session announcements, an effect for getting correct answers, an effect for scoreboard changes
 - New clue tossup behavior
 
 # Feature TODO (A collaboator, i.e. Teddy)
