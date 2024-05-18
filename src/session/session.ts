@@ -6,7 +6,7 @@ import {
     AttemptReconnectResult, getEnumSize, getRandomChoice, getSortedSessionPlayerIDs, getVoiceDurationMs, Host, Player, PlayerResponseType, PlayerState,
     SessionAnnouncement, SessionHosts, SessionPlayers, SessionState, SessionTimeout, SocketID,
     TriviaClue, TriviaClueBonus, TriviaClueDecision, TriviaClueDecisionInfo,
-    TriviaGame, TriviaGameSettings, TriviaGameSettingsPreset
+    TriviaGame, TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
 } from "jparty-shared";
 
 // store timeouts in their own container so we can cancel a timeout early and still trigger its callback
@@ -47,6 +47,7 @@ export class Session {
     // store transient data that needs to be restored for clients in the event that they disconnect and reconnect
     currentAnnouncement: SessionAnnouncement | undefined;
     displayingCorrectAnswer: boolean;
+    voiceType: VoiceType;
     currentVoiceLine: string;
 
     // clue selection info
@@ -67,6 +68,7 @@ export class Session {
         this.connectHost(creatorSocketID, creatorClientID);
         this.name = name;
         this.resetGame();
+        this.voiceType = VoiceType.ModernMasculine;
     }
 
     resetGame() {

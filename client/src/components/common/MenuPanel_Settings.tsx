@@ -2,8 +2,11 @@
 import { LayoutContext } from "./Layout";
 import { socket } from "../../misc/socket";
 
-import { Box, Button, Divider, Heading, Slider, SliderThumb, SliderFilledTrack, SliderTrack, Stack, TabPanel, Text } from "@chakra-ui/react";
-import { HostSocket, PlayerSocket } from "jparty-shared";
+import {
+    Box, Button, Divider, Heading, Radio, RadioGroup,
+    Slider, SliderThumb, SliderFilledTrack, SliderTrack, Stack, TabPanel, Text
+} from "@chakra-ui/react";
+import { HostSocket, PlayerSocket, VoiceType } from "jparty-shared";
 import { useContext } from "react";
 
 export function emitLeaveSession(isPlayer: boolean) {
@@ -17,6 +20,10 @@ export function emitLeaveSession(isPlayer: boolean) {
 
 export default function MenuPanel_Settings() {
     const context = useContext(LayoutContext);
+
+    const emitUpdateVoiceType = (voiceType: VoiceType) => {
+        socket.emit(HostSocket.UpdateVoiceType, voiceType);
+    }
 
     return (
         <TabPanel>
@@ -57,6 +64,15 @@ export default function MenuPanel_Settings() {
                                 </SliderTrack>
                                 <SliderThumb outline={"gray solid 1px"} />
                             </Slider>
+
+                            <RadioGroup isDisabled={context.isSpectator} onChange={emitUpdateVoiceType} value={context.voiceType}>
+                                <Stack direction={"row"} justifyContent={"center"}>
+                                    <Radio value={VoiceType.ClassicMasculine}>Classic (Masculine)</Radio>
+                                    <Radio value={VoiceType.ClassicFeminine}>Classic (Feminine)</Radio>
+                                    <Radio value={VoiceType.ModernMasculine}>Modern (Masculine)</Radio>
+                                    <Radio value={VoiceType.ModernFeminine}>Modern (Feminine)</Radio>
+                                </Stack>
+                            </RadioGroup>
                         </Box>
 
                         <Box margin={"1em"}>

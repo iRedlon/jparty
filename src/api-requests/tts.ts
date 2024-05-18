@@ -2,6 +2,7 @@
 import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
 
 import dotenv from "dotenv";
+import { VoiceType } from "jparty-shared";
 
 dotenv.config();
 
@@ -9,8 +10,12 @@ if (!process.env.OPENAI_SECRET_KEY) {
     throw new Error(formatDebugLog("attempted to connect to OpenAI without API key"));
 }
 
-export async function getVoiceBase64Audio(voiceLine: string) {
+export async function getVoiceBase64Audio(voiceType: VoiceType, voiceLine: string) {
     if (!process.env.USE_OPENAI_TTS) {
+        return;
+    }
+
+    if ((voiceType !== VoiceType.ModernMasculine) && (voiceType !== VoiceType.ModernFeminine)) {
         return;
     }
 
@@ -22,12 +27,12 @@ export async function getVoiceBase64Audio(voiceLine: string) {
         },
         body: JSON.stringify({
             model: "tts-1",
-            voice: "onyx",
+            voice: (voiceType === VoiceType.ModernFeminine) ? "nova" : "echo",
             input: voiceLine
         })
     });
 
-    debugLog(DebugLogType.Voice, "making audio request to OpenAI for spoken voice line");
+    debugLog(DebugLogType.Voice, `making audio request to OpenAI for voice line type: ${voiceType}`);
 
     if (!response.ok) {
         const errorText = await response.text();

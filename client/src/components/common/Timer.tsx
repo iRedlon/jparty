@@ -1,11 +1,14 @@
 
 import { LayoutContext } from "./Layout";
+import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
 import { TIMEOUT_DESCRIPTIONS } from "../../misc/ui-constants";
 
 import { Box, Text } from "@chakra-ui/react";
-import { ServerSocket, SessionTimeout } from "jparty-shared";
+import { HostServerSocket, ServerSocket, SessionTimeout } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
+
+addMockSocketEventHandler
 
 export default function Timer() {
     const context = useContext(LayoutContext);
@@ -15,23 +18,18 @@ export default function Timer() {
 
     useEffect(() => {
         const interval = setInterval(() => setTimeMs(Date.now()), 500);
+        
         socket.on(ServerSocket.StartTimeout, handleStartTimeout);
         socket.on(ServerSocket.StopTimeout, handleStopTimeout);
 
-        const mockSocket = document.getElementById("mock-socket");
-        if (!mockSocket) {
-            return;
-        }
-
-        const mockStartTimeoutListener = ((event: CustomEvent) => { handleStartTimeout(event.detail.timeout, event.detail.durationMs); }) as EventListener;
-        mockSocket.addEventListener(ServerSocket.StartTimeout, mockStartTimeoutListener);
+        addMockSocketEventHandler(ServerSocket.StartTimeout, handleStartTimeout);
 
         return () => {
             clearInterval(interval);
             socket.off(ServerSocket.StartTimeout, handleStartTimeout);
             socket.off(ServerSocket.StopTimeout, handleStopTimeout);
 
-            mockSocket.removeEventListener(ServerSocket.StartTimeout, mockStartTimeoutListener);
+            removeMockSocketEventHandler(ServerSocket.StartTimeout, handleStartTimeout);
         };
     }, []);
 

@@ -47,8 +47,14 @@ export default function Announcement() {
         setQueuedToHide(false);
     }
 
-    const handleHideAnnouncement = () => {
-        setQueuedToHide(true);
+    const handleHideAnnouncement = (forceHide: boolean) => {
+        if (forceHide) {
+            setAnnouncement(undefined);
+            setOverrideMessage("");
+        }
+        else {
+            setQueuedToHide(true);
+        }
     }
 
     if (announcement === undefined) {

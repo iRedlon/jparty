@@ -1,14 +1,13 @@
 
 # Feature TODO (Isaac)
 
+- Add documentation for new environment variable and for both TTS systems
 - Finish sound system
   - Hook up volume control settings to local storage variables
-  - Include option for masculine or feminine TTS voice
-  - New sound: buzzer noise on phone
   - New sound: applause when clearing a category
-  - New sound: background music, thinking music, maybe options for both?
   - New sound: "you control the board ____" when the board controller changes
 - Overall UI face lift (margins, fonts, colors, get the placeholder state to the best place it can possibly go without a proper artistic design)
+- Animation idea: UI elements always slightly moving like Balatro
 - New clue tossup behavior
 
 # Feature TODO (A collaboator, i.e. Teddy)
@@ -18,7 +17,6 @@
 - (Database 2): A centralized system to collect basic game data (game started/finished, custom games played, clues answered and their corectness, reversals used, etc.)
 - (Game Design 1): Standard format for uploading one's own categories/clues (perhaps including images as well?). Consider tech literacy when deciding upon this format
 - (Game Design 2): Answer streaks. Save some player data concerning their answer accuracy, then award them in the UI and with the host voice accordingly
-- (UI) Establish system for game event animations, starting with session announcements. I first need to make a decision about what animation paradigm we're going to use
 
 # Backlog TODO
 ### _Planned work that isn't high enough priority to be on a TODO list yet_
@@ -34,8 +32,9 @@
 
 - All play clues don't display the correct answer the whole time like they should, and they also freeze out the game...
 - Player leaderboard UI sometimes gets scuffed in a way where the border lines from the previous state are still visible (doesn't impact gameplay)
-- A few of the client debug commands appear to be broken
-- There are a few voice lines (like for the all wager bonus) that should be excluded on single clue rounds
 
 # Feedback
 ### _Raw feedback from playtesting that still needs to be organized_
+
+- Prevent the same voice line from being randomly chosen twice in a row for a given voice line type?
+- There are a few voice lines (like for the all wager bonus) that should be excluded on single clue rounds

@@ -27,6 +27,7 @@ export enum ServerSocket {
     UpdateTriviaRound = "server_update_trivia_round",
     SelectClue = "host_server_select_clue",
     UpdateSpotlightResponderID = "host_server_update_spotlight_responder_id",
+    UpdateVoiceType = "host_server_update_voice_type",
     StartTimeout = "host_server_start_timeout",
     StopTimeout = "host_server_stop_timeout",
     ShowAnnouncement = "host_server_show_announcement",
@@ -79,6 +80,7 @@ export type ClientSocketCallback = {
 export enum HostSocket {
     Connect = "host_connect",
     UpdateGameSettingsPreset = "host_update_game_settings_preset",
+    UpdateVoiceType = "host_update_voice_type",
     UpdateVoiceDuration = "host_update_voice_duration",
     AttemptSpectate = "host_attempt_spectate",
     LeaveSession = "host_leave_session",

@@ -1,10 +1,11 @@
 
 import { createSession, deleteSession, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost } from "./session-utils.js";
+import { io } from "../controller.js";
 import { debugLog, DebugLogType } from "../misc/log.js";
 
-import { 
+import {
     HostServerSocket, HostSocket, HostSocketCallback, ServerSocket, ServerSocketMessage, SessionState, SessionTimeout,
-    TriviaGameSettings, TriviaGameSettingsPreset 
+    TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
 } from "jparty-shared";
 import { generate as generateRandomWord } from "random-words";
 import { Socket } from "socket.io";
@@ -27,6 +28,18 @@ function handleUpdateGameSettingsPreset(socket: Socket, sessionName: string, gam
     }
 
     session.triviaGameSettingsPreset = gameSettingsPreset;
+}
+
+function handleUpdateVoiceType(socket: Socket, sessionName: string, voiceType: VoiceType) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    debugLog(DebugLogType.Voice, `updating session (${sessionName}) to use voice type: ${voiceType}`);
+
+    session.voiceType = voiceType;
+    io.to(Object.keys(session.hosts)).emit(ServerSocket.UpdateVoiceType, voiceType);
 }
 
 function handleUpdateVoiceDuration(socket: Socket, sessionName: string, durationSec: number) {
@@ -128,6 +141,7 @@ function handlePlayAgain(socket: Socket, sessionName: string) {
 const handlers: Record<HostSocket, Function> = {
     [HostSocket.Connect]: handleConnect,
     [HostSocket.UpdateGameSettingsPreset]: handleUpdateGameSettingsPreset,
+    [HostSocket.UpdateVoiceType]: handleUpdateVoiceType,
     [HostSocket.UpdateVoiceDuration]: handleUpdateVoiceDuration,
     [HostSocket.AttemptSpectate]: handleAttemptSpectate,
     [HostSocket.LeaveSession]: handleLeaveSession,

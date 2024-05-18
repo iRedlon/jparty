@@ -11,10 +11,10 @@ import ServerMessageAlert from "../common/ServerMessage";
 import Timer from "../common/Timer";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
-import { playOpenAIVoice, playSpeechSynthesisVoice } from "../../misc/sound-fx";
+import { playOpenAIVoice, playSoundEffect, playSpeechSynthesisVoice } from "../../misc/sound-fx";
 
 import { Box, Center, Flex, Text } from "@chakra-ui/react";
-import { HostServerSocket, SessionState } from "jparty-shared";
+import { HostServerSocket, SessionState, SoundEffect, VoiceType } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
 
 export default function HostLayout() {
@@ -40,12 +40,18 @@ export default function HostLayout() {
         }
     }, []);
 
-    const handlePlayVoice = (voiceLine: string, audioBase64?: string) => {
+    useEffect(() => {
+        if (context.sessionState > SessionState.Lobby) {
+            playSoundEffect(SoundEffect.GameMusic);
+        }
+    }, [context.sessionState]);
+
+    const handlePlayVoice = (voiceType: VoiceType, voiceLine: string, audioBase64?: string) => {
         if (audioBase64) {
             playOpenAIVoice(audioBase64);
         }
         else {
-            playSpeechSynthesisVoice(voiceLine);
+            playSpeechSynthesisVoice(voiceType, voiceLine);
         }
     }
 

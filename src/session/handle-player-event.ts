@@ -251,6 +251,7 @@ function finishBuzzWindow(sessionName: string) {
     }
 
     stopTimeout(sessionName, SessionTimeout.BuzzWindow);
+    playSoundEffect(sessionName, SoundEffect.BuzzWindowTimeout);
 
     session.finishBuzzWindow();
     emitStateUpdate(sessionName);

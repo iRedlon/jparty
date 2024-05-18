@@ -8,7 +8,7 @@ import { playSoundEffect } from "../../misc/sound-fx";
 
 import {
     AttemptReconnectResult, ClientSocket, cloneSessionPlayers, HostSocket,
-    ReservedSocket, ServerSocket, SessionPlayers, SessionState, SocketID, SoundEffect, TriviaRound
+    ReservedSocket, ServerSocket, SessionPlayers, SessionState, SocketID, SoundEffect, TriviaRound, VoiceType
 } from "jparty-shared";
 import { createContext, useEffect, useState } from "react";
 import { isMobile } from "react-device-detect";
@@ -25,7 +25,8 @@ export interface LayoutContextData {
     triviaRound: TriviaRound | undefined,
     categoryIndex: number,
     clueIndex: number,
-    spotlightResponderID: SocketID
+    spotlightResponderID: SocketID,
+    voiceType: VoiceType
 };
 
 export const LayoutContext = createContext<LayoutContextData>({} as any);
@@ -42,6 +43,7 @@ export default function Layout() {
     const [categoryIndex, setCategoryIndex] = useState(-1);
     const [clueIndex, setClueIndex] = useState(-1);
     const [spotlightResponderID, setSpotlightResponderID] = useState<SocketID>("");
+    const [voiceType, setVoiceType] = useState(VoiceType.ModernMasculine);
 
     useEffect(() => {
         window.addEventListener(ReservedSocket.VisibilityChange, handleVisibilityChange);
@@ -57,6 +59,7 @@ export default function Layout() {
         socket.on(ServerSocket.UpdateTriviaRound, handleUpdateTriviaRound);
         socket.on(ServerSocket.SelectClue, handleSelectClue);
         socket.on(ServerSocket.UpdateSpotlightResponderID, handleUpdateSpotlightResponderID);
+        socket.on(ServerSocket.UpdateVoiceType, handleUpdateVoiceType);
 
         addMockSocketEventHandler(ServerSocket.PlaySoundEffect, handlePlaySoundEffect);
         addMockSocketEventHandler(ServerSocket.UpdateSessionName, handleUpdateSessionName);
@@ -79,6 +82,7 @@ export default function Layout() {
             socket.off(ServerSocket.UpdateTriviaRound, handleUpdateTriviaRound);
             socket.off(ServerSocket.SelectClue, handleSelectClue);
             socket.off(ServerSocket.UpdateSpotlightResponderID, handleUpdateSpotlightResponderID);
+            socket.off(ServerSocket.UpdateVoiceType, handleUpdateVoiceType);
 
             removeMockSocketEventHandler(ServerSocket.PlaySoundEffect, handlePlaySoundEffect);
             removeMockSocketEventHandler(ServerSocket.UpdateSessionName, handleUpdateSessionName);
@@ -177,6 +181,10 @@ export default function Layout() {
         setSpotlightResponderID(responderID);
     }
 
+    const handleUpdateVoiceType = (voiceType: VoiceType) => {
+        setVoiceType(voiceType);
+    }
+
     let context: LayoutContextData = {
         debugMode: debugMode,
         isSpectator: isSpectator,
@@ -188,7 +196,8 @@ export default function Layout() {
         triviaRound: triviaRound,
         categoryIndex: categoryIndex,
         clueIndex: clueIndex,
-        spotlightResponderID: spotlightResponderID
+        spotlightResponderID: spotlightResponderID,
+        voiceType: voiceType
     };
 
     return (

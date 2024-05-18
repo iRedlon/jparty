@@ -1,39 +1,80 @@
 
 import { socket } from "./socket";
+import BuzzWindowTimeoutMP3 from "../assets/buzzWindowTimeout.mp3";
 import ApplauseMP3 from "../assets/applause.mp3";
+import GameMusicMP3 from "../assets/gameMusic.mp3";
+import LobbyMusicMP3 from "../assets/lobbyMusic.mp3";
 import LongApplauseMP3 from "../assets/longApplause.mp3";
 
-import { HostSocket, SoundEffect } from "jparty-shared";
+import { HostSocket, SoundEffect, VoiceType } from "jparty-shared";
 
-const applauseSound = new Audio(ApplauseMP3);
-const longApplauseSound = new Audio(LongApplauseMP3);
+const buzzWindowTimeoutAudio = new Audio(BuzzWindowTimeoutMP3);
+const gameMusicAudio = new Audio(GameMusicMP3);
+const lobbyMusicAudio = new Audio(LobbyMusicMP3);
+const applauseAudio = new Audio(ApplauseMP3);
+const longApplauseAudio = new Audio(LongApplauseMP3);
 
 export function playSoundEffect(effect: SoundEffect) {
     switch (effect) {
+        case SoundEffect.LobbyMusic:
+            {
+                if (lobbyMusicAudio.paused || !lobbyMusicAudio.currentTime) {
+                    gameMusicAudio.pause();
+                    lobbyMusicAudio.play();
+                }
+            }
+            break;
+        case SoundEffect.GameMusic:
+            {
+                if (gameMusicAudio.paused || !gameMusicAudio.currentTime) {
+                    lobbyMusicAudio.pause();
+                    gameMusicAudio.play();
+                }
+            }
+            break;
+        case SoundEffect.BuzzWindowTimeout:
+            {
+                buzzWindowTimeoutAudio.play();
+            }
+            break;
         case SoundEffect.Applause:
             {
-                applauseSound.play();
+                applauseAudio.play();
             }
             break;
         case SoundEffect.LongApplause:
             {
-                longApplauseSound.play();
+                longApplauseAudio.play();
             }
             break;
     }
 }
 
-function getSpeechSynthesisVoice() {
+function getSpeechSynthesisVoice(voiceType: VoiceType) {
     const voices = window.speechSynthesis.getVoices();
     if (!voices.length) {
         return;
     }
 
+    let voiceURI = "";
+    switch (voiceType) {
+        case VoiceType.ClassicMasculine:
+            {
+                voiceURI = "Google UK English Male";
+            }
+            break;
+        case VoiceType.ClassicFeminine:
+            {
+                voiceURI = "Google UK English Female";
+            }
+            break;
+    }
+
     for (let i = 0; i < voices.length; i++) {
         const voice = voices[i];
 
-        // this voice will only be available while using Chrome or a Google device. use it if we possibly can
-        if (voice.voiceURI === "Google UK English Male") {
+        // the Google voices will only be available while using Chrome or a Google device. use it if we possibly can
+        if (voice.voiceURI === voiceURI) {
             return voice;
         }
     }
@@ -52,8 +93,8 @@ export function playOpenAIVoice(audioBase64: string) {
     };
 }
 
-export function playSpeechSynthesisVoice(voiceLine: string) {
-    const voice = getSpeechSynthesisVoice();
+export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string) {
+    const voice = getSpeechSynthesisVoice(voiceType);
     if (!voice) {
         return;
     }

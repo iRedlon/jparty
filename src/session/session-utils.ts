@@ -91,6 +91,8 @@ export function joinSession(socket: Socket, sessionName: string) {
         socket.emit(ServerSocket.HideAnnouncement);
     }
 
+    socket.emit(ServerSocket.UpdateVoiceType, session.voiceType);
+
     emitStateUpdate(session.name);
 }
 
@@ -380,7 +382,7 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
     let voiceBase64Audio = undefined;
 
     try {
-        voiceBase64Audio = await getVoiceBase64Audio(voiceLine);
+        voiceBase64Audio = await getVoiceBase64Audio(session.voiceType, voiceLine);
     }
     catch (e) {
         // normally we'd go through handleServerError, but if our external TTS request fails we can just fall back on the speech synthesis voice instead
@@ -388,7 +390,7 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
         console.error(e);
     }
 
-    io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayVoice, voiceLine, voiceBase64Audio);
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayVoice, session.voiceType, voiceLine, voiceBase64Audio);
 }
 
 export function emitStateUpdate(sessionName: string) {

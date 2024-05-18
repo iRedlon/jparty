@@ -11,8 +11,18 @@ export function getVoiceDurationMs(text: string) {
 }
 
 export enum SoundEffect {
+    LobbyMusic,
+    GameMusic,
+    BuzzWindowTimeout,
     Applause,
     LongApplause
+}
+
+export enum VoiceType {
+    ClassicMasculine = "classic_masculine",
+    ClassicFeminine = "classic_feminine",
+    ModernMasculine = "modern_masculine",
+    ModernFeminine = "modern_feminine"
 }
 
 export enum VoiceLineType {

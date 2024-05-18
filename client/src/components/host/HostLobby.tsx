@@ -3,10 +3,10 @@ import { LayoutContext } from "../common/Layout";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
 import { getClientID } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
-import { playSpeechSynthesisVoice } from "../../misc/sound-fx";
+import { playSoundEffect, playSpeechSynthesisVoice } from "../../misc/sound-fx";
 
 import { Box, Button, Divider, Heading, Input, Stack, Tooltip } from "@chakra-ui/react";
-import { getSortedSessionPlayerIDs, HostServerSocket, HostSocket, SocketID, SoundEffect, TriviaGameSettingsPreset } from "jparty-shared";
+import { getSortedSessionPlayerIDs, HostServerSocket, HostSocket, SocketID, SoundEffect, TriviaGameSettingsPreset, VoiceType } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
 import { GoMute, GoUnmute } from "react-icons/go";
 
@@ -47,7 +47,8 @@ export default function HostLobby() {
         setSoundEnabled(enabled);
 
         if (enabled) {
-            playSpeechSynthesisVoice("");
+            playSoundEffect(SoundEffect.LobbyMusic);
+            playSpeechSynthesisVoice(VoiceType.ClassicMasculine, "");
         }
     }
 

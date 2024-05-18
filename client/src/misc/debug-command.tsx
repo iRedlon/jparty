@@ -144,14 +144,18 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
 
                 mockSocket.dispatchEvent(new CustomEvent(ServerSocket.PlaySoundEffect, {
                     detail: {
-                        params: [SoundEffect.Applause]
+                        params: [SoundEffect.BuzzWindowTimeout]
                     }
                 }));
             }
             break;
         case DebugCommand.HideAnnouncement:
             {
-                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.HideAnnouncement));
+                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.HideAnnouncement, {
+                    detail: {
+                        params: [true]
+                    }
+                }));
             }
             break;
     }
