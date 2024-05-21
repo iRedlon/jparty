@@ -34,7 +34,6 @@ export default function MenuPanel_Feedback() {
             <AbsoluteCenter axis={"horizontal"} width={"100%"}>
                 <Heading size={"md"}>Known issues</Heading>
                 <UnorderedList listStylePosition={"inside"} margin={"0 auto"} marginBottom={"1em"}>
-                    <ListItem>Host voice sometimes lags and starts partway through its sentence</ListItem>
                     <ListItem>Border lines of player scoreboard sometimes don't update visually</ListItem>
                 </UnorderedList>
 

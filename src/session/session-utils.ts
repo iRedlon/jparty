@@ -242,7 +242,7 @@ function emitTimeoutUpdate(sessionName: string, timeout: SessionTimeout) {
 
     const displayTimeout = (timeout === SessionTimeout.BuzzWindow) || (timeout === SessionTimeout.ResponseWindow);
 
-    if (process.env.DEBUG_MODE || displayTimeout) {
+    if (displayTimeout) {
         io.in(session.name).emit(ServerSocket.StartTimeout, timeout, timeoutInfo.getRemainingDurationMs());
     }
 }

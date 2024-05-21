@@ -28,6 +28,7 @@ export default function HostLayout() {
         socket.on(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         socket.on(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
+        addMockSocketEventHandler(HostServerSocket.PlayVoice, handlePlayVoice);
         addMockSocketEventHandler(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         addMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
@@ -35,6 +36,7 @@ export default function HostLayout() {
             socket.off(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
             socket.off(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
+            removeMockSocketEventHandler(HostServerSocket.PlayVoice, handlePlayVoice);
             removeMockSocketEventHandler(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
             removeMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
         }

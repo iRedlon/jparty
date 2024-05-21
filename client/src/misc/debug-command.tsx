@@ -1,8 +1,8 @@
 
 import {
-    PLACEHOLDER_TRIVIA_ROUND, Player, PlayerState, ServerSocket,
+    HostServerSocket, PLACEHOLDER_TRIVIA_ROUND, Player, PlayerState, ServerSocket,
     SessionAnnouncement, SessionState, SessionTimeout, SoundEffect, TriviaCategory, TriviaClue,
-    TriviaClueDecision, TriviaClueDecisionInfo, TriviaRound
+    TriviaClueDecision, TriviaClueDecisionInfo, TriviaRound, VoiceType
 } from "jparty-shared";
 
 export enum DebugCommand {
@@ -114,15 +114,15 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
 
                 handleDebugCommand(DebugCommand.UpdateSessionState, SessionState.ClueTossup);
 
-                // const triviaRound = TriviaRound.clone(PLACEHOLDER_TRIVIA_ROUND);
-                // const triviaCategory = triviaRound.categories[args[0]];
-                // const triviaClue = triviaCategory.clues[args[1]];
+                const triviaRound = TriviaRound.clone(PLACEHOLDER_TRIVIA_ROUND);
+                const triviaCategory = triviaRound.categories[args[0]];
+                const triviaClue = triviaCategory.clues[args[1]];
 
-                // mockSocket.dispatchEvent(new CustomEvent(HostServerSocket.PlayVoice, {
-                //     detail: {
-                //         params: [triviaClue.question]
-                //     }
-                // }));
+                mockSocket.dispatchEvent(new CustomEvent(HostServerSocket.PlayVoice, {
+                    detail: {
+                        params: [VoiceType.ClassicMasculine, triviaClue.question]
+                    }
+                }));
             }
             break;
         case DebugCommand.StartTimeout:

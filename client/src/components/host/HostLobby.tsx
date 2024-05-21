@@ -6,9 +6,9 @@ import { socket } from "../../misc/socket";
 import { playSoundEffect, playSpeechSynthesisVoice } from "../../misc/sound-fx";
 
 import { Box, Button, Divider, Heading, Input, Stack, Tooltip } from "@chakra-ui/react";
-import { getSortedSessionPlayerIDs, HostServerSocket, HostSocket, SocketID, SoundEffect, TriviaGameSettingsPreset, VoiceType } from "jparty-shared";
+import { getSortedSessionPlayerIDs, HostServerSocket, HostSocket, SocketID, SoundEffect, TriviaGameSettingsPreset, VoiceType, VolumeType } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
-import { GoMute, GoUnmute } from "react-icons/go";
+import { GoMute } from "react-icons/go";
 
 export default function HostLobby() {
     const context = useContext(LayoutContext);
@@ -55,10 +55,7 @@ export default function HostLobby() {
     return (
         <>
             <Box _hover={{ opacity: 1 }} position={"fixed"} cursor={"pointer"} top={"1em"} left={"1em"}>
-                {soundEnabled ?
-                    <GoUnmute onClick={() => toggleMute(false)} size={"4em"} color={"white"} /> :
-                    <GoMute onClick={() => toggleMute(true)} size={"4em"} color={"white"} className={"blink-slow"} />
-                }
+                {!soundEnabled && (<GoMute onClick={() => toggleMute(true)} size={"4em"} color={"white"} className={"blink-slow"} />)}
             </Box>
 
             <Stack direction={"column"}>

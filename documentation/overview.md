@@ -17,7 +17,8 @@ In production, they're set manually within the server environment provided by ou
 #### server settings
 - PORT
 - LOG_LEVEL: a value defined in logging-utils, the log level determines which systems' debug messages will be logged
-- DEBUG_MODE (optional): 0 or 1, enables debug logging on server and the debug menu on client
+- DEBUG_MODE (optional): enables debug logging on server and the debug menu on client
+- USE_OPENAI_TTS (optional): enables OpenAI API requests for TTS voice lines. Browser screen reader will otherwise be used as a fallback
 
 #### api credentials
 - MONGO_CONNECTION_STRING
@@ -94,3 +95,10 @@ In production, they're set manually within the server environment provided by ou
 - And these on server:
   - Enables debug logging which includes some extra info like the position of clue bonuses, outgoing API requests, etc.
   - Forced clue decisions by responding with the desired response. A response may be "correct", "incorrect", or "detail"
+
+## [Host Voice](../client/src/misc/sound-fx.ts)
+- Voice lines are spoken aloud by the host computer throughout the game. Most importantly, this voice reads out the clues but also filler lines like "correct" or "that's a bonus, you get to wager, etc."
+- There are two TTS systems in use in jparty: the first is API-requested OpenAI TTS with a very realistic sounding voice. This service costs money per request and is enabled/disabled with an environment variable
+- The second is the built-in browser screen reader. This TTS is actually pretty good in terms of pronunciation, but is still very robotic. We support it because it's free and not API requested so if the API needs to be disabled or is otherwise not working for any reason: we can easily fall back on the screen reader
+- Many timers in the game rely on the TTS system (i.e. when reading out the clue, we need to trigger the next state change once it's done being read aloud) but for various reasons, it's difficult to tell exactly how long a voice line will take to say out loud
+- To solve this, we start the timer with an educated estimate that's intentionally generous. Then, once we have more info about exactly how long it will take to be spoken, we update the timer by cancelling it and restarting it with our new duration. These timers are always hidden from players so the mid-timer update isn't jarring or confusing

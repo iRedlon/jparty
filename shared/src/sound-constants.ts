@@ -3,12 +3,18 @@ import { SessionAnnouncement } from "./socket-constants";
 import { TriviaClueDecision } from "./trivia-game-constants";
 
 // this estimate is quite generous. the client will always tell the server to cancel the timeout early once its utterance is complete anyway
-// that is to say, as long as we don't underestimate the voice duration, the timing will always be as smooth as possible
+// that is to say, as long as we don't underestimate the voice duration, the timing will always be as smooth as it can possibly be
 export const ESTIMATE_VOICE_DURATION_MS_PER_CHARACTER = 100;
 
 export function getVoiceDurationMs(text: string) {
     return text.length * ESTIMATE_VOICE_DURATION_MS_PER_CHARACTER;
 }
+
+export enum VolumeType {
+    Music = "music_volume",
+    Voice = "voice_volume",
+    SoundEffects = "sound_effects_volume"
+} 
 
 export enum SoundEffect {
     LobbyMusic,
@@ -19,10 +25,10 @@ export enum SoundEffect {
 }
 
 export enum VoiceType {
-    ClassicMasculine = "classic_masculine",
-    ClassicFeminine = "classic_feminine",
     ModernMasculine = "modern_masculine",
-    ModernFeminine = "modern_feminine"
+    ModernFeminine = "modern_feminine",
+    ClassicMasculine = "classic_masculine",
+    ClassicFeminine = "classic_feminine"
 }
 
 export enum VoiceLineType {

@@ -1,14 +1,11 @@
 
 # Feature TODO (Isaac)
 
-- Add documentation for new environment variable and for both TTS systems
 - Finish sound system
-  - Hook up volume control settings to local storage variables
   - New sound: applause when clearing a category
   - New sound: "you control the board ____" when the board controller changes
-  - Maybe bring up the default host voice volume a bit
 - Do some hardcore multiplayer testing in all available modes (including spectation)
-- Overall UI face lift (margins, fonts, colors, get the placeholder state to the best place it can possibly go without a proper artistic design)
+- Overall UI face lift
   - UI for clue selection where you see each board column individually and swipe between them
   - Margins/spacing/fonts/colors, small tweaks like that
   - A background with some texture, not just a solid color
@@ -35,7 +32,6 @@
 # Bugs
 ### _Known issues, hopefully with repro steps_
 
-- All play clues don't display the correct answer the whole time like they should, and they also freeze out the game...
 - Player leaderboard UI sometimes gets scuffed in a way where the border lines from the previous state are still visible (doesn't impact gameplay)
 
 # Feedback

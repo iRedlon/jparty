@@ -11,6 +11,7 @@ import {
     SessionAnnouncement, SessionState, SessionTimeout, SocketID, SoundEffect, TriviaClueBonus, TriviaClueDecision, TriviaGameSettingsPreset, VoiceLineType
 } from "jparty-shared";
 import { Socket } from "socket.io";
+import { DebugLogType, debugLog } from "../misc/log.js";
 
 function handleConnect(socket: Socket, sessionName: string, clientID: string, playerName: string, callback: PlayerSocketCallback[PlayerSocket.Connect]) {
     sessionName = sessionName.toLowerCase();
@@ -344,7 +345,11 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
 
     const responderID = session.findUndecidedResponderID();
 
+    debugLog(DebugLogType.ClueDecision, `found undecided responder ID: ${responderID}`);
+
     if (!responderID) {
+        debugLog(DebugLogType.ClueDecision, `done revealing clue decisions`);
+
         if (session.currentResponderIDs.length) {
             finishRevealClueDecision(sessionName, displayCorrectAnswer);
         }
@@ -376,6 +381,9 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
     if (session.getCurrentClue()?.hasSpotlightResponder()) {
         displayCorrectAnswer = (decision === TriviaClueDecision.Correct) || noEligibleRespondersRemaining;
     }
+    else {
+        displayCorrectAnswer = true;
+    }
 
     session.displayingCorrectAnswer = displayCorrectAnswer;
 
@@ -392,6 +400,8 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
             playSoundEffect(sessionName, SoundEffect.Applause);
         }
     }
+
+    debugLog(DebugLogType.ClueDecision, `got clue decision: ${decision}. display correct answer?: ${displayCorrectAnswer}`);
 
     startTimeout(sessionName, SessionTimeout.RevealClueDecision, () => {
         recursiveRevealClueDecision(sessionName, displayCorrectAnswer);
