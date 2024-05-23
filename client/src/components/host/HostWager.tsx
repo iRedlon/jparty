@@ -34,7 +34,7 @@ export default function HostWager({ triviaCategory, triviaClue, numSubmittedResp
             }
 
             {
-                !triviaClue.hasSpotlightResponder() && (context.sessionState === SessionState.WagerResponse) && (
+                !triviaClue.isTossupClue() && (context.sessionState === SessionState.WagerResponse) && (
                     <Text justifyContent={"center"}>
                         {numSubmittedResponders}/{numResponders} wagers submitted
                     </Text>

@@ -76,16 +76,19 @@ export function playSoundEffect(effect: SoundEffect) {
             break;
         case SoundEffect.BuzzWindowTimeout:
             {
+                buzzWindowTimeoutAudio.currentTime = 0;
                 buzzWindowTimeoutAudio.play();
             }
             break;
         case SoundEffect.Applause:
             {
+                applauseAudio.currentTime = 0;
                 applauseAudio.play();
             }
             break;
         case SoundEffect.LongApplause:
             {
+                longApplauseAudio.currentTime = 0;
                 longApplauseAudio.play();
             }
             break;

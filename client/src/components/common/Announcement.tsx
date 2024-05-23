@@ -41,10 +41,20 @@ export default function Announcement() {
         }
     }, [context.sessionState]);
 
-    const handleShowAnnouncement = (announcement: SessionAnnouncement, currentVoiceLine?: string) => {
+    const handleShowAnnouncement = (announcement: SessionAnnouncement, currentVoiceLine: string) => {
         setAnnouncement(announcement);
-        setOverrideMessage(currentVoiceLine || "");
         setQueuedToHide(false);
+
+        switch (announcement) {
+            case SessionAnnouncement.SelectClue:
+                {
+                    setOverrideMessage(currentVoiceLine);
+                }
+            
+            return;
+        }
+
+        setOverrideMessage("");
     }
 
     const handleHideAnnouncement = (forceHide: boolean) => {

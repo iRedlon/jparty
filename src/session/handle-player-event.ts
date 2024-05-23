@@ -194,7 +194,12 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
 
     session.selectClue(categoryIndex, clueIndex);
 
-    showAnnouncement(sessionName, SessionAnnouncement.SelectClue, () => {
+    const handleSelectClueInternal = () => {
+        let session = getSession(sessionName);
+        if (!session) {
+            return;
+        }
+
         io.in(sessionName).emit(ServerSocket.SelectClue, categoryIndex, clueIndex);
 
         switch (session.getCurrentClue()?.bonus) {
@@ -242,7 +247,16 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
 
         emitStateUpdate(sessionName);
         emitTriviaRoundUpdate(sessionName);
-    });
+    }
+
+    const clue = session.getCurrentClue();
+
+    // the key piece of information in a "select clue" announcement is the clue value. if our clue doesn't have a value... then no need to announce it!
+    if (clue && clue.value > 0) {
+        showAnnouncement(sessionName, SessionAnnouncement.SelectClue, handleSelectClueInternal);
+    } else {
+        handleSelectClueInternal();
+    }
 }
 
 function finishBuzzWindow(sessionName: string) {
@@ -252,7 +266,10 @@ function finishBuzzWindow(sessionName: string) {
     }
 
     stopTimeout(sessionName, SessionTimeout.BuzzWindow);
-    playSoundEffect(sessionName, SoundEffect.BuzzWindowTimeout);
+
+    if (session.getCurrentClue()?.isTossupClue()) {
+        playSoundEffect(sessionName, SoundEffect.BuzzWindowTimeout);
+    }
 
     session.finishBuzzWindow();
     emitStateUpdate(sessionName);
@@ -378,7 +395,7 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
     let noEligibleRespondersRemaining = (decision !== TriviaClueDecision.NeedsMoreDetail) && !session.getNumEligibleResponders();
 
     // decide if we should display the correct answer when we reveal this decision
-    if (session.getCurrentClue()?.hasSpotlightResponder()) {
+    if (session.getCurrentClue()?.isTossupClue()) {
         displayCorrectAnswer = (decision === TriviaClueDecision.Correct) || noEligibleRespondersRemaining;
     }
     else {
@@ -420,10 +437,15 @@ function finishRevealClueDecision(sessionName: string, displayCorrectAnswer: boo
     if (displayCorrectAnswer) {
         session.promptClueSelection();
 
+        // if we have a new clue selector, notify the players with a voice line
+        if (session.previousClueSelectorClientID !== (session.players[session.clueSelectorID] && session.players[session.clueSelectorID].clientID)) {
+            playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
+        }
+
         if (session.getCurrentRound()?.completed) {
             session.advanceRound();
 
-            let announcement = SessionAnnouncement.StartRound;
+            let announcement = session.isFinalRound() ? SessionAnnouncement.StartFinalRound : SessionAnnouncement.StartRound;
 
             if (session.state === SessionState.GameOver) {
                 announcement = SessionAnnouncement.GameOver;
@@ -441,7 +463,7 @@ function finishRevealClueDecision(sessionName: string, displayCorrectAnswer: boo
 
         attemptForceSelectFinalClue(sessionName);
     }
-    else if (session.getCurrentClue()?.hasSpotlightResponder()) {
+    else if (session.getCurrentClue()?.isTossupClue()) {
         const spotlightResponder = session.players[session.spotlightResponderID];
 
         let clueDecision = TriviaClueDecision.Incorrect;

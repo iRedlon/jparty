@@ -52,6 +52,7 @@ export class Session {
 
     // clue selection info
     gameStarterID: SocketID;
+    previousClueSelectorClientID: SocketID;
     clueSelectorID: SocketID;
     roundIndex: number;
     categoryIndex: number;
@@ -83,6 +84,7 @@ export class Session {
         this.currentVoiceLine = "";
 
         this.gameStarterID = "";
+        this.previousClueSelectorClientID = "";
         this.clueSelectorID = "";
         this.roundIndex = 0;
         this.categoryIndex = 0;
@@ -92,6 +94,8 @@ export class Session {
         this.previousResponderIDs = [];
         this.spotlightResponderID = "";
         this.awaitingDecisionResponderID = "";
+
+        this.promptGameStarter();
     }
 
     resetPlayers() {
@@ -493,12 +497,20 @@ export class Session {
         this.promptClueSelection();
     }
 
+    isFinalRound() {
+        if (!this.triviaGame) {
+            return false;
+        }
+
+        return this.roundIndex === (this.triviaGame.rounds.length - 1);
+    }
+
     advanceRound() {
         if (!this.triviaGame) {
             return;
         }
 
-        if (this.roundIndex === (this.triviaGame.rounds.length - 1)) {
+        if (this.isFinalRound()) {
             this.endGame();
         }
         else {
@@ -556,6 +568,8 @@ export class Session {
 
             return false;
         });
+
+        this.previousClueSelectorClientID = this.players[this.clueSelectorID] ? `${this.players[this.clueSelectorID].clientID}` : "";
 
         // first: give clue selector privileges to a connected player who responded correctly to the previous clue
         // in most cases, there will be exactly one previous correct responder but if there are multiple, choose one of them randomly
@@ -675,7 +689,7 @@ export class Session {
         }
 
         // if this clue has a spotlight responder, we should have exactly one responder ID
-        if (this.getCurrentClue()?.hasSpotlightResponder() && (responderIDs.length === 1)) {
+        if (this.getCurrentClue()?.isTossupClue() && (responderIDs.length === 1)) {
             this.spotlightResponderID = responderIDs[0];
         }
         else {
@@ -803,16 +817,19 @@ export class Session {
         const isFollowUpResponse = responder.clueDecisionInfo ? (responder.clueDecisionInfo.decision === TriviaClueDecision.NeedsMoreDetail) : false;
 
         // don't allow the decision to be "needs more detail" more than once in a row
-        if (needsMoreDetail && (isFollowUpResponse || !this.getCurrentClue()?.hasSpotlightResponder())) {
+        if (needsMoreDetail && (isFollowUpResponse || !this.getCurrentClue()?.isTossupClue())) {
             decision = TriviaClueDecision.Incorrect;
         }
 
         const clueValue = this.getClueValue(this.getCurrentClue(), this.awaitingDecisionResponderID, decision);
-        responder.clueDecisionInfo = new TriviaClueDecisionInfo(currentCategory.name, currentClue, clueResponse, decision, clueValue);
+        const clueDecisionInfo = new TriviaClueDecisionInfo(currentCategory.id, currentCategory.name, currentClue, clueResponse, decision, clueValue);
+
+        responder.clueDecisionInfo = clueDecisionInfo;
+        responder.updateClueDecision();
         responder.decided = true;
 
-        if (decision !== TriviaClueDecision.NeedsMoreDetail) {
-            this.updatePlayerScore(this.awaitingDecisionResponderID, clueValue, decision);
+        if (clueDecisionInfo.decision !== TriviaClueDecision.NeedsMoreDetail) {
+            this.updatePlayerScore(this.awaitingDecisionResponderID, clueDecisionInfo.clueValue, clueDecisionInfo.decision);
         }
 
         this.state = SessionState.ReadingClueDecision;
@@ -855,7 +872,11 @@ export class Session {
 
         const newDecision = (responder.clueDecisionInfo.decision === TriviaClueDecision.Correct) ? TriviaClueDecision.Incorrect : TriviaClueDecision.Correct;
 
-        responder.clueDecisionInfo = new TriviaClueDecisionInfo(responder.clueDecisionInfo.categoryName, responder.clueDecisionInfo.clue, responder.clueDecisionInfo.response, newDecision, responder.clueDecisionInfo.clueValue, true);
+        responder.clueDecisionInfo = new TriviaClueDecisionInfo(responder.clueDecisionInfo.categoryID, 
+                                                                responder.clueDecisionInfo.categoryName, 
+                                                                responder.clueDecisionInfo.clue, 
+                                                                responder.clueDecisionInfo.response, 
+                                                                newDecision, responder.clueDecisionInfo.clueValue, true);
 
         let clueValue = responder.clueDecisionInfo.clueValue;
 
@@ -872,8 +893,8 @@ export class Session {
                 break;
         }
 
-
         this.updatePlayerScore(responderID, clueValue, newDecision, clueValueModifier);
+        responder.updateClueDecision();
 
         return true;
     }

@@ -90,7 +90,7 @@ export class TriviaCluePosition {
     }
 }
 
-// DNT: mongo schema
+// DO NOT TOUCH: mongo schema
 export interface TriviaCategorySchema {
     id: number,
     name: string,
@@ -141,7 +141,7 @@ export class TriviaCategory {
     }
 }
 
-// DNT: mongo schema
+// DO NOT TOUCH: mongo schema
 export interface TriviaClueSchema {
     id: number,
     category_id: number,
@@ -180,8 +180,7 @@ export class TriviaClue {
         return Object.assign(new TriviaClue(), source);
     }
 
-    // see glossary/spotlight responder
-    hasSpotlightResponder() {
+    isTossupClue() {
         switch (this.bonus) {
             case TriviaClueBonus.AllWager:
             case TriviaClueBonus.AllPlay:
@@ -219,6 +218,7 @@ export class TriviaClue {
 }
 
 export class TriviaClueDecisionInfo {
+    categoryID: number;
     categoryName: string;
     clue: TriviaClue;
     response: string;
@@ -227,7 +227,8 @@ export class TriviaClueDecisionInfo {
     isReversal: boolean;
     reversalVoterIDs: string[];
 
-    constructor(categoryName: string, clue: TriviaClue, response: string, decision: TriviaClueDecision, clueValue: number, isReversal: boolean = false) {
+    constructor(categoryID: number, categoryName: string, clue: TriviaClue, response: string, decision: TriviaClueDecision, clueValue: number, isReversal: boolean = false) {
+        this.categoryID = categoryID;
         this.categoryName = categoryName;
         this.clue = TriviaClue.clone(clue);
         this.response = response;

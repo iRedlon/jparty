@@ -9,7 +9,7 @@ export enum TriviaRoundType {
     Standard
 }
 
-// DNT: trivia database relies on these enum values
+// DO NOT TOUCH: trivia database relies on these enum values
 export enum TriviaCategoryType {
     Geography,
     Entertainment,
@@ -31,7 +31,7 @@ export const DEFAULT_CATEGORY_TYPE_DISTRIBUTION: Record<TriviaCategoryType, numb
     [TriviaCategoryType.Miscellaneous]: 0.25
 }
 
-// DNT: trivia database relies on these enum values
+// DO NOT TOUCH: trivia database relies on these enum values
 export enum TriviaClueDifficulty {
     Easiest = 1,
     Easy,
@@ -96,7 +96,7 @@ export const RATED_CLUE_BONUS_POSITION_DISTRIBUTION = {
     4: 0.15
 }
 
-// DNT: string values need to be the exact return format of the OpenAI decision bot
+// DO NOT TOUCH: string values need to be the exact return format of the OpenAI decision bot
 export enum TriviaClueDecision {
     Correct = "correct",
     Incorrect = "incorrect",

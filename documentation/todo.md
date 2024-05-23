@@ -28,11 +28,14 @@
 - State validation and a general pass for data sanity on client input (i.e. if I somehow receive a buzz during clue response... don't do anything)
 - Consider how reversals affect public leaderboard status
 - "Battle royale" round type: continue to answer questions, player with fewest correct gets eliminated every so often
+- Change phrasing of champion congratulations depending on game performance: "nice job" if you did poorly vs. "masterfully played" if you played really well
+- Consider adding filler voice lines when clues go back to tossup i.e. "anyone else want to try?"
 
 # Bugs
 ### _Known issues, hopefully with repro steps_
 
 - Player leaderboard UI sometimes gets scuffed in a way where the border lines from the previous state are still visible (doesn't impact gameplay)
+- OpenAI TTS voice has trouble sometimes with pronouncing symbols, for example: "4.3" as "4 point 3"
 
 # Feedback
 ### _Raw feedback from playtesting that still needs to be organized_

@@ -10,6 +10,7 @@ import { HostSocket } from "jparty-shared";
 export default function HostGameOver() {
     const emitPlayAgain = () => {
         socket.emit(HostSocket.PlayAgain);
+        location.reload();
     }
 
     return (

@@ -14,7 +14,7 @@ export default function HostLobby() {
     const context = useContext(LayoutContext);
     const [spectateSessionName, setSpectateSessionName] = useState("");
     const [gameSettingsPreset, setGameSettingsPreset] = useState(TriviaGameSettingsPreset.Default);
-    const [soundEnabled, setSoundEnabled] = useState(false);
+    const [isMuted, setIsMuted] = useState(true);
 
     useEffect(() => {
         socket.on(HostServerSocket.UpdateGameSettingsPreset, handleUpdateGameSettingsPreset);
@@ -43,19 +43,19 @@ export default function HostLobby() {
         emitLeaveSession(false);
     }
 
-    const toggleMute = (enabled: boolean) => {
-        setSoundEnabled(enabled);
+    const toggleMute = (isMuted: boolean) => {
+        setIsMuted(isMuted);
 
-        if (enabled) {
+        if (isMuted) {
             playSoundEffect(SoundEffect.LobbyMusic);
             playSpeechSynthesisVoice(VoiceType.ClassicMasculine, "");
         }
     }
 
     return (
-        <>
+        <Box onClick={() => toggleMute(false)}>
             <Box _hover={{ opacity: 1 }} position={"fixed"} cursor={"pointer"} top={"1em"} left={"1em"}>
-                {!soundEnabled && (<GoMute onClick={() => toggleMute(true)} size={"4em"} color={"white"} className={"blink-slow"} />)}
+                {isMuted && (<GoMute onClick={() => toggleMute(false)} size={"4em"} color={"white"} className={"blink-slow"} />)}
             </Box>
 
             <Stack direction={"column"}>
@@ -132,6 +132,6 @@ export default function HostLobby() {
                     </Stack>
                 </Box>
             </Stack>
-        </>
+        </Box>
     );
 }

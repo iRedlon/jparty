@@ -96,7 +96,7 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
 
                         <Box padding={"1em"} backgroundColor={"white"} outline={"black solid 3px"} boxShadow={"10px 10px black"}>
                             {
-                                !triviaClue.hasSpotlightResponder() && (context.sessionState === SessionState.ClueResponse) && (
+                                !triviaClue.isTossupClue() && (context.sessionState === SessionState.ClueResponse) && (
                                     <Heading size={"md"} justifyContent={"center"}>
                                         {numSubmittedResponders}/{numResponders} responses submitted
                                     </Heading>

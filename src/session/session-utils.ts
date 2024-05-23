@@ -1,15 +1,15 @@
 
-import { Session, TimeoutInfo } from "./session.js";
+import { Session } from "./session.js";
 import { getVoiceBase64Audio } from "../api-requests/tts.js";
 import { io } from "../controller.js";
 import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
 import { formatSpokenVoiceLine } from "../misc/text-utils.js";
 
 import {
-    AttemptReconnectResult, ClientSocket, ClientSocketCallback, DISPLAY_CORRECT_ANSWER_VOICE_LINES,
-    getEnumSize, getRandomChoice, HostServerSocket, REVEAL_CLUE_DECISION_VOICE_LINES,
+    ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES, AttemptReconnectResult, ClientSocket, ClientSocketCallback, DISPLAY_CORRECT_ANSWER_VOICE_LINES,
+    getEnumSize, getRandomChoice, HostServerSocket, PROMPT_CLUE_SELECTION_VOICE_LINES,
     ServerSocket, ServerSocketMessage, SessionAnnouncement, SESSION_ANNOUNCEMENT_VOICE_LINES, SessionState, SessionTimeout,
-    SoundEffect, VoiceLineType, VoiceLineVariable
+    SoundEffect, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable
 } from "jparty-shared";
 import { Socket } from "socket.io";
 
@@ -253,20 +253,10 @@ export function showAnnouncement(sessionName: string, announcement: SessionAnnou
         return;
     }
 
-    let useVoiceLineAsMessage = false;
-
-    switch (announcement) {
-        case SessionAnnouncement.SelectClue:
-            {
-                useVoiceLineAsMessage = true;
-            }
-            break;
-    }
-
     session.setCurrentAnnouncement(announcement);
     playVoiceLine(sessionName, VoiceLineType.Announcement);
 
-    io.in(sessionName).emit(ServerSocket.ShowAnnouncement, announcement, useVoiceLineAsMessage && session.currentVoiceLine);
+    io.in(sessionName).emit(ServerSocket.ShowAnnouncement, announcement, session.currentVoiceLine);
 
     startTimeout(sessionName, SessionTimeout.Announcement, () => {
         let session = getSession(sessionName);
@@ -312,6 +302,11 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                 voiceLine = getRandomChoice(SESSION_ANNOUNCEMENT_VOICE_LINES[session.currentAnnouncement]);
             }
             break;
+        case VoiceLineType.PromptClueSelection:
+            {
+                voiceLine = getRandomChoice(PROMPT_CLUE_SELECTION_VOICE_LINES)
+            }
+            break;
         case VoiceLineType.ReadClue:
             {
                 const clue = session.getCurrentClue();
@@ -328,7 +323,12 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                     break;
                 }
 
-                voiceLine = getRandomChoice(REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
+                if (session.getCurrentClue()?.isTossupClue()) {
+                    voiceLine = getRandomChoice(TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
+                }
+                else {
+                    voiceLine = getRandomChoice(ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
+                }
             }
             break;
         case VoiceLineType.DisplayCorrectAnswer:
