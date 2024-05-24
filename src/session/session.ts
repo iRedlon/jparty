@@ -893,8 +893,8 @@ export class Session {
                 break;
         }
 
-        this.updatePlayerScore(responderID, clueValue, newDecision, clueValueModifier);
         responder.updateClueDecision();
+        this.updatePlayerScore(responderID, clueValue, newDecision, clueValueModifier);
 
         return true;
     }

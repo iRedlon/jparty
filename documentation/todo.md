@@ -3,14 +3,14 @@
 
 - Finish sound system
   - New sound: applause when clearing a category
-  - New sound: "you control the board ____" when the board controller changes
 - Do some hardcore multiplayer testing in all available modes (including spectation)
 - Overall UI face lift
   - UI for clue selection where you see each board column individually and swipe between them
   - Margins/spacing/fonts/colors, small tweaks like that
   - A background with some texture, not just a solid color
   - Basic animations: constant idle motion like Balatro, an effect for session announcements, an effect for getting correct answers, an effect for scoreboard changes
-- New clue tossup behavior
+  - Timer as a clock, sliding on and off screen whenever it comes or goes
+- New clue tossup behavior  
 
 # Feature TODO (A collaboator, i.e. Teddy)
 
@@ -30,6 +30,7 @@
 - "Battle royale" round type: continue to answer questions, player with fewest correct gets eliminated every so often
 - Change phrasing of champion congratulations depending on game performance: "nice job" if you did poorly vs. "masterfully played" if you played really well
 - Consider adding filler voice lines when clues go back to tossup i.e. "anyone else want to try?"
+- Random announcements for fun things like score streaks would be way easier if announcements didn't have to use callback syntax
 
 # Bugs
 ### _Known issues, hopefully with repro steps_
@@ -41,4 +42,3 @@
 ### _Raw feedback from playtesting that still needs to be organized_
 
 - Prevent the same voice line from being randomly chosen twice in a row for a given voice line type?
-- There are a few voice lines (like for the all wager bonus) that should be excluded on single clue rounds
