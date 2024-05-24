@@ -112,6 +112,9 @@ function readClue(sessionName: string) {
         return;
     }
 
+    // turn off the client timer while we wait for the clue to be read aloud
+    io.in(sessionName).emit(ServerSocket.StopTimeout);
+
     session.readClue();
     playVoiceLine(sessionName, VoiceLineType.ReadClue);
 
@@ -347,6 +350,7 @@ async function finishResponseWindow(sessionName: string) {
         case SessionState.WagerResponse:
             {
                 readClue(sessionName);
+                emitStateUpdate(sessionName);
             }
             break;
     }
@@ -408,7 +412,7 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
     emitStateUpdate(sessionName);
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, displayCorrectAnswer);
 
-    if (noEligibleRespondersRemaining && (decision === TriviaClueDecision.Incorrect)) {
+    if (session.getCurrentClue()?.isTossupClue() && noEligibleRespondersRemaining) {
         playVoiceLine(sessionName, VoiceLineType.DisplayCorrectAnswer);
     }
     else {

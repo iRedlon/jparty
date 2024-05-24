@@ -311,6 +311,12 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                     break;
                 }
 
+                const finalCluePosition = session.getCurrentRound()?.getFinalCluePosition();
+                if (!finalCluePosition || !finalCluePosition.validate()) {
+                    debugLog(DebugLogType.Voice, "early out. trying to prompt clue selection on the final clue");
+                    return;
+                }
+
                 const currentCategory = session.getCurrentCategory();
 
                 if (session.previousClueSelectorClientID !== clueSelector.clientID) {

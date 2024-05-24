@@ -99,7 +99,7 @@ export default function GameSettings({ onCloseHostMenu }: GameSettingsProps) {
 
     const heading = (context.sessionState === SessionState.Lobby) ? (
         <Heading size={"md"}>
-            {context.isSpectator ? "Only the session creator can update game settings" : "Customize your settings (or use a preset), then generate your game below"}
+            {context.isSpectator ? "Only the session creator can customize game settings" : "Customize your game settings; then save them down below"}
         </Heading>
     ) : (
         <Heading size={"md"}>This game is in progress. Settings are now locked</Heading>

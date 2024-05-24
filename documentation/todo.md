@@ -27,12 +27,14 @@
 - Consider how reversals affect public leaderboard status
 - "Battle royale" round type: continue to answer questions, player with fewest correct gets eliminated every so often
 - Change phrasing of champion congratulations depending on game performance: "nice job" if you did poorly vs. "masterfully played" if you played really well
+- Categories (particularly in a party game) should never have the exact same answer unless it's an answer that's enumerated in the category name
+- Voice line/sound effect methods should do their own session validation as much as possible
 
 # Bugs
 ### _Known issues, hopefully with repro steps_
 
 - Player leaderboard UI sometimes gets scuffed in a way where the border lines from the previous state are still visible (doesn't impact gameplay)
-- OpenAI TTS voice has trouble sometimes with pronouncing symbols, for example: "4.3" as "4 point 3"
+- OpenAI TTS voice has trouble sometimes with pronouncing symbols, for example: "4.3" as "4 point 3", "%" as "percent" instead of "cent"...
 
 # Feedback
 ### _Raw feedback from playtesting that still needs to be organized_
