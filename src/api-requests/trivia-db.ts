@@ -5,7 +5,7 @@ import { formatDebugLog } from "../misc/log";
 
 import dotenv from "dotenv";
 import { TriviaCategorySchema, TriviaCategoryType, TriviaClueDifficulty } from "jparty-shared";
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 
 dotenv.config();
 
@@ -78,5 +78,74 @@ export async function getRandomCategorySchema(type: TriviaCategoryType, minYear:
     }
     catch (e) {
         throw e;
+    }
+}
+
+
+export async function changeClueDifficulty(type: TriviaCategoryType, subcategoryId: string, clueId: number, currentDifficulty: TriviaClueDifficulty, newDifficulty: TriviaClueDifficulty) {
+    try {
+        const db = client.db(MONGO_TRIVIA_DB_NAME);
+        const categoryCollection = db.collection(TriviaCategoryType[type].toLowerCase());
+        const subcategoryObjectId = new ObjectId(subcategoryId);
+
+        // Get the subcategory document
+        const subcategory = await categoryCollection.findOne({ _id: subcategoryObjectId }) as TriviaCategorySchema | null
+
+        if (!subcategory) {
+            throw new Error(formatDebugLog('Subcategory not found.'));
+        }
+
+        // Find the clue in the current difficulty array
+        const clueIndex = subcategory.clues[currentDifficulty].findIndex((clue) => clue.id === clueId);
+        if (clueIndex === -1) {
+            throw new Error(formatDebugLog('Clue not found in the current difficulty array.'));
+        }
+
+        // Remove the clue from the current difficulty array
+        const [clue] = subcategory.clues[currentDifficulty].splice(clueIndex, 1);
+
+        // Add the clue to the new difficulty array
+        subcategory.clues[newDifficulty].push(clue);
+
+        // Update the subcategory in the database
+        await categoryCollection.updateOne(
+            { _id: subcategoryObjectId },
+            { $set: { clues: subcategory.clues } }
+        );
+        console.log(`Clue moved from difficulty ${currentDifficulty} to ${newDifficulty} within subcategory ${subcategory.name}`);
+    } catch (e) {
+        throw e    
+    }
+}
+
+
+export async function moveSubcategory(oldType: TriviaCategoryType, subcategoryId: string, newType: TriviaCategoryType) {
+    try {
+        const db = client.db(MONGO_TRIVIA_DB_NAME);
+        const oldCategoryCollection = db.collection(TriviaCategoryType[oldType].toLowerCase());
+        const newCategoryCollection = db.collection(TriviaCategoryType[newType].toLowerCase());
+
+        // Find the subcategory in the old category collection
+        const subcategory = await oldCategoryCollection.findOne({ _id: new ObjectId(subcategoryId) });
+
+        if (!subcategory) {
+            throw new Error(formatDebugLog('Subcategory not found.'));
+        }
+
+        // Insert the subcategory into the new category collection
+        const insertResult = await newCategoryCollection.insertOne(subcategory);
+        if (!insertResult.acknowledged) {
+            throw new Error(formatDebugLog('Failed to insert subcategory into new category.'));
+        }
+
+        // Remove the subcategory from the old category collection
+        const deleteResult = await oldCategoryCollection.deleteOne({ _id: new ObjectId(subcategoryId) });
+        if (!deleteResult.acknowledged) {
+            throw new Error(formatDebugLog('Failed to delete subcategory from old category.'));
+        }
+
+        console.log(`Subcategory moved from ${TriviaCategoryType[oldType]} to ${TriviaCategoryType[newType]}`);
+    } catch (e) {
+        throw e    
     }
 }
