@@ -493,10 +493,6 @@ export class Session {
         }
     }
 
-    startGame() {
-        this.promptClueSelection();
-    }
-
     isFinalRound() {
         if (!this.triviaGame) {
             return false;

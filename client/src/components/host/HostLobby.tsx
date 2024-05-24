@@ -46,7 +46,7 @@ export default function HostLobby() {
     const toggleMute = (isMuted: boolean) => {
         setIsMuted(isMuted);
 
-        if (isMuted) {
+        if (!isMuted) {
             playSoundEffect(SoundEffect.LobbyMusic);
             playSpeechSynthesisVoice(VoiceType.ClassicMasculine, "");
         }

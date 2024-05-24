@@ -79,13 +79,14 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
         emitTriviaRoundUpdate(sessionName);
     }
 
+    session.promptClueSelection();
+
     showAnnouncement(sessionName, SessionAnnouncement.StartGame, () => {
         let session = getSession(sessionName);
         if (!session) {
             return;
         }
 
-        session.startGame();
         attemptForceSelectFinalClue(sessionName);
         emitStateUpdate(sessionName);
     });
@@ -436,11 +437,7 @@ function finishRevealClueDecision(sessionName: string, displayCorrectAnswer: boo
     // if we displayed the correct answer for any reason, we need to move on to a new clue
     if (displayCorrectAnswer) {
         session.promptClueSelection();
-
-        // if we have a new clue selector, notify the players with a voice line
-        if (session.previousClueSelectorClientID !== (session.players[session.clueSelectorID] && session.players[session.clueSelectorID].clientID)) {
-            playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
-        }
+        playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
 
         if (session.getCurrentRound()?.completed) {
             session.advanceRound();
