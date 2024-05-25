@@ -5,7 +5,7 @@ import { socket } from "../../misc/socket";
 import { TIMEOUT_DESCRIPTIONS } from "../../misc/ui-constants";
 
 import { Box, Text } from "@chakra-ui/react";
-import { HostServerSocket, ServerSocket, SessionTimeout } from "jparty-shared";
+import { ServerSocket, SessionTimeout } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
 
 addMockSocketEventHandler

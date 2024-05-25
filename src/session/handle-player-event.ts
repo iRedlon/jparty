@@ -11,7 +11,7 @@ import {
     SessionAnnouncement, SessionState, SessionTimeout, SocketID, SoundEffect, TriviaClueBonus, TriviaClueDecision, TriviaGameSettingsPreset, VoiceLineType
 } from "jparty-shared";
 import { Socket } from "socket.io";
-import { DebugLogType, debugLog } from "../misc/log.js";
+import { DebugLogType, debugLog, formatDebugLog } from "../misc/log.js";
 
 function handleConnect(socket: Socket, sessionName: string, clientID: string, playerName: string, callback: PlayerSocketCallback[PlayerSocket.Connect]) {
     sessionName = sessionName.toLowerCase();
@@ -79,13 +79,14 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
         emitTriviaRoundUpdate(sessionName);
     }
 
+    session.promptClueSelection();
+
     showAnnouncement(sessionName, SessionAnnouncement.StartGame, () => {
         let session = getSession(sessionName);
         if (!session) {
             return;
         }
 
-        session.startGame();
         attemptForceSelectFinalClue(sessionName);
         emitStateUpdate(sessionName);
     });
@@ -110,6 +111,9 @@ function readClue(sessionName: string) {
     if (!session) {
         return;
     }
+
+    // turn off the client timer while we wait for the clue to be read aloud
+    io.in(sessionName).emit(ServerSocket.StopTimeout);
 
     session.readClue();
     playVoiceLine(sessionName, VoiceLineType.ReadClue);
@@ -334,18 +338,32 @@ async function finishResponseWindow(sessionName: string) {
 
     stopTimeout(sessionName, SessionTimeout.ResponseWindow);
 
+    session.resetPlayerSubmissions();
+
     switch (session.state) {
         case SessionState.ClueResponse:
             {
                 session.finishClueResponseWindow();
                 emitStateUpdate(sessionName);
 
-                recursiveRevealClueDecision(sessionName);
+                // there's only one response window for an all play/wager, so we can safely announce the correct answer to begin with
+                // before finding the decisions
+                if (!session.getCurrentClue()?.isTossupClue()) {
+                    const displayCorrectAnswer = true;
+                    io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, displayCorrectAnswer);
+                    playVoiceLine(sessionName, VoiceLineType.DisplayCorrectAnswer);
+
+                    startTimeout(sessionName, SessionTimeout.RevealClueDecision, () => recursiveRevealClueDecision(sessionName, true));
+                }
+                else {
+                    recursiveRevealClueDecision(sessionName);
+                }
             }
             break;
         case SessionState.WagerResponse:
             {
                 readClue(sessionName);
+                emitStateUpdate(sessionName);
             }
             break;
     }
@@ -367,11 +385,11 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
     if (!responderID) {
         debugLog(DebugLogType.ClueDecision, `done revealing clue decisions`);
 
-        if (session.currentResponderIDs.length) {
+        if (session.currentResponderIDs.length || !session.getCurrentClue()?.isTossupClue()) {
             finishRevealClueDecision(sessionName, displayCorrectAnswer);
         }
         else {
-            // if we have no responders somehow... make sure we display the correct answer before moving on
+            // if we had no responders somehow... still make sure we display the correct answer before moving on
             finishBuzzWindow(sessionName);
         }
 
@@ -407,7 +425,7 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
     emitStateUpdate(sessionName);
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, displayCorrectAnswer);
 
-    if (noEligibleRespondersRemaining && (decision === TriviaClueDecision.Incorrect)) {
+    if (session.getCurrentClue()?.isTossupClue() && noEligibleRespondersRemaining) {
         playVoiceLine(sessionName, VoiceLineType.DisplayCorrectAnswer);
     }
     else {
@@ -436,11 +454,7 @@ function finishRevealClueDecision(sessionName: string, displayCorrectAnswer: boo
     // if we displayed the correct answer for any reason, we need to move on to a new clue
     if (displayCorrectAnswer) {
         session.promptClueSelection();
-
-        // if we have a new clue selector, notify the players with a voice line
-        if (session.previousClueSelectorClientID !== (session.players[session.clueSelectorID] && session.players[session.clueSelectorID].clientID)) {
-            playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
-        }
+        playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
 
         if (session.getCurrentRound()?.completed) {
             session.advanceRound();
@@ -485,6 +499,9 @@ function finishRevealClueDecision(sessionName: string, displayCorrectAnswer: boo
                 }
                 break;
         }
+    }
+    else {
+        throw new Error(formatDebugLog(`Failed to finish revealing clue decision. tossup?: ${session.getCurrentClue()?.isTossupClue()}, display correct answer?: ${displayCorrectAnswer}`));
     }
 
     emitStateUpdate(sessionName);

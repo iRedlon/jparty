@@ -6,7 +6,8 @@ import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
 import { formatSpokenVoiceLine } from "../misc/text-utils.js";
 
 import {
-    ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES, AttemptReconnectResult, ClientSocket, ClientSocketCallback, DISPLAY_CORRECT_ANSWER_VOICE_LINES,
+    ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES, AttemptReconnectResult, CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES,
+    ClientSocket, ClientSocketCallback, DISPLAY_CORRECT_ANSWER_VOICE_LINES,
     getEnumSize, getRandomChoice, HostServerSocket, PROMPT_CLUE_SELECTION_VOICE_LINES,
     ServerSocket, ServerSocketMessage, SessionAnnouncement, SESSION_ANNOUNCEMENT_VOICE_LINES, SessionState, SessionTimeout,
     SoundEffect, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable
@@ -202,7 +203,7 @@ function attemptReconnectInternal(socket: Socket, sessionName: string, clientID:
     return AttemptReconnectResult.InvalidClientID;
 }
 
-export function startTimeout(sessionName: string, timeout: SessionTimeout, cb: Function) {
+export function startTimeout(sessionName: string, timeout: SessionTimeout, callback: Function) {
     let session = getSession(sessionName);
     if (!session) {
         return;
@@ -210,7 +211,7 @@ export function startTimeout(sessionName: string, timeout: SessionTimeout, cb: F
 
     session.startTimeout(timeout, () => {
         try {
-            cb();
+            callback();
         }
         catch (e) {
             emitServerError(e, undefined, sessionName);
@@ -304,7 +305,27 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
             break;
         case VoiceLineType.PromptClueSelection:
             {
-                voiceLine = getRandomChoice(PROMPT_CLUE_SELECTION_VOICE_LINES)
+                const clueSelector = session.players[session.clueSelectorID];
+                if (!clueSelector) {
+                    debugLog(DebugLogType.Voice, "early out. session didn't have a clue selector");
+                    break;
+                }
+
+                const finalCluePosition = session.getCurrentRound()?.getFinalCluePosition();
+                if (!finalCluePosition || !finalCluePosition.validate()) {
+                    debugLog(DebugLogType.Voice, "early out. trying to prompt clue selection on the final clue");
+                    return;
+                }
+
+                const currentCategory = session.getCurrentCategory();
+
+                if (session.previousClueSelectorClientID !== clueSelector.clientID) {
+                    voiceLine = getRandomChoice(PROMPT_CLUE_SELECTION_VOICE_LINES);
+                }
+                else if (currentCategory && clueSelector.getCorrectCluesInCategory(currentCategory.id) === currentCategory.clues.length) {
+                    playSoundEffect(sessionName, SoundEffect.Applause);
+                    voiceLine = getRandomChoice(CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES);
+                }
             }
             break;
         case VoiceLineType.ReadClue:

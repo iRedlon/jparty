@@ -493,10 +493,6 @@ export class Session {
         }
     }
 
-    startGame() {
-        this.promptClueSelection();
-    }
-
     isFinalRound() {
         if (!this.triviaGame) {
             return false;
@@ -637,7 +633,6 @@ export class Session {
     finishClueResponseWindow() {
         this.state = SessionState.WaitingForClueDecision;
         this.setPlayersIdle();
-        this.resetPlayerSubmissions();
     }
 
     // player response is a generic system. it can prompt any number of players for any of the different response types (i.e. clue, wager)
@@ -893,8 +888,8 @@ export class Session {
                 break;
         }
 
-        this.updatePlayerScore(responderID, clueValue, newDecision, clueValueModifier);
         responder.updateClueDecision();
+        this.updatePlayerScore(responderID, clueValue, newDecision, clueValueModifier);
 
         return true;
     }

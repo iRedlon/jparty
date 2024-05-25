@@ -100,7 +100,14 @@ export const PROMPT_CLUE_SELECTION_VOICE_LINES = [
     `Make a selection ${VoiceLineVariable.ClueSelectorName}.`,
     `${VoiceLineVariable.ClueSelectorName} controls the board.`,
     `It's up to you ${VoiceLineVariable.ClueSelectorName}.`,
-    `Go ahead ${VoiceLineVariable.ClueSelectorName}`
+    `Go ahead ${VoiceLineVariable.ClueSelectorName}`,
+    `Where are we headed ${VoiceLineVariable.ClueSelectorName}?`
+];
+
+export const CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES = [
+    `${VoiceLineVariable.ClueSelectorName} cleared that whole category, nice work!`,
+    `${VoiceLineVariable.ClueSelectorName} got every clue in that category.`,
+    `${VoiceLineVariable.CategoryName} was swept by ${VoiceLineVariable.ClueSelectorName}. Well done!`
 ];
 
 export const TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES: Record<TriviaClueDecision, string[]> = {
@@ -144,5 +151,5 @@ export const DISPLAY_CORRECT_ANSWER_VOICE_LINES = [
     `The correct answer was ${VoiceLineVariable.ClueAnswer}.`,
     `It was ${VoiceLineVariable.ClueAnswer}.`,
     `The answer was ${VoiceLineVariable.ClueAnswer}.`,
-    `The answer to this one was ${VoiceLineVariable.ClueAnswer}.`
+    `The answer there was ${VoiceLineVariable.ClueAnswer}.`
 ];

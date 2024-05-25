@@ -47,7 +47,7 @@ export default function PlayerMenu({ checkScoreboardButton }: PlayerMenuProps) {
 
     return (
         <>
-            <Button onClick={onOpen} position={"fixed"} bottom={"1em"} right={"1em"} colorScheme={"red"} zIndex={zIndex}>Settings</Button>
+            <Button onClick={onOpen} position={"fixed"} bottom={"1em"} right={"1em"} colorScheme={"red"} zIndex={zIndex}>Menu</Button>
             <Box position={"fixed"} bottom={"4em"} right={"1em"} zIndex={"99"}>{checkScoreboardButton}</Box>
 
             <Modal motionPreset={"none"} isOpen={isOpen} onClose={onClose}>

@@ -114,7 +114,7 @@ export class Player {
         }
 
         if (!this.correctCluesPerCategory[this.clueDecisionInfo.categoryID]) {
-            this.correctCluesPerCategory = [];
+            this.correctCluesPerCategory[this.clueDecisionInfo.categoryID] = [];
         }
 
         const decision = this.clueDecisionInfo?.decision;

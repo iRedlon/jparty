@@ -62,8 +62,7 @@ export default function MenuPanel_Feedback() {
 
                     <Textarea
                         value={feedbackMessage}
-                        onChange={e => setFeedbackMessage(e.target.value)}
-                        placeholder={"What I learned in boating school is..."} />
+                        onChange={e => setFeedbackMessage(e.target.value)} />
                 </Box>
 
                 <Button onClick={emitSubmitFeedback} isDisabled={!feedbackMessage} marginBottom={"1em"} colorScheme={"blue"}>Submit</Button>

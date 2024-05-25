@@ -16,9 +16,11 @@ import { playOpenAIVoice, playSoundEffect, playSpeechSynthesisVoice } from "../.
 import { Box, Center, Flex, Text } from "@chakra-ui/react";
 import { HostServerSocket, SessionState, SoundEffect, VoiceType } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
+import { GoMute } from "react-icons/go";
 
 export default function HostLayout() {
     const context = useContext(LayoutContext);
+    const [isMuted, setIsMuted] = useState(true);
     const [numSubmittedResponders, setNumSubmittedResponders] = useState(0);
     const [numResponders, setNumResponders] = useState(0);
     const [displayCorrectAnswer, setDisplayCorrectAnswer] = useState(true);
@@ -43,6 +45,7 @@ export default function HostLayout() {
     }, []);
 
     useEffect(() => {
+        // switch to game music once the game starts
         if (context.sessionState > SessionState.Lobby) {
             playSoundEffect(SoundEffect.GameMusic);
         }
@@ -64,6 +67,32 @@ export default function HostLayout() {
 
     const handleRevealClueDecision = (displayCorrectAnswer: boolean) => {
         setDisplayCorrectAnswer(displayCorrectAnswer);
+    }
+
+    const toggleMute = (isMuted: boolean) => {
+        setIsMuted(isMuted);
+
+        if (!isMuted) {
+            if (context.sessionState > SessionState.Lobby) {
+                playSoundEffect(SoundEffect.GameMusic);
+            }
+            else {
+                playSoundEffect(SoundEffect.LobbyMusic);
+            }
+
+            playSpeechSynthesisVoice(VoiceType.ClassicMasculine, "");
+
+            // enableFullscreen();
+        }
+    }
+
+    const enableFullscreen = () => {
+        const element = document.documentElement;
+        const request = element && element.requestFullscreen;
+
+        if (request && typeof request !== "undefined") {
+            request.call(element);
+        }
     }
 
     const getHostComponent = () => {
@@ -110,7 +139,11 @@ export default function HostLayout() {
     const hostComponent = getHostComponent();
 
     return (
-        <Box backgroundColor={"darkblue"}>
+        <Box backgroundColor={"darkblue"} onClick={() => toggleMute(false)}>
+            <Box _hover={{ opacity: 1 }} position={"fixed"} cursor={"pointer"} top={"1em"} left={"1em"}>
+                {isMuted && (<GoMute size={"4em"} color={"white"} className={"blink-slow"} />)}
+            </Box>
+
             <Announcement />
             <Timer />
             <ServerMessageAlert />
