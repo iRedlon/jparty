@@ -256,7 +256,7 @@ export const DEFAULT_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRound
 export const DEFAULT_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 6, 5, 400, { [TriviaClueBonus.Wager]: 2 });
 export const DEFAULT_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 1, 1, 0, { [TriviaClueBonus.AllWager]: 1 });
 export const DEFAULT_ROUND_SETTINGS = [DEFAULT_SINGLE_ROUND_SETTINGS, DEFAULT_DOUBLE_ROUND_SETTINGS, DEFAULT_FINAL_ROUND_SETTINGS];
-export const DEFAULT_GAME_SETTINGS = new TriviaGameSettings(2000, TriviaGameDifficulty.Normal, 5, 12, 3, DEFAULT_ROUND_SETTINGS);
+export const DEFAULT_GAME_SETTINGS = new TriviaGameSettings(2000, TriviaGameDifficulty.Normal, 5, 12, 4, DEFAULT_ROUND_SETTINGS);
 
 // party game settings
 export const PARTY_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 3, 4, 250,
@@ -266,7 +266,7 @@ export const PARTY_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundTy
 export const PARTY_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 1, 1, 0,
     { [TriviaClueBonus.AllWager]: 1 });
 export const PARTY_ROUND_SETTINGS = [PARTY_SINGLE_ROUND_SETTINGS, PARTY_DOUBLE_ROUND_SETTINGS, PARTY_FINAL_ROUND_SETTINGS];
-export const PARTY_GAME_SETTINGS = new TriviaGameSettings(2000, TriviaGameDifficulty.Easy, 5, 12, 3, PARTY_ROUND_SETTINGS);
+export const PARTY_GAME_SETTINGS = new TriviaGameSettings(2000, TriviaGameDifficulty.Easy, 5, 12, 4, PARTY_ROUND_SETTINGS);
 
 // test game settings (only available in debug mode)
 export const TEST_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 1, 1, 200,
@@ -276,4 +276,4 @@ export const TEST_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundTyp
 export const TEST_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 1, 1, 0,
     { [TriviaClueBonus.AllWager]: 1 });
 export const TEST_ROUND_SETTINGS = [TEST_SINGLE_ROUND_SETTINGS, TEST_FINAL_ROUND_SETTINGS];
-export const TEST_GAME_SETTINGS = new TriviaGameSettings(2000, TriviaGameDifficulty.Easy, 5, 12, 3, TEST_ROUND_SETTINGS);
+export const TEST_GAME_SETTINGS = new TriviaGameSettings(2000, TriviaGameDifficulty.Easy, 5, 12, 4, TEST_ROUND_SETTINGS);
