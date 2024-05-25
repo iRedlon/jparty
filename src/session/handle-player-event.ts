@@ -11,7 +11,7 @@ import {
     SessionAnnouncement, SessionState, SessionTimeout, SocketID, SoundEffect, TriviaClueBonus, TriviaClueDecision, TriviaGameSettingsPreset, VoiceLineType
 } from "jparty-shared";
 import { Socket } from "socket.io";
-import { DebugLogType, debugLog } from "../misc/log.js";
+import { DebugLogType, debugLog, formatDebugLog } from "../misc/log.js";
 
 function handleConnect(socket: Socket, sessionName: string, clientID: string, playerName: string, callback: PlayerSocketCallback[PlayerSocket.Connect]) {
     sessionName = sessionName.toLowerCase();
@@ -338,13 +338,26 @@ async function finishResponseWindow(sessionName: string) {
 
     stopTimeout(sessionName, SessionTimeout.ResponseWindow);
 
+    session.resetPlayerSubmissions();
+
     switch (session.state) {
         case SessionState.ClueResponse:
             {
                 session.finishClueResponseWindow();
                 emitStateUpdate(sessionName);
 
-                recursiveRevealClueDecision(sessionName);
+                // there's only one response window for an all play/wager, so we can safely announce the correct answer to begin with
+                // before finding the decisions
+                if (!session.getCurrentClue()?.isTossupClue()) {
+                    const displayCorrectAnswer = true;
+                    io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, displayCorrectAnswer);
+                    playVoiceLine(sessionName, VoiceLineType.DisplayCorrectAnswer);
+
+                    startTimeout(sessionName, SessionTimeout.RevealClueDecision, () => recursiveRevealClueDecision(sessionName, true));
+                }
+                else {
+                    recursiveRevealClueDecision(sessionName);
+                }
             }
             break;
         case SessionState.WagerResponse:
@@ -372,11 +385,11 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
     if (!responderID) {
         debugLog(DebugLogType.ClueDecision, `done revealing clue decisions`);
 
-        if (session.currentResponderIDs.length) {
+        if (session.currentResponderIDs.length || !session.getCurrentClue()?.isTossupClue()) {
             finishRevealClueDecision(sessionName, displayCorrectAnswer);
         }
         else {
-            // if we have no responders somehow... make sure we display the correct answer before moving on
+            // if we had no responders somehow... still make sure we display the correct answer before moving on
             finishBuzzWindow(sessionName);
         }
 
@@ -486,6 +499,9 @@ function finishRevealClueDecision(sessionName: string, displayCorrectAnswer: boo
                 }
                 break;
         }
+    }
+    else {
+        throw new Error(formatDebugLog(`Failed to finish revealing clue decision. tossup?: ${session.getCurrentClue()?.isTossupClue()}, display correct answer?: ${displayCorrectAnswer}`));
     }
 
     emitStateUpdate(sessionName);

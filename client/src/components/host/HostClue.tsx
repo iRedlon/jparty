@@ -76,7 +76,9 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
                             </>
                         )
                     }
-                    {triviaClue.isWagerClue() ? `wager: ${formatDollarValue(spotlightResponderWager)}` : `clue value: ${formatDollarValue(triviaClue.value)}`}
+                    {(triviaClue.isWagerClue() && triviaClue.isPersonalClue()) ?
+                        `wager: ${formatDollarValue(spotlightResponderWager)}` :
+                        `clue value: ${formatDollarValue(triviaClue.value)}`}
                 </Heading>
             </Box>
 

@@ -82,7 +82,7 @@ export default function HostLayout() {
 
             playSpeechSynthesisVoice(VoiceType.ClassicMasculine, "");
 
-            enableFullscreen();
+            // enableFullscreen();
         }
     }
 
