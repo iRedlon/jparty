@@ -1,6 +1,8 @@
 
 # Feature TODO (Isaac)
 
+- "completedBy" should be a companion of "completed" and store a client ID on the trivia game object (this should also own the 'cleared the whole category' helper)
+- Category names probably need some variable font sizing like trivia clues
 - Overall UI face lift
   - UI for clue selection where you see each board column individually and swipe between them
   - Margins/spacing/fonts/colors, small tweaks like that
@@ -34,6 +36,7 @@
 ### _Known issues, hopefully with repro steps_
 
 - Player leaderboard UI sometimes gets scuffed in a way where the border lines from the previous state are still visible (doesn't impact gameplay)
+- Does something weird happen when you change the voice type as a voice line is in progress?
 
 # Feedback
 ### _Raw feedback from playtesting that still needs to be organized_

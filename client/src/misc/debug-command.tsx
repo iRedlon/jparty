@@ -106,6 +106,10 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
             break;
         case DebugCommand.SelectClue:
             {
+                if (args[0] < 0 || args[0] < 0) {
+                    return;
+                }
+                
                 mockSocket.dispatchEvent(new CustomEvent(ServerSocket.SelectClue, {
                     detail: {
                         params: args

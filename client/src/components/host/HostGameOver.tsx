@@ -14,8 +14,8 @@ export default function HostGameOver() {
     }
 
     return (
-        <Box padding={"1em"} backgroundColor={"white"} outline={"black solid 3px"} boxShadow={"10px 10px black"} fontSize={"2em"}>
-            <Heading>game over, thanks for playing!</Heading>
+        <Box padding={"1em"} backgroundColor={"white"} boxShadow={"8px 8px black"} fontSize={"2em"}>
+            <Heading fontFamily={"logo"}>game over, thanks for playing!</Heading>
             <HostScoreboard />
 
             <Button onClick={emitPlayAgain} colorScheme={"blue"} margin={"0.1em"}>back to lobby with same players</Button><br />

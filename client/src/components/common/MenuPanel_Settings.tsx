@@ -63,7 +63,7 @@ export default function MenuPanel_Settings() {
                             <Text>You are in session: <b>{context.sessionName}</b></Text>
                         </Stack>
                         <Button onClick={() => confirm("Are you sure?") && emitLeaveSession(context.isPlayer)} marginTop={"1em"} colorScheme={"red"}>
-                            Leave Session
+                            Leave session
                         </Button>
                         <Divider margin={"1em"} />
                     </>

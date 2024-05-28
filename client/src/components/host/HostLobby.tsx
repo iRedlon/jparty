@@ -42,8 +42,8 @@ export default function HostLobby() {
 
     return (
         <Stack direction={"column"}>
-            <Box padding={"2em"} backgroundColor={"white"} outline={"black solid 3px"} boxShadow={"10px 10px black"}>
-                <Heading>jparty.io</Heading>
+            <Box padding={"2em"} backgroundColor={"white"} boxShadow={"8px 8px black"}>
+                <Heading fontFamily={"logo"} fontSize={"4em"}>jparty.io</Heading>
 
                 <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
 
@@ -74,8 +74,8 @@ export default function HostLobby() {
 
             <Box marginTop={"0.5em"} marginBottom={"0.5em"} />
 
-            <Box padding={"1em"} backgroundColor={"white"} outline={"black solid 3px"} boxShadow={"10px 10px black"}>
-                <Heading size={"sm"}>joined players</Heading>
+            <Box padding={"1em"} backgroundColor={"white"} boxShadow={"8px 8px black"}>
+                <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>joined players</Heading>
 
                 <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
 

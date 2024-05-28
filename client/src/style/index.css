@@ -1,15 +1,3 @@
-html {
-    background-color: darkblue !important;
-}
-
-body {
-    margin: 0;
-    text-align: center;
-    overflow-x: auto;
-    overflow-y: auto;
-    background-color: darkblue !important;
-}
-
 @keyframes blink {
     0% {
         opacity: 0;
@@ -21,6 +9,28 @@ body {
 
     100% {
         opacity: 0;
+    }
+}
+
+@keyframes twitch {
+    0% {
+        rotate: -1deg;
+    }
+
+    25% {
+        rotate: 0;
+    }
+
+    50% {
+        rotate: 1deg;
+    }
+
+    75% {
+        rotate: 0;
+    }
+
+    100% {
+        rotate: -1deg;
     }
 }
 
@@ -36,4 +46,22 @@ body {
     animation-duration: 0.2s;
     animation-timing-function: ease-in;
     animation-iteration-count: Infinite;
+}
+
+.twitch-slow {
+    animation-name: twitch;
+    animation-duration: 3s;
+    animation-iteration-count: Infinite;
+}
+
+html {
+    /* background-color: darkblue !important; */
+}
+
+body {
+    margin: 0;
+    text-align: center;
+    overflow-x: auto;
+    overflow-y: auto;
+    /* background-color: darkblue !important; */
 }

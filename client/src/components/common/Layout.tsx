@@ -1,4 +1,5 @@
 
+import Background from "./Background";
 import HostLayout from "../host/HostLayout";
 import PlayerLayout from "../player/PlayerLayout";
 import { getClientID } from "../../misc/client-utils";
@@ -6,6 +7,7 @@ import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../m
 import { socket } from "../../misc/socket";
 import { playSoundEffect } from "../../misc/sound-fx";
 
+import { Box } from "@chakra-ui/react";
 import {
     AttemptReconnectResult, ClientSocket, cloneSessionPlayers, HostSocket,
     ReservedSocket, ServerSocket, SessionPlayers, SessionState, SocketID, SoundEffect, TriviaRound, VoiceType
@@ -202,6 +204,7 @@ export default function Layout() {
 
     return (
         <LayoutContext.Provider value={context}>
+            <Background />
             {isPlayer ? <PlayerLayout /> : <HostLayout />}
         </LayoutContext.Provider>
     );

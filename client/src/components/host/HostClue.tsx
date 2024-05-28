@@ -44,13 +44,16 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
             }
     }
 
-    let questionFontSize = "2em";
+    let questionFontSize = "2.5em";
 
-    if (triviaClue.question.length < 150) {
+    if (triviaClue.question.length < 50) {
+        questionFontSize = "4em";
+    }
+    else if (triviaClue.question.length < 150) {
         questionFontSize = "3em";
     }
     else if (triviaClue.question.length < 300) {
-        questionFontSize = "2em";
+        questionFontSize = "2.5em";
     }
     else if (triviaClue.question.length < 400) {
         questionFontSize = "1.75em";
@@ -65,9 +68,9 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
         <Stack direction={"column"} width={"50vw"}>
             <Box padding={"1em"} backgroundColor={"white"} outline={"black solid 3px"} boxShadow={"10px 10px black"}
                 onClick={() => handleDebugCommand(DebugCommand.UpdateSessionState, SessionState.ClueSelection)}>
-                <Heading size={"lg"}>"{triviaCategory.name}" from {triviaClue.year}</Heading>
+                <Heading size={"lg"} fontFamily={"clue"}>{triviaCategory.name.toUpperCase()} from {triviaClue.year}</Heading>
 
-                <Heading size={"sm"}>
+                <Heading size={"sm"} fontFamily={"clue"}>
                     {
                         context.debugMode && (
                             <>
@@ -86,7 +89,7 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
 
             <Box padding={"2em"} backgroundColor={"white"} outline={"black solid 3px"} boxShadow={"10px 10px black"}
                 height={"50vh"} justifyContent={"center"} alignContent={"center"} overflow={"auto"}>
-                <Text fontSize={questionFontSize}>
+                <Text fontFamily={"clue"} fontSize={questionFontSize}>
                     {triviaClue.question}
                 </Text>
             </Box>

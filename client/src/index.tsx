@@ -1,6 +1,7 @@
 
 import Layout from "./components/common/Layout";
 import "./style/index.css";
+import "./style/font.css";
 
 import { ChakraProvider } from "@chakra-ui/react";
 import React from "react";

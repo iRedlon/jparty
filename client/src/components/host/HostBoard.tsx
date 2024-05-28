@@ -17,17 +17,25 @@ export default function HostBoard() {
 
         const panelHeight = `${100 / (context.triviaRound.settings.numClues + 1)}vh`;
         const panelWidth = `${100 / context.triviaRound.settings.numCategories}vw`;
+        const isDollarValue = panelIndex > 0;
 
         return (
             <Box
                 key={`category-${categoryIndex}-${panelIndex}`}
                 display={"flex"} justifyContent={"center"} alignItems={"center"}
-                height={panelHeight} width={panelWidth} backgroundColor={"darkblue"}>
+                height={panelHeight} width={panelWidth}>
 
                 <Box onClick={() => handleDebugCommand(DebugCommand.SelectClue, categoryIndex, panelIndex - 1)}
-                     display={"flex"} justifyContent={"center"} alignItems={"center"} height={"80%"} width={"80%"} 
-                     backgroundColor={"white"} outline={"black solid 3px"} boxShadow={"7px 7px black"} padding={"0.5em"}>
-                    <Heading size={"md"}>{content}</Heading>
+                    display={"flex"} justifyContent={"center"} alignItems={"center"} height={"80%"} width={"80%"}
+                    backgroundColor={"white"} boxShadow={"7px 7px black"} padding={"0.5em"}>
+                    {
+                        isDollarValue ? (
+                            <Heading fontFamily={"board-panel"} size={"4xl"} fontWeight={0}>{content}</Heading>
+                        ) : (
+                            <Heading fontFamily={"board-panel"} size={"xl"}>{content}</Heading>
+                        )
+                    }
+
                 </Box>
             </Box>
         )

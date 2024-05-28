@@ -1,0 +1,15 @@
+
+@font-face {
+    font-family: "logo";
+    src: url("../fonts/new-comic-title.ttf");
+}
+
+@font-face {
+    font-family: "board-panel";
+    src: url("../fonts/rheiborn-sans-clean.ttf");
+}
+
+@font-face {
+    font-family: "clue";
+    src: url("../fonts/optikorinna-agency.otf");
+}

@@ -15,17 +15,21 @@ import { playOpenAIVoice, playSoundEffect, playSpeechSynthesisVoice } from "../.
 
 import { Box, Center, Flex, Text } from "@chakra-ui/react";
 import { HostServerSocket, SessionState, SoundEffect, VoiceType } from "jparty-shared";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { GoMute } from "react-icons/go";
 
 export default function HostLayout() {
     const context = useContext(LayoutContext);
+    const myRef = useRef(null);
+
+    const [vantaEffect, setVantaEffect] = useState(null);
     const [isMuted, setIsMuted] = useState(true);
     const [numSubmittedResponders, setNumSubmittedResponders] = useState(0);
     const [numResponders, setNumResponders] = useState(0);
     const [displayCorrectAnswer, setDisplayCorrectAnswer] = useState(true);
 
     useEffect(() => {
+
         socket.on(HostServerSocket.PlayVoice, handlePlayVoice)
         socket.on(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         socket.on(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
@@ -139,7 +143,7 @@ export default function HostLayout() {
     const hostComponent = getHostComponent();
 
     return (
-        <Box backgroundColor={"darkblue"} onClick={() => toggleMute(false)}>
+        <Box onClick={() => toggleMute(false)}>
             <Box _hover={{ opacity: 1 }} position={"fixed"} cursor={"pointer"} top={"1em"} left={"1em"}>
                 {isMuted && (<GoMute size={"4em"} color={"white"} className={"blink-slow"} />)}
             </Box>
@@ -149,7 +153,7 @@ export default function HostLayout() {
             <ServerMessageAlert />
             <HostMenu />
             <Flex height={"100vh"} width={"100vw"} alignContent={"center"} justifyContent={"center"}>
-                <Center>
+                <Center zIndex={9}>
                     {hostComponent}
                 </Center>
             </Flex>

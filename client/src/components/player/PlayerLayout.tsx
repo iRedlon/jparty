@@ -134,13 +134,14 @@ export default function PlayerLayout() {
     const wrapperBoxStyle = hideWrapperBox ? {} : { backgroundColor: "white", outline: "black solid 3px", boxShadow: "7px 7px black" };
 
     return (
-        <Box backgroundColor={"darkblue"}>
+        <Box>
             <Announcement />
             <Timer />
             <ServerMessageAlert />
             <PlayerMenu checkScoreboardButton={checkScoreboardButton} />
             <Flex height={"100vh"} width={"100vw"}>
                 <AbsoluteCenter
+                    zIndex={9}
                     axis={"horizontal"} width={contentWidth} minWidth={"50%"}
                     padding={"1em"} marginTop={"1em"} marginBottom={"1em"} style={wrapperBoxStyle}>
                     {playerComponent}

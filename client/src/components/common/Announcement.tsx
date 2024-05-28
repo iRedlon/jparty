@@ -75,7 +75,7 @@ export default function Announcement() {
 
     if (isMobile) {
         return (
-            <Box position={"fixed"} height={"100vh"} width={"100vw"} display={"flex"} justifyContent={"center"} backgroundColor={"darkblue"} zIndex={"999"}>
+            <Box position={"fixed"} height={"100vh"} width={"100vw"} display={"flex"} justifyContent={"center"} zIndex={"999"}>
                 <Box height={"50%"} width={"75%"} marginTop={"10%"} display={"flex"} justifyContent={"center"} alignItems={"center"} padding={"1em"}
                     outline={"black solid 3px"} boxShadow={"7px 7px black"} backgroundColor={"white"}>
                     <Text fontSize={"5vh"}>{message}</Text>
@@ -85,7 +85,7 @@ export default function Announcement() {
     }
     else {
         return (
-            <Box position={"fixed"} height={"100vh"} width={"100vw"} display={"flex"} justifyContent={"center"} alignItems={"center"} backgroundColor={"darkblue"} zIndex={"999"}>
+            <Box position={"fixed"} height={"100vh"} width={"100vw"} display={"flex"} justifyContent={"center"} alignItems={"center"} zIndex={"999"}>
                 <Box height={"50%"} width={"50%"} display={"flex"} justifyContent={"center"} alignItems={"center"} padding={"1em"}
                     outline={"black solid 3px"} boxShadow={"10px 10px black"} backgroundColor={"white"}>
                     <Text fontSize={"5vh"}>{message}</Text>
