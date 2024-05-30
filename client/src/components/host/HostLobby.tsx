@@ -42,14 +42,14 @@ export default function HostLobby() {
 
     return (
         <Stack direction={"column"}>
-            <Box padding={"2em"} backgroundColor={"white"} boxShadow={"8px 8px black"}>
+            <Box className={"slide-from-left-anim"} padding={"2em"} backgroundColor={"white"} boxShadow={"8px 8px black"}>
                 <Heading fontFamily={"logo"} fontSize={"4em"}>jparty.io</Heading>
 
                 <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
 
                 <Box>
                     join on your phone with session name:
-                    <Heading>{context.sessionName}</Heading>
+                    <Heading fontFamily={"logo"} fontSize={"3em"}>{context.sessionName}</Heading>
                 </Box>
 
                 <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
@@ -74,7 +74,7 @@ export default function HostLobby() {
 
             <Box marginTop={"0.5em"} marginBottom={"0.5em"} />
 
-            <Box padding={"1em"} backgroundColor={"white"} boxShadow={"8px 8px black"}>
+            <Box className={"slide-from-right-anim"} padding={"1em"} backgroundColor={"white"} boxShadow={"8px 8px black"}>
                 <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>joined players</Heading>
 
                 <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />

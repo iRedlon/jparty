@@ -144,8 +144,8 @@ export default function HostLayout() {
 
     return (
         <Box onClick={() => toggleMute(false)}>
-            <Box _hover={{ opacity: 1 }} position={"fixed"} cursor={"pointer"} top={"1em"} left={"1em"}>
-                {isMuted && (<GoMute size={"4em"} color={"white"} className={"blink-slow"} />)}
+            <Box _hover={{ opacity: 1 }} className={"blink-anim"} position={"fixed"} cursor={"pointer"} top={"1em"} left={"1em"}>
+                {isMuted && (<GoMute size={"4em"} color={"white"} />)}
             </Box>
 
             <Announcement />

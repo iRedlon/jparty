@@ -30,9 +30,9 @@ export default function HostBoard() {
                     backgroundColor={"white"} boxShadow={"7px 7px black"} padding={"0.5em"}>
                     {
                         isDollarValue ? (
-                            <Heading fontFamily={"board-panel"} size={"4xl"} fontWeight={0}>{content}</Heading>
+                            <Heading fontFamily={"board"} size={"4xl"} fontWeight={0}>{content}</Heading>
                         ) : (
-                            <Heading fontFamily={"board-panel"} size={"xl"}>{content}</Heading>
+                            <Heading fontFamily={"board"} size={"xl"} fontWeight={0}>{content}</Heading>
                         )
                     }
 

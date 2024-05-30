@@ -36,7 +36,7 @@ export default function HostMenu() {
 
     return (
         <>
-            <Button onClick={onOpen} _hover={{ opacity: 1 }} position={"fixed"} zIndex={zIndex} top={"1em"} right={"1em"} opacity={fixedButtonOpacity} colorScheme={"red"}>
+            <Button onClick={onOpen} _hover={{ opacity: 1 }} position={"fixed"} zIndex={zIndex} top={"1em"} right={"1em"} opacity={fixedButtonOpacity} colorScheme={"gray"}>
                 Menu
             </Button>
 

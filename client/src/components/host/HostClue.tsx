@@ -66,7 +66,7 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
 
     return (
         <Stack direction={"column"} width={"50vw"}>
-            <Box padding={"1em"} backgroundColor={"white"} outline={"black solid 3px"} boxShadow={"10px 10px black"}
+            <Box className={"slide-from-left-anim"} padding={"1em"} backgroundColor={"white"} boxShadow={"8px 8px black"}
                 onClick={() => handleDebugCommand(DebugCommand.UpdateSessionState, SessionState.ClueSelection)}>
                 <Heading size={"lg"} fontFamily={"clue"}>{triviaCategory.name.toUpperCase()} from {triviaClue.year}</Heading>
 
@@ -87,7 +87,7 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
 
             <Box margin={"0.25em"} />
 
-            <Box padding={"2em"} backgroundColor={"white"} outline={"black solid 3px"} boxShadow={"10px 10px black"}
+            <Box className={"slide-from-right-anim"} padding={"2em"} backgroundColor={"white"} boxShadow={"8px 8px black"}
                 height={"50vh"} justifyContent={"center"} alignContent={"center"} overflow={"auto"}>
                 <Text fontFamily={"clue"} fontSize={questionFontSize}>
                     {triviaClue.question}
@@ -99,41 +99,47 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
                     <>
                         <Box margin={"0.25em"} />
 
-                        <Box padding={"1em"} backgroundColor={"white"} outline={"black solid 3px"} boxShadow={"10px 10px black"}>
-                            {
-                                !triviaClue.isTossupClue() && (context.sessionState === SessionState.ClueResponse) && (
-                                    <Heading size={"md"} justifyContent={"center"}>
-                                        {numSubmittedResponders}/{numResponders} responses submitted
-                                    </Heading>
-                                )
-                            }
+                        <Stack className={"slide-from-bottom-anim"} direction={"row"} width={"30vw"} marginLeft={"auto"} marginRight={"auto"}>
+                            <Box backgroundColor={"white"} boxShadow={"8px 8px black"} marginRight={"0.5em"} height={"7em"} width={"7em"} />
 
-                            {
-                                spotlightResponder && (
-                                    <InputGroup size={"lg"} justifyContent={"center"} marginBottom={"1em"}>
-                                        <InputLeftAddon>{spotlightResponder.name}</InputLeftAddon>
-                                        <Input isReadOnly={true} value={spotlightResponder.responses[PlayerResponseType.Clue]} />
-                                    </InputGroup>
-                                )
-                            }
+                            <Box padding={"1em"} backgroundColor={"white"} boxShadow={"8px 8px black"} flexGrow={"1"} position={"relative"}>
+                                {
+                                    !triviaClue.isTossupClue() && (context.sessionState === SessionState.ClueResponse) && (
+                                        <Heading size={"md"} justifyContent={"center"}>
+                                            {numSubmittedResponders}/{numResponders} responses submitted
+                                        </Heading>
+                                    )
+                                }
 
-                            {
-                                // wait until the spotlight responder's decision is available before showing the correct answer (for dramatic effect)
-                                displayCorrectAnswer && (!spotlightResponder || showSpotlightResponderClueDecision) && (
-                                    <Heading size={"md"}>
-                                        correct answer: "{triviaClue.answer}"
-                                    </Heading>
-                                )
-                            }
+                                {
+                                    spotlightResponder && (
+                                        <>
+                                            <Box position={"absolute"} top={"5px"} left={"15px"} color={"black"}><b>{spotlightResponder.name.toUpperCase()}</b></Box>
+                                            <Box position={"absolute"} textAlign={"left"} fontSize={"3em"} bottom={"5px"} left={"15px"}>
+                                                <i>{spotlightResponder.responses[PlayerResponseType.Clue]}</i>
+                                            </Box>
+                                        </>
+                                    )
+                                }
 
-                            {
-                                (context.sessionState === SessionState.ReadingClueDecision) &&
-                                spotlightResponderClueDecisionInfo &&
-                                showSpotlightResponderClueDecision && (
-                                    decisionDisplayButton
-                                )
-                            }
-                        </Box>
+                                {
+                                    // wait until the spotlight responder's decision is available before showing the correct answer (for dramatic effect)
+                                    displayCorrectAnswer && (!spotlightResponder || showSpotlightResponderClueDecision) && (
+                                        <Heading size={"md"}>
+                                            correct answer: "{triviaClue.answer}"
+                                        </Heading>
+                                    )
+                                }
+
+                                {
+                                    (context.sessionState === SessionState.ReadingClueDecision) &&
+                                    spotlightResponderClueDecisionInfo &&
+                                    showSpotlightResponderClueDecision && (
+                                        decisionDisplayButton
+                                    )
+                                }
+                            </Box>
+                        </Stack>
                     </>
                 )
             }

@@ -1,5 +1,6 @@
 
 import Layout from "./components/common/Layout";
+import "./style/animation.css";
 import "./style/index.css";
 import "./style/font.css";
 

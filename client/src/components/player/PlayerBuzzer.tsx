@@ -19,8 +19,8 @@ export default function PlayerBuzzer({ renderComponent }: PlayerBuzzerProps) {
     return (
         <Box display={renderComponent ? "auto" : "none"}>
             <Box onClick={emitBuzz}>
-                <AwesomeButton type={"danger"} className={"buzzer"}>
-                    <Text fontSize={"2em"} className={"blink-fast"}>BUZZ</Text>
+                <AwesomeButton className={"buzzer"} type={"danger"}>
+                    <Text className={"blink-fast"} fontSize={"2em"}>BUZZ</Text>
                 </AwesomeButton>
             </Box>
         </Box>

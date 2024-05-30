@@ -1,6 +1,6 @@
 
 import {
-    HostServerSocket, PLACEHOLDER_TRIVIA_ROUND, Player, PlayerState, ServerSocket,
+    HostServerSocket, PLACEHOLDER_TRIVIA_ROUND, Player, PlayerResponseType, PlayerState, ServerSocket,
     SessionAnnouncement, SessionState, SessionTimeout, SoundEffect, TriviaCategory, TriviaClue,
     TriviaClueDecision, TriviaClueDecisionInfo, TriviaRound, VoiceType
 } from "jparty-shared";
@@ -31,6 +31,8 @@ function getPlaceholderSessionPlayers(triviaCategory?: TriviaCategory, triviaClu
         // player5.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "baratie", TriviaClueDecision.Incorrect, 141, false);
         // player3.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "mountain?", TriviaClueDecision.Incorrect, 25235, false);
     }
+
+    player1.responses[PlayerResponseType.Clue] = "shearing a sheep"
 
     return { "socket1": player1, "socket2": player2, "socket3": player3, "socket4": player4, "socket5": player5, "socket6": player6 };
 }

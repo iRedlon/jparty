@@ -1,10 +1,10 @@
 
 import { socket } from "./socket";
-import BuzzWindowTimeoutMP3 from "../assets/buzzWindowTimeout.mp3";
+import BuzzWindowTimeoutMP3 from "../assets/buzz-window-timeout.mp3";
 import ApplauseMP3 from "../assets/applause.mp3";
-import GameMusicMP3 from "../assets/gameMusic.mp3";
-import LobbyMusicMP3 from "../assets/lobbyMusic.mp3";
-import LongApplauseMP3 from "../assets/longApplause.mp3";
+import GameMusicMP3 from "../assets/game-music.mp3";
+import LobbyMusicMP3 from "../assets/lobby-music.mp3";
+import LongApplauseMP3 from "../assets/long-applause.mp3";
 
 import { HostSocket, SoundEffect, VoiceType, VolumeType } from "jparty-shared";
 
