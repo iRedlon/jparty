@@ -2,8 +2,9 @@
 import { LayoutContext } from "../common/Layout";
 import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
 import { formatDollarValue } from "../../misc/format";
+import "../../style/host-clue-anim.css";
 
-import { Box, Button, Heading, Input, InputGroup, InputLeftAddon, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Heading, Stack, Text } from "@chakra-ui/react";
 import { PlayerResponseType, SessionState, TriviaCategory, TriviaCategoryType, TriviaClue, TriviaClueDecision, TriviaClueDifficulty } from "jparty-shared";
 import { useContext } from "react";
 
@@ -23,7 +24,7 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
     const spotlightResponderClueDecisionInfo = spotlightResponder && spotlightResponder.clueDecisionInfo;
 
     // our spotlight responder may be stale. make sure we only display a decision for the clue we're currently displaying
-    const showSpotlightResponderClueDecision = (spotlightResponderClueDecisionInfo && spotlightResponderClueDecisionInfo.clue.id) === triviaClue.id;
+    const showSpotlightResponderClueDecision = context.debugMode || ((spotlightResponderClueDecisionInfo && spotlightResponderClueDecisionInfo.clue.id) === triviaClue.id);
 
     // this is a button for the sake of color scheme formatting, it isn't meant to be clicked
     let decisionDisplayButton = <></>;
@@ -64,6 +65,37 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
 
     const areBuzzersClosed = (context.sessionState === SessionState.ReadingClue) || (context.sessionState === SessionState.ClueTossup);
 
+    let clueDecisionAnimClassName = "";
+    if ((context.sessionState === SessionState.ReadingClueDecision) && spotlightResponderClueDecisionInfo && showSpotlightResponderClueDecision) {
+        switch (spotlightResponderClueDecisionInfo.decision) {
+            case TriviaClueDecision.Correct:
+                {
+                    clueDecisionAnimClassName = "correct-shadow-blink-anim";
+                }
+                break;
+            case TriviaClueDecision.Incorrect:
+                {
+                    clueDecisionAnimClassName = "incorrect-shadow-blink-anim";
+                }
+                break;
+            case TriviaClueDecision.NeedsMoreDetail:
+                {
+                    clueDecisionAnimClassName = "detail-shadow-blink-anim";
+                }
+                break;
+        }
+    }
+
+    let clueValueString = "";
+    if (triviaClue.isWagerClue()) {
+        if (triviaClue.isPersonalClue()) {
+            clueValueString = `wager: ${formatDollarValue(spotlightResponderWager)}`;
+        }
+    }
+    else {
+        clueValueString = `clue value: ${formatDollarValue(triviaClue.value)}`;
+    }
+
     return (
         <Stack direction={"column"} width={"50vw"}>
             <Box className={"slide-from-left-anim"} padding={"1em"} backgroundColor={"white"} boxShadow={"8px 8px black"}
@@ -79,19 +111,29 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
                             </>
                         )
                     }
-                    {(triviaClue.isWagerClue() && triviaClue.isPersonalClue()) ?
-                        `wager: ${formatDollarValue(spotlightResponderWager)}` :
-                        `clue value: ${formatDollarValue(triviaClue.value)}`}
+
+                    {clueValueString}
                 </Heading>
             </Box>
 
             <Box margin={"0.25em"} />
 
             <Box className={"slide-from-right-anim"} padding={"2em"} backgroundColor={"white"} boxShadow={"8px 8px black"}
-                height={"50vh"} justifyContent={"center"} alignContent={"center"} overflow={"auto"}>
+                height={"50vh"} justifyContent={"center"} alignContent={"center"} overflow={"auto"} position={"relative"}>
                 <Text fontFamily={"clue"} fontSize={questionFontSize}>
                     {triviaClue.question}
                 </Text>
+
+                {
+                    // wait until the spotlight responder's decision is available before showing the correct answer (for dramatic effect)
+                    displayCorrectAnswer && (!spotlightResponder || showSpotlightResponderClueDecision) && (
+                        <Box className={"slide-from-left-anim"} position={"absolute"} bottom={"10px"} left={0} right={0}>
+                            <Heading size={"lg"} fontFamily={"clue"}>
+                                <i>"{triviaClue.answer}"</i>
+                            </Heading>
+                        </Box>
+                    )
+                }
             </Box>
 
             {
@@ -102,7 +144,7 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
                         <Stack className={"slide-from-bottom-anim"} direction={"row"} width={"30vw"} marginLeft={"auto"} marginRight={"auto"}>
                             <Box backgroundColor={"white"} boxShadow={"8px 8px black"} marginRight={"0.5em"} height={"7em"} width={"7em"} />
 
-                            <Box padding={"1em"} backgroundColor={"white"} boxShadow={"8px 8px black"} flexGrow={"1"} position={"relative"}>
+                            <Box className={clueDecisionAnimClassName} boxShadow={"8px 8px black"} padding={"1em"} backgroundColor={"white"} flexGrow={"1"} position={"relative"}>
                                 {
                                     !triviaClue.isTossupClue() && (context.sessionState === SessionState.ClueResponse) && (
                                         <Heading size={"md"} justifyContent={"center"}>
@@ -119,23 +161,6 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
                                                 <i>{spotlightResponder.responses[PlayerResponseType.Clue]}</i>
                                             </Box>
                                         </>
-                                    )
-                                }
-
-                                {
-                                    // wait until the spotlight responder's decision is available before showing the correct answer (for dramatic effect)
-                                    displayCorrectAnswer && (!spotlightResponder || showSpotlightResponderClueDecision) && (
-                                        <Heading size={"md"}>
-                                            correct answer: "{triviaClue.answer}"
-                                        </Heading>
-                                    )
-                                }
-
-                                {
-                                    (context.sessionState === SessionState.ReadingClueDecision) &&
-                                    spotlightResponderClueDecisionInfo &&
-                                    showSpotlightResponderClueDecision && (
-                                        decisionDisplayButton
                                     )
                                 }
                             </Box>

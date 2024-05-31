@@ -15,7 +15,7 @@ const PLACEHOLDER_TRIVIA_ROUND_CATEGORIES: TriviaCategory[] = [
                 value: 200,
                 difficulty: 1,
                 year: 2004,
-                bonus: 0
+                bonus: 3
             },
             {
                 id: 125428,

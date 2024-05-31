@@ -24,7 +24,7 @@ function getPlaceholderSessionPlayers(triviaCategory?: TriviaCategory, triviaClu
     let player6 = new Player("", "chopper");
 
     if (triviaCategory && triviaClue) {
-        player1.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.id, triviaCategory.name, triviaClue, "romance dawn", TriviaClueDecision.Incorrect, 200, false);
+        player1.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.id, triviaCategory.name, triviaClue, "romance dawn", TriviaClueDecision.Correct, 200, false);
         // player2.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "romance dawn", TriviaClueDecision.Incorrect, 400, false);
         // player3.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "arlong park", TriviaClueDecision.Incorrect, 10000, false);
         // player4.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "syrup village", TriviaClueDecision.Incorrect, 23471, false);
@@ -118,11 +118,16 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
                     }
                 }));
 
-                handleDebugCommand(DebugCommand.UpdateSessionState, SessionState.ClueTossup);
-
                 const triviaRound = TriviaRound.clone(PLACEHOLDER_TRIVIA_ROUND);
                 const triviaCategory = triviaRound.categories[args[0]];
                 const triviaClue = triviaCategory.clues[args[1]];
+
+                if (triviaClue.value === 200) {
+                    handleDebugCommand(DebugCommand.UpdateSessionState, SessionState.ReadingClueDecision);
+                }
+                else {
+                    handleDebugCommand(DebugCommand.UpdateSessionState, SessionState.ClueTossup);
+                }
 
                 mockSocket.dispatchEvent(new CustomEvent(HostServerSocket.PlayVoice, {
                     detail: {
@@ -144,7 +149,7 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
             {
                 mockSocket.dispatchEvent(new CustomEvent(ServerSocket.ShowAnnouncement, {
                     detail: {
-                        params: [SessionAnnouncement.GameOver]
+                        params: [SessionAnnouncement.SelectClue]
                     }
                 }));
 

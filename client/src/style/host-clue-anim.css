@@ -1,0 +1,62 @@
+@keyframes correct-shadow-blink {
+    0% {
+        box-shadow: 8px 8px #5fb35d;
+    }
+
+    50% {
+        box-shadow: 16px 16px #5fb35d;
+    }
+
+    100% {
+        box-shadow: 8px 8px #5fb35d;
+    }
+}
+
+.correct-shadow-blink-anim {
+    animation-name: correct-shadow-blink;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: Infinite;
+}
+
+@keyframes incorrect-shadow-blink {
+    0% {
+        box-shadow: 8px 8px #b12e22;
+    }
+
+    50% {
+        box-shadow: 16px 16px #b12e22;
+    }
+
+    100% {
+        box-shadow: 8px 8px #b12e22;
+    }
+}
+
+.incorrect-shadow-blink-anim {
+    animation-name: incorrect-shadow-blink;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: Infinite;
+}
+
+@keyframes detail-shadow-blink {
+    0% {
+        box-shadow: 8px 8px #FFBF00;
+    }
+
+    50% {
+        box-shadow: 16px 16px #FFBF00;
+    }
+
+    100% {
+        box-shadow: 8px 8px #FFBF00;
+    }
+}
+
+.detail-shadow-blink-anim {
+    animation-name: detail-shadow-blink;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: Infinite;
+}

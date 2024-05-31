@@ -3,6 +3,7 @@ import { LayoutContext } from "./Layout";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
 import { SESSION_ANNOUNCEMENT_MESSAGES } from "../../misc/ui-constants";
+import "../../style/announcement-anim.css";
 
 import { Box, Text } from "@chakra-ui/react";
 import { ServerSocket, SessionAnnouncement } from "jparty-shared";
@@ -85,10 +86,10 @@ export default function Announcement() {
     }
     else {
         return (
-            <Box position={"fixed"} height={"100vh"} width={"100vw"} display={"flex"} justifyContent={"center"} alignItems={"center"} zIndex={"999"}>
-                <Box height={"50%"} width={"50%"} display={"flex"} justifyContent={"center"} alignItems={"center"} padding={"1em"}
-                    outline={"black solid 3px"} boxShadow={"10px 10px black"} backgroundColor={"white"}>
-                    <Text fontSize={"5vh"}>{message}</Text>
+            <Box backdropFilter={"blur(4px)"} position={"fixed"} left={0} right={0} top={0} bottom={0} display={"flex"} justifyContent={"center"} alignItems={"center"} zIndex={"999"}>
+                <Box width={"30em"} height={"30em"} className={"bounce-anim"} display={"flex"} justifyContent={"center"} alignItems={"center"} padding={"5em"}
+                    boxShadow={"8px 8px black"} backgroundColor={"white"} position={"absolute"}>
+                    <Text fontFamily={"logo"} fontSize={"6em"}>{message}</Text>
                 </Box>
             </Box>
         );
