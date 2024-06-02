@@ -7,7 +7,6 @@ export enum ReservedSocket {
     Connect = "connect",
     Connection = "connection",
     Disconnect = "disconnect",
-    BeforeUnload = "beforeunload",
     VisibilityChange = "visibilitychange"
 }
 
@@ -20,6 +19,7 @@ export enum ServerSocket {
     BeginSpectate = "server_update_begin_spectate",
     Message = "server_message",
     CancelGame = "server_cancel_game",
+    UpdateVoiceType = "host_server_update_voice_type",
     PlaySoundEffect = "server_play_sound_effect",
     UpdateSessionName = "server_update_session_name",
     UpdateSessionState = "server_update_session_state",
@@ -27,7 +27,6 @@ export enum ServerSocket {
     UpdateTriviaRound = "server_update_trivia_round",
     SelectClue = "host_server_select_clue",
     UpdateSpotlightResponderID = "host_server_update_spotlight_responder_id",
-    UpdateVoiceType = "host_server_update_voice_type",
     StartTimeout = "host_server_start_timeout",
     StopTimeout = "host_server_stop_timeout",
     ShowAnnouncement = "host_server_show_announcement",

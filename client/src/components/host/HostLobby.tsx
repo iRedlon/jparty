@@ -1,4 +1,6 @@
 
+import "../../style/components/HostLobby.css";
+
 import { LayoutContext } from "../common/Layout";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
 import { getClientID } from "../../misc/client-utils";
@@ -42,7 +44,7 @@ export default function HostLobby() {
 
     return (
         <Stack direction={"column"}>
-            <Box className={"slide-from-left-anim"} padding={"2em"} backgroundColor={"white"} boxShadow={"8px 8px black"}>
+            <Box id={"logo-box"} className={"box"} padding={"2em"}>
                 <Heading fontFamily={"logo"} fontSize={"4em"}>jparty.io</Heading>
 
                 <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
@@ -57,7 +59,7 @@ export default function HostLobby() {
                 <Box>
                     or, spectate an existing session with name:
                     <Stack direction={"row"} display={"flex"} justifyContent={"center"} marginTop={"0.5em"}>
-                        <Input value={spectateSessionName} onChange={(e) => setSpectateSessionName(e.target.value)} width={"10em"} />
+                        <Input id={"spectate-session-name"} value={spectateSessionName} onChange={(e) => setSpectateSessionName(e.target.value)} width={"10em"} />
                         <Button onClick={emitAttemptSpectate} isDisabled={!spectateSessionName} colorScheme={"blue"}>spectate</Button>
                     </Stack>
                 </Box>
@@ -74,16 +76,16 @@ export default function HostLobby() {
 
             <Box marginTop={"0.5em"} marginBottom={"0.5em"} />
 
-            <Box className={"slide-from-right-anim"} padding={"1em"} backgroundColor={"white"} boxShadow={"8px 8px black"}>
+            <Box id={"players-joined-box"} className={"box"} padding={"1em"}>
                 <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>joined players</Heading>
 
                 <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
 
-                <div style={{ columnCount: 3 }}>
+                <Box style={{ columnCount: 3 }}>
                     {getSortedSessionPlayerIDs(context.sessionPlayers).map((playerID: SocketID) => {
                         return <span key={playerID}>{context.sessionPlayers[playerID].name}<br /></span>;
                     })}
-                </div>
+                </Box>
 
                 <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
 

@@ -1,6 +1,6 @@
 
 import { socket } from "../../misc/socket";
-import "../../style/buzzer.css";
+import "../../style/components/PlayerBuzzer.css";
 
 import { Box, Text } from "@chakra-ui/react";
 import { PlayerSocket } from "jparty-shared";

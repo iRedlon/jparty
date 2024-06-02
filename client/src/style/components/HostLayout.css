@@ -1,0 +1,11 @@
+#mute-icon-box {
+    position: fixed;
+    cursor: pointer;
+    top: 1em;
+    left: 1em;
+
+    animation-name: blink;
+    animation-duration: 0.5s;
+    animation-timing-function: ease-in;
+    animation-iteration-count: Infinite;
+}

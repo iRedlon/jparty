@@ -32,7 +32,7 @@ function getPlaceholderSessionPlayers(triviaCategory?: TriviaCategory, triviaClu
         // player3.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "mountain?", TriviaClueDecision.Incorrect, 25235, false);
     }
 
-    player1.responses[PlayerResponseType.Clue] = "shearing a sheep"
+    player1.responses[PlayerResponseType.Clue] = "shearing a sheep in the place at the time at the word word"
 
     return { "socket1": player1, "socket2": player2, "socket3": player3, "socket4": player4, "socket5": player5, "socket6": player6 };
 }
@@ -108,7 +108,7 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
             break;
         case DebugCommand.SelectClue:
             {
-                if (args[0] < 0 || args[0] < 0) {
+                if (args[0] < 0 || args[1] < 0) {
                     return;
                 }
                 

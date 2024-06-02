@@ -6,3 +6,12 @@ export function getClientID() {
 
     return localStorage.clientID;
 }
+
+export function enableFullscreen() {
+    const element = document.documentElement;
+    const request = element && element.requestFullscreen;
+
+    if (request && typeof request !== "undefined") {
+        request.call(element);
+    }
+}

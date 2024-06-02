@@ -1,0 +1,33 @@
+/* logo box */
+
+.component-appear #logo-box, .component-enter #logo-box {
+    animation-name: slide-from-left;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.component-exit #logo-box {
+    animation-name: slide-from-left;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}
+
+/* players joined box */
+
+.component-appear #players-joined-box, .component-enter #players-joined-box {
+    animation-name: slide-from-right;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.component-exit #players-joined-box {
+    animation-name: slide-from-right;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}

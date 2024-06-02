@@ -1,3 +1,13 @@
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
 @keyframes blink {
     0% {
         opacity: 0;
@@ -10,13 +20,6 @@
     100% {
         opacity: 0;
     }
-}
-
-.blink-anim {
-    animation-name: blink;
-    animation-duration: 0.5s;
-    animation-timing-function: ease-in;
-    animation-iteration-count: Infinite;
 }
 
 @keyframes slide-from-left {
@@ -39,6 +42,16 @@
     }
 }
 
+@keyframes slide-from-top {
+    0% {
+        transform: translateY(-100vh);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
 @keyframes slide-from-bottom {
     0% {
         transform: translateY(100vh);
@@ -47,22 +60,4 @@
     100% {
         transform: translateY(0);
     }
-}
-
-.slide-from-left-anim {
-    animation-name: slide-from-left;
-    animation-duration: 1s;
-    animation-timing-function: ease-in-out;
-}
-
-.slide-from-right-anim {
-    animation-name: slide-from-right;
-    animation-duration: 1s;
-    animation-timing-function: ease-in-out;
-}
-
-.slide-from-bottom-anim {
-    animation-name: slide-from-bottom;
-    animation-duration: 1s;
-    animation-timing-function: ease-in-out;
 }

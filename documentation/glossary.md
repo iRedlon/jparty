@@ -11,12 +11,6 @@
 
 ## Mock Socket
 *A tool for debugging a client that isn't connected to a web socket. Simulates socket event handling with DOM effects*
-- Debugging with an offline client is convenient because it can utilize hot-reloading, but without a server we need to simulate game events somehow
+- Debugging with an offline client is convenient because it can utilize hot-reloading, but in the absence of a real server we need to simulate game events somehow
 - To do this: we setup DOM event listeners at the same time as we setup socket handlers, to listen for the exact same events
 - Then, we use a suite of [debug commands](../client/src/misc/debug-command.tsx) to send those events with dummy data in order to test the client under realistic conditions
-
-## Spotlight Responder
-*The individual player who's answering a question. Their live response is featured on the host screen for all players to see*
-- A clue will only feature a spotlight responder if exactly one player gets to respond at a time
-- Just because a clue has a spotlight responder doesn't neccessarily mean only one player gets to attempt the clue. The name for that type of clue is a "personal clue" i.e. only one player gets to attempt a response even if they get it wrong
-- During the clue decision process, the player whose decision is currently being featured on the host screen is (for that brief time) considered the spotlight responder, even if the clue itself did not have a spotlight responder

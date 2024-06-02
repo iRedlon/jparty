@@ -1,4 +1,6 @@
 
+import "../../style/components/HostLayout.css";
+
 import HostBoard from "./HostBoard";
 import HostClue from "./HostClue";
 import HostGameOver from "./HostGameOver";
@@ -13,23 +15,22 @@ import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../m
 import { socket } from "../../misc/socket";
 import { playOpenAIVoice, playSoundEffect, playSpeechSynthesisVoice } from "../../misc/sound-fx";
 
-import { Box, Center, Flex, Text } from "@chakra-ui/react";
+import { Box, Center, Flex } from "@chakra-ui/react";
 import { HostServerSocket, SessionState, SoundEffect, VoiceType } from "jparty-shared";
 import { useContext, useEffect, useRef, useState } from "react";
 import { GoMute } from "react-icons/go";
+import { CSSTransition, SwitchTransition } from "react-transition-group";
 
 export default function HostLayout() {
-    const context = useContext(LayoutContext);
-    const myRef = useRef(null);
+    const stateTransitionRef = useRef(null);
 
-    const [vantaEffect, setVantaEffect] = useState(null);
+    const context = useContext(LayoutContext);
     const [isMuted, setIsMuted] = useState(true);
     const [numSubmittedResponders, setNumSubmittedResponders] = useState(0);
     const [numResponders, setNumResponders] = useState(0);
     const [displayCorrectAnswer, setDisplayCorrectAnswer] = useState(true);
 
     useEffect(() => {
-
         socket.on(HostServerSocket.PlayVoice, handlePlayVoice)
         socket.on(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         socket.on(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
@@ -39,6 +40,7 @@ export default function HostLayout() {
         addMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
         return () => {
+            socket.off(HostServerSocket.PlayVoice, handlePlayVoice)
             socket.off(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
             socket.off(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
@@ -83,29 +85,16 @@ export default function HostLayout() {
             else {
                 playSoundEffect(SoundEffect.LobbyMusic);
             }
-
-            playSpeechSynthesisVoice(VoiceType.ClassicMasculine, "");
-
-            // enableFullscreen();
         }
     }
 
-    const enableFullscreen = () => {
-        const element = document.documentElement;
-        const request = element && element.requestFullscreen;
-
-        if (request && typeof request !== "undefined") {
-            request.call(element);
-        }
-    }
-
-    const getHostComponent = () => {
+    const getGameComponent = () => {
         if (context.sessionState === SessionState.Lobby) {
             return <HostLobby />;
         }
 
         if (!context.triviaRound) {
-            return <Text>Trivia round isn't populated in state: {SessionState[context.sessionState]}</Text>;
+            throw new Error(`HostLayout: missing trivia round`);
         }
 
         if (context.sessionState === SessionState.ClueSelection) {
@@ -113,7 +102,7 @@ export default function HostLayout() {
         }
 
         if (context.categoryIndex < 0 || context.clueIndex < 0) {
-            return <Text>Trivia clue isn't populated in state: {SessionState[context.sessionState]}</Text>;
+            throw new Error(`HostLayout: missing current clue`);
         }
 
         const triviaCategory = context.triviaRound.categories[context.categoryIndex];
@@ -140,11 +129,9 @@ export default function HostLayout() {
         }
     }
 
-    const hostComponent = getHostComponent();
-
     return (
         <Box onClick={() => toggleMute(false)}>
-            <Box _hover={{ opacity: 1 }} className={"blink-anim"} position={"fixed"} cursor={"pointer"} top={"1em"} left={"1em"}>
+            <Box id={"mute-icon-box"}>
                 {isMuted && (<GoMute size={"4em"} color={"white"} />)}
             </Box>
 
@@ -152,9 +139,16 @@ export default function HostLayout() {
             <Timer />
             <ServerMessageAlert />
             <HostMenu />
+
             <Flex height={"100vh"} width={"100vw"} alignContent={"center"} justifyContent={"center"}>
                 <Center zIndex={9}>
-                    {hostComponent}
+                    <SwitchTransition>
+                        <CSSTransition key={SessionState[context.sessionState]} nodeRef={stateTransitionRef} timeout={1000} classNames={"component"} appear mountOnEnter unmountOnExit>
+                            <Box ref={stateTransitionRef}>
+                                {getGameComponent()}
+                            </Box>
+                        </CSSTransition>
+                    </SwitchTransition>
                 </Center>
             </Flex>
         </Box>

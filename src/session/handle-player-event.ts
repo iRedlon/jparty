@@ -425,7 +425,7 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
     emitStateUpdate(sessionName);
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, displayCorrectAnswer);
 
-    if (session.getCurrentClue()?.isTossupClue() && noEligibleRespondersRemaining) {
+    if (session.getCurrentClue()?.isTossupClue() && noEligibleRespondersRemaining && decision === TriviaClueDecision.Incorrect) {
         playVoiceLine(sessionName, VoiceLineType.DisplayCorrectAnswer);
     }
     else {

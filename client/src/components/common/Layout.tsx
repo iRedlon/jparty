@@ -1,5 +1,4 @@
 
-import Background from "./Background";
 import HostLayout from "../host/HostLayout";
 import PlayerLayout from "../player/PlayerLayout";
 import { getClientID } from "../../misc/client-utils";
@@ -7,7 +6,6 @@ import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../m
 import { socket } from "../../misc/socket";
 import { playSoundEffect } from "../../misc/sound-fx";
 
-import { Box } from "@chakra-ui/react";
 import {
     AttemptReconnectResult, ClientSocket, cloneSessionPlayers, HostSocket,
     ReservedSocket, ServerSocket, SessionPlayers, SessionState, SocketID, SoundEffect, TriviaRound, VoiceType
@@ -33,11 +31,11 @@ export interface LayoutContextData {
 
 export const LayoutContext = createContext<LayoutContextData>({} as any);
 
-// Layout manages all of the state shared by both types of clients, then makes it available to them through LayoutContext via its provider
 export default function Layout() {
     const [debugMode, setDebugMode] = useState(process.env.NODE_ENV === "development");
     const [isSpectator, setIsSpectator] = useState(false);
     const [isPlayer, setIsPlayer] = useState(isMobile || localStorage.isPlayer);
+    const [voiceType, setVoiceType] = useState(VoiceType.ModernMasculine);
     const [sessionName, setSessionName] = useState("");
     const [sessionState, setSessionState] = useState(SessionState.Lobby);
     const [sessionPlayers, setSessionPlayers] = useState<SessionPlayers>({});
@@ -45,7 +43,6 @@ export default function Layout() {
     const [categoryIndex, setCategoryIndex] = useState(-1);
     const [clueIndex, setClueIndex] = useState(-1);
     const [spotlightResponderID, setSpotlightResponderID] = useState<SocketID>("");
-    const [voiceType, setVoiceType] = useState(VoiceType.ModernMasculine);
 
     useEffect(() => {
         window.addEventListener(ReservedSocket.VisibilityChange, handleVisibilityChange);
@@ -54,6 +51,7 @@ export default function Layout() {
         socket.on(ServerSocket.EnableDebugMode, handleEnableDebugMode);
         socket.on(ServerSocket.BeginSpectate, handleBeginSpectate);
         socket.on(ServerSocket.CancelGame, handleCancelGame);
+        socket.on(ServerSocket.UpdateVoiceType, handleUpdateVoiceType);
         socket.on(ServerSocket.PlaySoundEffect, handlePlaySoundEffect);
         socket.on(ServerSocket.UpdateSessionName, handleUpdateSessionName);
         socket.on(ServerSocket.UpdateSessionState, handleUpdateSessionState);
@@ -61,7 +59,6 @@ export default function Layout() {
         socket.on(ServerSocket.UpdateTriviaRound, handleUpdateTriviaRound);
         socket.on(ServerSocket.SelectClue, handleSelectClue);
         socket.on(ServerSocket.UpdateSpotlightResponderID, handleUpdateSpotlightResponderID);
-        socket.on(ServerSocket.UpdateVoiceType, handleUpdateVoiceType);
 
         addMockSocketEventHandler(ServerSocket.PlaySoundEffect, handlePlaySoundEffect);
         addMockSocketEventHandler(ServerSocket.UpdateSessionName, handleUpdateSessionName);
@@ -77,6 +74,7 @@ export default function Layout() {
             socket.off(ServerSocket.EnableDebugMode, handleEnableDebugMode);
             socket.off(ServerSocket.BeginSpectate, handleBeginSpectate);
             socket.off(ServerSocket.CancelGame, handleCancelGame);
+            socket.off(ServerSocket.UpdateVoiceType, handleUpdateVoiceType);
             socket.off(ServerSocket.PlaySoundEffect, handlePlaySoundEffect);
             socket.off(ServerSocket.UpdateSessionName, handleUpdateSessionName);
             socket.off(ServerSocket.UpdateSessionState, handleUpdateSessionState);
@@ -84,7 +82,6 @@ export default function Layout() {
             socket.off(ServerSocket.UpdateTriviaRound, handleUpdateTriviaRound);
             socket.off(ServerSocket.SelectClue, handleSelectClue);
             socket.off(ServerSocket.UpdateSpotlightResponderID, handleUpdateSpotlightResponderID);
-            socket.off(ServerSocket.UpdateVoiceType, handleUpdateVoiceType);
 
             removeMockSocketEventHandler(ServerSocket.PlaySoundEffect, handlePlaySoundEffect);
             removeMockSocketEventHandler(ServerSocket.UpdateSessionName, handleUpdateSessionName);
@@ -110,6 +107,10 @@ export default function Layout() {
         if (isPlayer) {
             localStorage.setItem("isPlayer", "true");
         }
+
+        // clients disconnect all the time. it happens VERY UNRELIABLY when changing tabs, apps, turning your phone on and off, etc.
+        // our approach to client reconnection is simply this: it doesn't hurt to get updated state from the server, so request such updates often; just in case we need them
+        // "often" meaning: anytime we hear a state update from the server, or anytime the user's tab visibility has changed for any reason
 
         if (localStorage.sessionName) {
             socket.emit(ClientSocket.AttemptReconnect, localStorage.sessionName, getClientID(), (result: AttemptReconnectResult) => {
@@ -138,10 +139,14 @@ export default function Layout() {
 
     const handleCancelGame = (serverCrashed?: boolean) => {
         if (serverCrashed && (sessionState > SessionState.Lobby)) {
-            alert("We apologize, the jparty server just went offline. Your game was cancelled. This incident has been reported.");
+            alert("We apologize: the jparty server just crashed. Your game can't continue. This incident has been reported.");
         }
 
         location.reload();
+    }
+
+    const handleUpdateVoiceType = (voiceType: VoiceType) => {
+        setVoiceType(voiceType);
     }
 
     const handlePlaySoundEffect = (effect: SoundEffect) => {
@@ -183,10 +188,6 @@ export default function Layout() {
         setSpotlightResponderID(responderID);
     }
 
-    const handleUpdateVoiceType = (voiceType: VoiceType) => {
-        setVoiceType(voiceType);
-    }
-
     let context: LayoutContextData = {
         debugMode: debugMode,
         isSpectator: isSpectator,
@@ -204,7 +205,6 @@ export default function Layout() {
 
     return (
         <LayoutContext.Provider value={context}>
-            <Background />
             {isPlayer ? <PlayerLayout /> : <HostLayout />}
         </LayoutContext.Provider>
     );

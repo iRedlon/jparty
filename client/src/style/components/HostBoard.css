@@ -1,0 +1,46 @@
+/* board panel */
+
+.board-panel-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.board-panel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80%;
+    width: 80%;
+    padding: 0.5em;
+}
+
+.component-appear .board-panel-wrapper.even, .component-enter .board-panel-wrapper.even {
+    animation-name: slide-from-top;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.component-appear .board-panel-wrapper.odd, .component-enter .board-panel-wrapper.odd {
+    animation-name: slide-from-bottom;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.component-exit .board-panel-wrapper.even {
+    animation-name: slide-from-top;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}
+
+.component-exit .board-panel-wrapper.odd {
+    animation-name: slide-from-bottom;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}

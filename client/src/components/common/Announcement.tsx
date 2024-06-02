@@ -3,7 +3,7 @@ import { LayoutContext } from "./Layout";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
 import { SESSION_ANNOUNCEMENT_MESSAGES } from "../../misc/ui-constants";
-import "../../style/announcement-anim.css";
+import "../../style/components/Announcement.css";
 
 import { Box, Text } from "@chakra-ui/react";
 import { ServerSocket, SessionAnnouncement } from "jparty-shared";

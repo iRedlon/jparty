@@ -1,0 +1,23 @@
+@keyframes move-x-axis {
+    from {
+        left: 0;
+    }
+
+    to {
+        left: calc(100% - 30em);
+    }
+}
+
+@keyframes move-y-axis {
+    from {
+        top: 0;
+    }
+
+    to {
+        top: calc(100% - 30em);
+    }
+}
+
+.announcement-anim {
+    animation: move-x-axis 3.25s linear 0s infinite alternate, move-y-axis 4s linear 0s infinite alternate;
+}
