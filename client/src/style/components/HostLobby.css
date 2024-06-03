@@ -1,13 +1,13 @@
 /* logo box */
 
-.component-appear #logo-box, .component-enter #logo-box {
+.state-appear #logo-box, .state-enter #logo-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.component-exit #logo-box {
+.state-exit #logo-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
@@ -17,14 +17,14 @@
 
 /* players joined box */
 
-.component-appear #players-joined-box, .component-enter #players-joined-box {
+.state-appear #players-joined-box, .state-enter #players-joined-box {
     animation-name: slide-from-right;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.component-exit #players-joined-box {
+.state-exit #players-joined-box {
     animation-name: slide-from-right;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;

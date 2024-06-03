@@ -6,17 +6,18 @@ import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
 import { formatDollarValue } from "../../misc/format";
 
 import { Box, Heading, SimpleGrid } from "@chakra-ui/react";
+import { TriviaRound } from "jparty-shared";
 import { useContext } from "react";
 
-export default function HostBoard() {
+interface HostBoardProps {
+    triviaRound: TriviaRound
+}
+
+export default function HostBoard({ triviaRound }: HostBoardProps) {
     const context = useContext(LayoutContext);
 
-    if (!context.triviaRound) {
-        throw new Error("HostClue: missing trivia round");
-    }
-
-    const numCategories = context.triviaRound.settings.numCategories;
-    const numClues = context.triviaRound.settings.numClues;
+    const numCategories = triviaRound.settings.numCategories;
+    const numClues = triviaRound.settings.numClues;
 
     // adjust for the additional panel at the top of each column that displays the category name
     const numPanels = numClues + 1;
@@ -42,11 +43,7 @@ export default function HostBoard() {
             {[...Array(numPanels)].map((_, panelIndex) => {
                 return (
                     [...Array(numCategories)].map((_, categoryIndex) => {
-                        if (!context.triviaRound) {
-                            throw new Error("HostClue: missing trivia round");
-                        }
-
-                        const triviaCategory = context.triviaRound.categories[categoryIndex];
+                        const triviaCategory = triviaRound.categories[categoryIndex];
 
                         // the first panel is the top of this category's column, which displays the category name
                         if (panelIndex === 0) {

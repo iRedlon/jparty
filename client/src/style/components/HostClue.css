@@ -1,62 +1,57 @@
-@keyframes correct-shadow-blink {
-    0% {
-        box-shadow: 8px 8px #5fb35d;
-    }
+/* category box */
 
-    50% {
-        box-shadow: 16px 16px #5fb35d;
-    }
-
-    100% {
-        box-shadow: 8px 8px #5fb35d;
-    }
-}
-
-.correct-shadow-blink-anim {
-    animation-name: correct-shadow-blink;
+.state-appear #category-box, .state-enter #category-box {
+    animation-name: slide-from-left;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
-    animation-iteration-count: Infinite;
+    animation-fill-mode: both;
 }
 
-@keyframes incorrect-shadow-blink {
-    0% {
-        box-shadow: 8px 8px #b12e22;
-    }
-
-    50% {
-        box-shadow: 16px 16px #b12e22;
-    }
-
-    100% {
-        box-shadow: 8px 8px #b12e22;
-    }
-}
-
-.incorrect-shadow-blink-anim {
-    animation-name: incorrect-shadow-blink;
+.state-exit #category-box {
+    animation-name: slide-from-left;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
-    animation-iteration-count: Infinite;
+    animation-direction: reverse;
+    animation-fill-mode: both;
 }
 
-@keyframes detail-shadow-blink {
-    0% {
-        box-shadow: 8px 8px #FFBF00;
-    }
+/* question box */
 
-    50% {
-        box-shadow: 16px 16px #FFBF00;
-    }
-
-    100% {
-        box-shadow: 8px 8px #FFBF00;
-    }
-}
-
-.detail-shadow-blink-anim {
-    animation-name: detail-shadow-blink;
+.state-appear #question-box, .state-enter #question-box {
+    animation-name: slide-from-right;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
-    animation-iteration-count: Infinite;
+    animation-fill-mode: both;
+}
+
+.state-exit #question-box {
+    animation-name: slide-from-right;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}
+
+#correct-answer {
+    animation-name: fade-in;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+/* spotlight responder */
+
+.spotlight-responder-appear, .spotlight-responder-enter {
+    animation-name: slide-from-bottom;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.spotlight-responder-exit {
+    animation-name: slide-from-bottom;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
 }

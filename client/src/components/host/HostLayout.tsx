@@ -21,6 +21,45 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { GoMute } from "react-icons/go";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 
+// a less specific version of session state. this enum stores which game component the host is currently displaying
+// i.e. "clue tossup" and "clue response" are different session states but they both show the same game component
+enum GameComponentState {
+    Lobby,
+    Board,
+    Clue,
+    Wager,
+    GameOver
+}
+
+function getGameComponentState(sessionState: SessionState) {
+    switch (sessionState) {
+        case SessionState.Lobby:
+            {
+                return GameComponentState.Lobby;
+            }
+        case SessionState.ClueSelection:
+            {
+                return GameComponentState.Board;
+            }
+        case SessionState.ReadingClue:
+        case SessionState.ClueTossup:
+        case SessionState.ClueResponse:
+        case SessionState.WaitingForClueDecision:
+        case SessionState.ReadingClueDecision:
+            {
+                return GameComponentState.Clue;
+            }
+        case SessionState.WagerResponse:
+            {
+                return GameComponentState.Wager;
+            }
+        case SessionState.GameOver:
+            {
+                return GameComponentState.GameOver;
+            }
+    }
+}
+
 export default function HostLayout() {
     const stateTransitionRef = useRef(null);
 
@@ -28,7 +67,7 @@ export default function HostLayout() {
     const [isMuted, setIsMuted] = useState(true);
     const [numSubmittedResponders, setNumSubmittedResponders] = useState(0);
     const [numResponders, setNumResponders] = useState(0);
-    const [displayCorrectAnswer, setDisplayCorrectAnswer] = useState(true);
+    const [displayCorrectAnswer, setDisplayCorrectAnswer] = useState(false);
 
     useEffect(() => {
         socket.on(HostServerSocket.PlayVoice, handlePlayVoice)
@@ -98,7 +137,7 @@ export default function HostLayout() {
         }
 
         if (context.sessionState === SessionState.ClueSelection) {
-            return <HostBoard />;
+            return <HostBoard triviaRound={context.triviaRound} />;
         }
 
         if (context.categoryIndex < 0 || context.clueIndex < 0) {
@@ -143,7 +182,7 @@ export default function HostLayout() {
             <Flex height={"100vh"} width={"100vw"} alignContent={"center"} justifyContent={"center"}>
                 <Center zIndex={9}>
                     <SwitchTransition>
-                        <CSSTransition key={SessionState[context.sessionState]} nodeRef={stateTransitionRef} timeout={1000} classNames={"component"} appear mountOnEnter unmountOnExit>
+                        <CSSTransition key={getGameComponentState(context.sessionState)} nodeRef={stateTransitionRef} timeout={1000} classNames={"state"} appear mountOnEnter unmountOnExit>
                             <Box ref={stateTransitionRef}>
                                 {getGameComponent()}
                             </Box>
