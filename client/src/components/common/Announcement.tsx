@@ -45,16 +45,6 @@ export default function Announcement() {
     const handleShowAnnouncement = (announcement: SessionAnnouncement, currentVoiceLine: string) => {
         setAnnouncement(announcement);
         setQueuedToHide(false);
-
-        switch (announcement) {
-            case SessionAnnouncement.SelectClue:
-                {
-                    setOverrideMessage(currentVoiceLine);
-                }
-            
-            return;
-        }
-
         setOverrideMessage("");
     }
 

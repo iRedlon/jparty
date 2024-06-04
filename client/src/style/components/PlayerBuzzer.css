@@ -1,4 +1,4 @@
-.buzzer {
+#buzzer {
     height: 20em !important;
     width: 20em !important;
     --button-default-border-radius: 10em !important;

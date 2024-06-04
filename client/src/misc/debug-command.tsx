@@ -25,6 +25,8 @@ function getPlaceholderSessionPlayers(triviaCategory?: TriviaCategory, triviaClu
 
     if (triviaCategory && triviaClue) {
         player1.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.id, triviaCategory.name, triviaClue, "romance dawn", TriviaClueDecision.Correct, 200, false);
+        player1.minWager = 0;
+        player1.maxWager = 10000;
         // player2.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "romance dawn", TriviaClueDecision.Incorrect, 400, false);
         // player3.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "arlong park", TriviaClueDecision.Incorrect, 10000, false);
         // player4.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "syrup village", TriviaClueDecision.Incorrect, 23471, false);
@@ -149,7 +151,7 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
             {
                 mockSocket.dispatchEvent(new CustomEvent(ServerSocket.ShowAnnouncement, {
                     detail: {
-                        params: [SessionAnnouncement.SelectClue]
+                        params: [SessionAnnouncement.StartGame]
                     }
                 }));
 

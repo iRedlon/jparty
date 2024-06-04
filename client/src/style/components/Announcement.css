@@ -18,6 +18,6 @@
     }
 }
 
-.announcement-anim {
+#announcement-box {
     animation: move-x-axis 3.25s linear 0s infinite alternate, move-y-axis 4s linear 0s infinite alternate;
 }

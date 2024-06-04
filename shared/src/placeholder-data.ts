@@ -24,7 +24,7 @@ const PLACEHOLDER_TRIVIA_ROUND_CATEGORIES: TriviaCategory[] = [
                 value: 400,
                 difficulty: 2,
                 year: 2004,
-                bonus: 0
+                bonus: 2
             },
             {
                 id: 125429,
@@ -33,7 +33,7 @@ const PLACEHOLDER_TRIVIA_ROUND_CATEGORIES: TriviaCategory[] = [
                 value: 600,
                 difficulty: 3,
                 year: 2004,
-                bonus: 0
+                bonus: 1
             },
             {
                 id: 125430,

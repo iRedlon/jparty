@@ -43,18 +43,6 @@ export class ServerSocketMessage {
     }
 }
 
-export enum SessionAnnouncement {
-    StartGame,
-    SelectClue,
-    ClueBonusWager,
-    ClueBonusAllWager,
-    ClueBonusAllPlay,
-    StartRound,
-    StartFinalRound,
-    FinalClue,
-    GameOver
-}
-
 export enum FeedbackType {
     Bug,
     TriviaData,

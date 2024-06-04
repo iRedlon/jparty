@@ -15,21 +15,24 @@
     padding: 0.5em;
 }
 
-.state-appear .board-panel-wrapper.even, .state-enter .board-panel-wrapper.even {
+.state-change-appear .board-panel-wrapper.even, 
+.state-change-enter .board-panel-wrapper.even {
     animation-name: slide-from-top;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.state-appear .board-panel-wrapper.odd, .state-enter .board-panel-wrapper.odd {
+.state-change-appear .board-panel-wrapper.odd, 
+.state-change-enter .board-panel-wrapper.odd {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.state-exit .board-panel-wrapper.even {
+.state-change-exit 
+.board-panel-wrapper.even {
     animation-name: slide-from-top;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
@@ -37,7 +40,8 @@
     animation-fill-mode: both;
 }
 
-.state-exit .board-panel-wrapper.odd {
+.state-change-exit 
+.board-panel-wrapper.odd {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;

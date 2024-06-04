@@ -1,13 +1,14 @@
 /* category box */
 
-.state-appear #category-box, .state-enter #category-box {
+.state-change-appear #category-box, 
+.state-change-enter #category-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.state-exit #category-box {
+.state-change-exit #category-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
@@ -17,14 +18,25 @@
 
 /* question box */
 
-.state-appear #question-box, .state-enter #question-box {
+#question-box {
+    height: 50vh;
+    padding: 2em;
+    justify-content: center;
+    align-content: center;
+    overflow: auto;
+    position: relative;
+}
+
+.question-box-anim-appear, 
+.question-box-anim-enter {
     animation-name: slide-from-right;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.state-exit #question-box {
+.question-box-anim-exit, 
+.state-change-exit #question-box {
     animation-name: slide-from-right;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
@@ -33,22 +45,28 @@
 }
 
 #correct-answer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin-top: 1em;
+
     animation-name: fade-in;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-/* spotlight responder */
+/* responder info */
 
-.spotlight-responder-appear, .spotlight-responder-enter {
+.responder-info-box-anim-appear, 
+.responder-info-box-anim-enter {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.spotlight-responder-exit {
+.responder-info-box-anim-exit {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;

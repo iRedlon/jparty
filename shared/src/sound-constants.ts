@@ -1,5 +1,5 @@
 
-import { SessionAnnouncement } from "./socket-constants";
+import { SessionAnnouncement } from "./session-constants";
 import { TriviaClueDecision } from "./trivia-game-constants";
 
 // this estimate is quite generous. the client will always tell the server to cancel the timeout early once its utterance is complete anyway
@@ -34,6 +34,7 @@ export enum VoiceType {
 export enum VoiceLineType {
     Announcement,
     PromptClueSelection,
+    ReadClueSelection,
     ReadClue,
     RevealClueDecision,
     DisplayCorrectAnswer
@@ -54,9 +55,6 @@ export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, strin
         `Welcome to j-party! Start us off ${VoiceLineVariable.ClueSelectorName}.`,
         `Welcome to j-party! Get us started ${VoiceLineVariable.ClueSelectorName}.`,
         `The game is starting! ${VoiceLineVariable.ClueSelectorName} will start the round off.`
-    ],
-    [SessionAnnouncement.SelectClue]: [
-        `"${VoiceLineVariable.CategoryName}" for $${VoiceLineVariable.ClueValue}`
     ],
     [SessionAnnouncement.ClueBonusWager]: [
         `That's a bonus! ${VoiceLineVariable.ClueSelectorName} gets to wager!`, 
@@ -103,6 +101,8 @@ export const PROMPT_CLUE_SELECTION_VOICE_LINES = [
     `Go ahead ${VoiceLineVariable.ClueSelectorName}`,
     `Where are we headed ${VoiceLineVariable.ClueSelectorName}?`
 ];
+
+export const READ_CLUE_SELECTION_VOICE_LINE = `${VoiceLineVariable.CategoryName} for ${VoiceLineVariable.ClueValue}`;
 
 export const CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES = [
     `${VoiceLineVariable.ClueSelectorName} cleared that whole category, nice work!`,

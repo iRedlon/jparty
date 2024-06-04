@@ -600,10 +600,14 @@ export class Session {
         currentRound.setClueCompleted(categoryIndex, clueIndex);
     }
 
-    readClue() {
-        this.state = SessionState.ReadingClue;
+    readClueSelection() {
+        this.state = SessionState.ReadingClueSelection;
         this.spotlightResponderID = "";
         this.setPlayersIdle();
+    }
+
+    readClue() {
+        this.state = SessionState.ReadingClue;
     }
 
     displayTossupClue() {

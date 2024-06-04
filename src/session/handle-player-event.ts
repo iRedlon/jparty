@@ -106,6 +106,13 @@ function promptResponse(sessionName: string, responseType: PlayerResponseType, .
     emitStateUpdate(sessionName);
 }
 
+function readClueSelection(sessionName: string) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+}
+
 function readClue(sessionName: string) {
     let session = getSession(sessionName);
     if (!session) {
@@ -197,6 +204,7 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
     }
 
     session.selectClue(categoryIndex, clueIndex);
+    io.in(sessionName).emit(ServerSocket.SelectClue, categoryIndex, clueIndex);
 
     const handleSelectClueInternal = () => {
         let session = getSession(sessionName);
@@ -204,7 +212,7 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
             return;
         }
 
-        io.in(sessionName).emit(ServerSocket.SelectClue, categoryIndex, clueIndex);
+        stopTimeout(sessionName, SessionTimeout.ReadingClueSelection);
 
         switch (session.getCurrentClue()?.bonus) {
             case TriviaClueBonus.Wager:
@@ -255,9 +263,15 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
 
     const clue = session.getCurrentClue();
 
-    // the key piece of information in a "select clue" announcement is the clue value. if our clue doesn't have a value... then no need to announce it!
-    if (clue && clue.value > 0) {
-        showAnnouncement(sessionName, SessionAnnouncement.SelectClue, handleSelectClueInternal);
+    // the clue selector has the slight advantage of knowing the category and clue value before everyone else... so we read it out to make sure everyone's on the same page
+    // if this isn't a tossup clue, then this info will be announced to the players some other way (i.e. with a "clue bonus" announcement)
+    if (clue && !clue.bonus) {
+        session.readClueSelection();
+        playVoiceLine(sessionName, VoiceLineType.ReadClueSelection);
+
+        emitStateUpdate(sessionName);
+
+        startTimeout(sessionName, SessionTimeout.ReadingClueSelection, handleSelectClueInternal);
     } else {
         handleSelectClueInternal();
     }

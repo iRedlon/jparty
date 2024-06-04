@@ -8,7 +8,7 @@ import { formatSpokenVoiceLine } from "../misc/text-utils.js";
 import {
     ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES, AttemptReconnectResult, CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES,
     ClientSocket, ClientSocketCallback, DISPLAY_CORRECT_ANSWER_VOICE_LINES,
-    getEnumSize, getRandomChoice, HostServerSocket, PROMPT_CLUE_SELECTION_VOICE_LINES,
+    getEnumSize, getRandomChoice, HostServerSocket, PROMPT_CLUE_SELECTION_VOICE_LINES, READ_CLUE_SELECTION_VOICE_LINE,
     ServerSocket, ServerSocketMessage, SessionAnnouncement, SESSION_ANNOUNCEMENT_VOICE_LINES, SessionState, SessionTimeout,
     SoundEffect, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable
 } from "jparty-shared";
@@ -326,6 +326,11 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                     playSoundEffect(sessionName, SoundEffect.Applause);
                     voiceLine = getRandomChoice(CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES);
                 }
+            }
+            break;
+        case VoiceLineType.ReadClueSelection:
+            {
+                voiceLine = READ_CLUE_SELECTION_VOICE_LINE;
             }
             break;
         case VoiceLineType.ReadClue:

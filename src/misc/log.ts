@@ -25,8 +25,8 @@ const NORMAL_LOG_LEVEL_TYPES = [
 
 const DEBUG_LOG_LEVEL_TYPES = NORMAL_LOG_LEVEL_TYPES.concat([
     DebugLogType.GameGeneration,
-    DebugLogType.ClueDecision,
-    DebugLogType.Email,
+    // DebugLogType.ClueDecision,
+    // DebugLogType.Email,
     // DebugLogType.Voice
 ]);
 

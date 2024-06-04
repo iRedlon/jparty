@@ -4,14 +4,6 @@ import { FeedbackType, SessionAnnouncement, SessionTimeout, TriviaClueBonus, Tri
 export const BACKGROUND_COLOR = "#0d47a1";
 export const BACKGROUND_ACCENT_COLOR = "#00008b";
 
-export const TIMEOUT_DESCRIPTIONS: Record<SessionTimeout, string> = {
-    [SessionTimeout.Announcement]: "reading announcement...",
-    [SessionTimeout.ReadingClue]: "reading clue...",
-    [SessionTimeout.BuzzWindow]: "",
-    [SessionTimeout.ResponseWindow]: "",
-    [SessionTimeout.RevealClueDecision]: "reading clue decision..."
-}
-
 export const TRIVIA_ROUND_TYPE_DISPLAY_NAMES: Record<TriviaRoundType, string> = {
     [TriviaRoundType.Standard]: "Standard"
 }
@@ -36,7 +28,6 @@ export const TRIVIA_CLUE_BONUS_DESCRIPTIONS: Record<TriviaClueBonus, string> = {
 
 export const SESSION_ANNOUNCEMENT_MESSAGES: Record<SessionAnnouncement, string> = {
     [SessionAnnouncement.StartGame]: "The game is starting!",
-    [SessionAnnouncement.SelectClue]: "A clue was selected!",
     [SessionAnnouncement.ClueBonusWager]: "Clue bonus: wager!",
     [SessionAnnouncement.ClueBonusAllWager]: "Clue bonus: all wager!",
     [SessionAnnouncement.ClueBonusAllPlay]: "Clue bonus: all play!",

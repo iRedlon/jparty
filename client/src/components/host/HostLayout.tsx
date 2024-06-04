@@ -41,6 +41,7 @@ function getGameComponentState(sessionState: SessionState) {
             {
                 return GameComponentState.Board;
             }
+        case SessionState.ReadingClueSelection:
         case SessionState.ReadingClue:
         case SessionState.ClueTossup:
         case SessionState.ClueResponse:
@@ -61,7 +62,7 @@ function getGameComponentState(sessionState: SessionState) {
 }
 
 export default function HostLayout() {
-    const stateTransitionRef = useRef(null);
+    const stateChangeRef = useRef(null);
 
     const context = useContext(LayoutContext);
     const [isMuted, setIsMuted] = useState(true);
@@ -147,7 +148,7 @@ export default function HostLayout() {
         const triviaCategory = context.triviaRound.categories[context.categoryIndex];
         const triviaClue = triviaCategory.clues[context.clueIndex];
 
-        if ((context.sessionState === SessionState.ReadingClue) || (context.sessionState === SessionState.ClueTossup)) {
+        if ((context.sessionState === SessionState.ReadingClueSelection) || (context.sessionState === SessionState.ReadingClue) || (context.sessionState === SessionState.ClueTossup)) {
             return <HostClue triviaCategory={triviaCategory} triviaClue={triviaClue} />;
         }
 
@@ -182,8 +183,10 @@ export default function HostLayout() {
             <Flex height={"100vh"} width={"100vw"} alignContent={"center"} justifyContent={"center"}>
                 <Center zIndex={9}>
                     <SwitchTransition>
-                        <CSSTransition key={getGameComponentState(context.sessionState)} nodeRef={stateTransitionRef} timeout={1000} classNames={"state"} appear mountOnEnter unmountOnExit>
-                            <Box ref={stateTransitionRef}>
+                        <CSSTransition key={getGameComponentState(context.sessionState)} nodeRef={stateChangeRef} timeout={1000} classNames={"state-change"}
+                            appear mountOnEnter unmountOnExit>
+
+                            <Box ref={stateChangeRef}>
                                 {getGameComponent()}
                             </Box>
                         </CSSTransition>

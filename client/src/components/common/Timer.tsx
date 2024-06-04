@@ -2,7 +2,6 @@
 import { LayoutContext } from "./Layout";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
-import { TIMEOUT_DESCRIPTIONS } from "../../misc/ui-constants";
 
 import { Box, Text } from "@chakra-ui/react";
 import { ServerSocket, SessionTimeout } from "jparty-shared";
@@ -57,8 +56,6 @@ export default function Timer() {
         return <></>;
     }
 
-    const timeoutDescription = TIMEOUT_DESCRIPTIONS[currentTimeout];
-
     if (context.isPlayer) {
         return (
             <Box position={"fixed"} top={"1em"} left={"1em"} height={"3em"} width={"3em"}
@@ -76,13 +73,6 @@ export default function Timer() {
                 <Box display={"flex"} justifyContent={"center"} alignItems={"center"} width={"100%"} height={"100%"}>
                     <Text fontSize={"4em"}>{getTimeRemainingSec()}</Text>
                 </Box>
-                {
-                    timeoutDescription && (
-                        <Box position={"relative"} bottom={"-0.5em"} outline={"black solid 3px"} boxShadow={"7px 7px black"} backgroundColor={"white"} padding={"0.25em"}>
-                            <Text>{timeoutDescription}</Text>
-                        </Box>
-                    )
-                }
             </Box>
         );
     }

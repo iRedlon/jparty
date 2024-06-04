@@ -5,6 +5,7 @@ import { TriviaClueDecision } from "./trivia-game-constants";
 export enum SessionState {
     Lobby,
     ClueSelection,
+    ReadingClueSelection,
     ReadingClue,
     ClueTossup,
     ClueResponse,
@@ -16,10 +17,22 @@ export enum SessionState {
 
 export enum SessionTimeout {
     Announcement,
+    ReadingClueSelection,
     ReadingClue,
     BuzzWindow,
     ResponseWindow,
     RevealClueDecision
+}
+
+export enum SessionAnnouncement {
+    StartGame,
+    ClueBonusWager,
+    ClueBonusAllWager,
+    ClueBonusAllPlay,
+    StartRound,
+    StartFinalRound,
+    FinalClue,
+    GameOver
 }
 
 export enum AttemptReconnectResult {

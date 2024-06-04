@@ -61,6 +61,11 @@ function handleUpdateVoiceDuration(socket: Socket, sessionName: string, duration
     }
 
     switch (session.state) {
+        case SessionState.ReadingClueSelection:
+            {
+                session.restartTimeout(SessionTimeout.ReadingClueSelection, durationSec * 1000);
+            }
+            break;
         case SessionState.ReadingClue:
             {
                 session.restartTimeout(SessionTimeout.ReadingClue, durationSec * 1000);

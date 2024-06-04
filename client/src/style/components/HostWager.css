@@ -1,33 +1,33 @@
-/* logo box */
+/* category box */
 
-.state-change-appear #logo-box, 
-.state-enter #logo-box {
-    animation-name: slide-from-left;
+.state-change-appear #category-box, 
+.state-change-enter #category-box {
+    animation-name: slide-from-top;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.state-change-exit #logo-box {
-    animation-name: slide-from-left;
+.state-change-exit #category-box {
+    animation-name: slide-from-top;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-direction: reverse;
     animation-fill-mode: both;
 }
 
-/* players joined box */
+/* responder info */
 
-.state-change-appear #players-joined-box, 
-.state-enter #players-joined-box {
-    animation-name: slide-from-right;
+.state-change-appear #responder-info-box, 
+.state-change-enter #responder-info-box {
+    animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.state-change-exit #players-joined-box {
-    animation-name: slide-from-right;
+.state-change-exit #responder-info-box {
+    animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-direction: reverse;

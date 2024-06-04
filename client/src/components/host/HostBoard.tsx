@@ -24,7 +24,9 @@ export default function HostBoard({ triviaRound }: HostBoardProps) {
     const boardPanelHeight = `${100 / numPanels}vh`;
     const boardPanelWidth = `${100 / numCategories}vw`;
 
+    // CapitalCase cause this is just a mini-sized functional component. should this go into its own file? the jury is out...
     const BoardPanel = (content: any, categoryIndex: number, panelIndex: number) => {
+        // give every other category column a different class so they can be animated differently
         const isEvenCategoryIndex = (categoryIndex % 2) === 0;
 
         return (
