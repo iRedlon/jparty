@@ -8,6 +8,19 @@ import { AbsoluteCenter, Box, Button, Select, Stack, TabPanel } from "@chakra-ui
 import { getEnumKeys, SessionState } from "jparty-shared";
 import { useContext } from "react";
 
+export function DebugSessionStateSelect(sessionState: SessionState) {
+    return (
+        <Select
+            value={sessionState} _hover={{ opacity: 1 }}
+            onChange={(e) => handleDebugCommand(DebugCommand.UpdateSessionState, parseInt(e.target.value))}>
+            {getEnumKeys(SessionState).map((_) => {
+                const state: SessionState = parseInt(_);
+                return (<option key={state} value={state}>{SessionState[state]}</option>);
+            })}
+        </Select>
+    );
+}
+
 interface MenuPanel_DebugProps {
     customDebugElement?: JSX.Element
 }
@@ -31,14 +44,7 @@ export default function MenuPanel_Debug({ customDebugElement }: MenuPanel_DebugP
 
                         <Button onClick={() => handleDebugCommand(DebugCommand.PopulatePlaceholderData)}>Populate placeholder data</Button>
 
-                        <Select
-                            value={context.sessionState} _hover={{ opacity: 1 }}
-                            onChange={(e) => handleDebugCommand(DebugCommand.UpdateSessionState, parseInt(e.target.value))}>
-                            {getEnumKeys(SessionState).map((_) => {
-                                const state: SessionState = parseInt(_);
-                                return (<option key={state} value={state}>{SessionState[state]}</option>);
-                            })}
-                        </Select>
+                        {DebugSessionStateSelect(context.sessionState)}
 
                         <Button onClick={() => handleDebugCommand(DebugCommand.StartTimeout)}>Start timeout</Button>
                         <Button onClick={() => handleDebugCommand(DebugCommand.ShowAnnouncement)}>Show announcement</Button>

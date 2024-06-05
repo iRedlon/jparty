@@ -16,7 +16,7 @@ import { socket } from "../../misc/socket";
 import { playOpenAIVoice, playSoundEffect, playSpeechSynthesisVoice } from "../../misc/sound-fx";
 
 import { Box, Center, Flex } from "@chakra-ui/react";
-import { HostServerSocket, SessionState, SoundEffect, VoiceType } from "jparty-shared";
+import { HostServerSocket, ServerSocket, SessionAnnouncement, SessionState, SoundEffect, VoiceType } from "jparty-shared";
 import { useContext, useEffect, useRef, useState } from "react";
 import { GoMute } from "react-icons/go";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
@@ -24,6 +24,7 @@ import { CSSTransition, SwitchTransition } from "react-transition-group";
 // a less specific version of session state. this enum stores which game component the host is currently displaying
 // i.e. "clue tossup" and "clue response" are different session states but they both show the same game component
 enum GameComponentState {
+    Announcement,
     Lobby,
     Board,
     Clue,
@@ -31,7 +32,10 @@ enum GameComponentState {
     GameOver
 }
 
-function getGameComponentState(sessionState: SessionState) {
+function getGameComponentState(sessionState: SessionState, announcement?: SessionAnnouncement) {
+    if (announcement !== undefined) {
+        return GameComponentState.Announcement;
+    }
     switch (sessionState) {
         case SessionState.Lobby:
             {
@@ -66,24 +70,34 @@ export default function HostLayout() {
 
     const context = useContext(LayoutContext);
     const [isMuted, setIsMuted] = useState(true);
+    const [announcement, setAnnouncement] = useState<SessionAnnouncement | undefined>();
+    const [queuedToHideAnnouncement, setQueuedToHideAnnouncement] = useState(false);
     const [numSubmittedResponders, setNumSubmittedResponders] = useState(0);
     const [numResponders, setNumResponders] = useState(0);
     const [displayCorrectAnswer, setDisplayCorrectAnswer] = useState(false);
 
     useEffect(() => {
+        socket.on(ServerSocket.ShowAnnouncement, handleShowAnnouncement);
+        socket.on(ServerSocket.HideAnnouncement, handleHideAnnouncement);
         socket.on(HostServerSocket.PlayVoice, handlePlayVoice)
         socket.on(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         socket.on(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
+        addMockSocketEventHandler(ServerSocket.ShowAnnouncement, handleShowAnnouncement);
+        addMockSocketEventHandler(ServerSocket.HideAnnouncement, handleHideAnnouncement);
         addMockSocketEventHandler(HostServerSocket.PlayVoice, handlePlayVoice);
         addMockSocketEventHandler(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         addMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
         return () => {
+            socket.off(ServerSocket.ShowAnnouncement, handleShowAnnouncement);
+            socket.off(ServerSocket.HideAnnouncement, handleHideAnnouncement);
             socket.off(HostServerSocket.PlayVoice, handlePlayVoice)
             socket.off(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
             socket.off(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
+            removeMockSocketEventHandler(ServerSocket.ShowAnnouncement, handleShowAnnouncement);
+            removeMockSocketEventHandler(ServerSocket.HideAnnouncement, handleHideAnnouncement);
             removeMockSocketEventHandler(HostServerSocket.PlayVoice, handlePlayVoice);
             removeMockSocketEventHandler(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
             removeMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
@@ -95,7 +109,25 @@ export default function HostLayout() {
         if (context.sessionState > SessionState.Lobby) {
             playSoundEffect(SoundEffect.GameMusic);
         }
+
+        if (queuedToHideAnnouncement) {
+            setAnnouncement(undefined);
+        }
     }, [context.sessionState]);
+
+    const handleShowAnnouncement = (announcement: SessionAnnouncement) => {
+        setAnnouncement(announcement);
+        setQueuedToHideAnnouncement(false);
+    }
+
+    const handleHideAnnouncement = (forceHide: boolean) => {
+        if (forceHide) {
+            setAnnouncement(undefined);
+        }
+        else {
+            setQueuedToHideAnnouncement(true);
+        }
+    }
 
     const handlePlayVoice = (voiceType: VoiceType, voiceLine: string, audioBase64?: string) => {
         if (audioBase64) {
@@ -129,6 +161,10 @@ export default function HostLayout() {
     }
 
     const getGameComponent = () => {
+        if (announcement !== undefined) {
+            return <Announcement announcement={announcement} />;
+        }
+
         if (context.sessionState === SessionState.Lobby) {
             return <HostLobby />;
         }
@@ -175,7 +211,6 @@ export default function HostLayout() {
                 {isMuted && (<GoMute size={"4em"} color={"white"} />)}
             </Box>
 
-            <Announcement />
             <Timer />
             <ServerMessageAlert />
             <HostMenu />
@@ -183,7 +218,7 @@ export default function HostLayout() {
             <Flex height={"100vh"} width={"100vw"} alignContent={"center"} justifyContent={"center"}>
                 <Center zIndex={9}>
                     <SwitchTransition>
-                        <CSSTransition key={getGameComponentState(context.sessionState)} nodeRef={stateChangeRef} timeout={1000} classNames={"state-change"}
+                        <CSSTransition key={getGameComponentState(context.sessionState, announcement)} nodeRef={stateChangeRef} timeout={1000} classNames={"state-change"}
                             appear mountOnEnter unmountOnExit>
 
                             <Box ref={stateChangeRef}>

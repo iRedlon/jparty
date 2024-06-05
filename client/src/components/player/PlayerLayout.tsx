@@ -135,7 +135,7 @@ export default function PlayerLayout() {
 
     return (
         <Box>
-            <Announcement />
+            {/* <Announcement /> */}
             <Timer />
             <ServerMessageAlert />
             <PlayerMenu checkScoreboardButton={checkScoreboardButton} />

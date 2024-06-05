@@ -61,7 +61,7 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
                 }
         }
 
-        if (spotlightResponder.clueDecisionInfo) {
+        if (spotlightResponder.clueDecisionInfo && context.sessionState === SessionState.ReadingClueDecision) {
             showClueDecision = context.debugMode || (spotlightResponder.clueDecisionInfo.clue.id === triviaClue.id);
         }
 
@@ -77,7 +77,7 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
 
             <Box margin={"0.25em"} />
 
-            <Box height={"50vh"} width={"50vw"}>
+            <Box height={"50vh"} width={"50vw"} marginLeft={"auto"} marginRight={"auto"}>
                 <CSSTransition nodeRef={questionBoxRef} in={showQuestion} timeout={1000} classNames={"question-box-anim"}
                     appear mountOnEnter unmountOnExit>
 
@@ -106,7 +106,7 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
                     appear mountOnEnter unmountOnExit>
 
                     <Box ref={responderInfoRef}>
-                        <ResponderInfo triviaClue={triviaClue} responder={spotlightResponder} responseType={PlayerResponseType.Clue}
+                        <ResponderInfo triviaClue={triviaClue} responder={spotlightResponder} responseType={PlayerResponseType.Clue} showClueDecision={showClueDecision}
                             numSubmittedResponders={numSubmittedResponders} numResponders={numResponders} />
                     </Box>
                 </CSSTransition>

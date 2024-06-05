@@ -28,7 +28,7 @@ export default function CategoryBox({ triviaCategory, triviaClue, wager, minWage
         clueValueString = `for $(${minWager} - ${maxWager})`;
     }
     else if (!isAllWagerBonus) {
-        let clueValue = (isWagerBonus && wager) ? wager : triviaClue.value;
+        let clueValue = (isWagerBonus && wager !== undefined) ? wager : triviaClue.value;
         clueValueString = `for ${formatDollarValue(clueValue)}`;
     }
 

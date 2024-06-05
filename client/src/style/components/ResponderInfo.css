@@ -1,0 +1,15 @@
+.responder-info-state-change-appear, 
+.responder-info-state-change-enter {
+    animation-name: slide-from-bottom;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.responder-info-state-change-exit {
+    animation-name: slide-from-bottom;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}

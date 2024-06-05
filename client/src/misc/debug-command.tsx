@@ -25,6 +25,7 @@ function getPlaceholderSessionPlayers(triviaCategory?: TriviaCategory, triviaClu
 
     if (triviaCategory && triviaClue) {
         player1.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.id, triviaCategory.name, triviaClue, "romance dawn", TriviaClueDecision.Correct, 200, false);
+        player1.responses[PlayerResponseType.Wager] = 1234;
         player1.minWager = 0;
         player1.maxWager = 10000;
         // player2.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "romance dawn", TriviaClueDecision.Incorrect, 400, false);

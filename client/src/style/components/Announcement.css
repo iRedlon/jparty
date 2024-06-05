@@ -1,10 +1,10 @@
-@keyframes move-x-axis {
+/* @keyframes move-x-axis {
     from {
         left: 0;
     }
 
     to {
-        left: calc(100% - 30em);
+        left: calc(100% - 20em);
     }
 }
 
@@ -18,6 +18,45 @@
     }
 }
 
-#announcement-box {
-    animation: move-x-axis 3.25s linear 0s infinite alternate, move-y-axis 4s linear 0s infinite alternate;
+.dvd-anim {
+    animation-name: move-x-axis, move-y-axis;
+    animation-duration: 3.25s, 4s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+} */
+
+.announcement-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#desktop-announcement-box {
+    height: 30em;
+    width: 30em;
+    padding: 5em;
+}
+
+#mobile-announcement-box {
+    height: 50%;
+    width: 75%;
+    margin-top: 10%;
+    padding: 1em;
+}
+
+.state-change-appear .announcement-box,
+.state-change-enter .announcement-box {
+    animation-name: slide-from-left;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.state-change-exit .announcement-box {
+    animation-name: slide-from-right;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+    animation-direction: reverse;
 }

@@ -1,12 +1,12 @@
 
 import GameSettings from "./GameSettings";
 import { LayoutContext } from "../common/Layout";
-import MenuPanel_Debug from "../common/MenuPanel_Debug";
+import MenuPanel_Debug, { DebugSessionStateSelect } from "../common/MenuPanel_Debug";
 import MenuPanel_Feedback from "../common/MenuPanel_Feedback";
 import MenuPanel_Settings from "../common/MenuPanel_Settings";
 
 import {
-    Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay,
+    Box, Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay,
     Tabs, TabList, TabPanels, Tab, TabPanel, useDisclosure
 } from "@chakra-ui/react";
 import { SessionState } from "jparty-shared";
@@ -36,9 +36,21 @@ export default function HostMenu() {
 
     return (
         <>
-            <Button onClick={onOpen} _hover={{ opacity: 1 }} position={"fixed"} zIndex={zIndex} top={"1em"} right={"1em"} opacity={fixedButtonOpacity}>
+            <Button onClick={onOpen} _hover={{ opacity: 1 }} zIndex={zIndex} opacity={fixedButtonOpacity}
+                position={"fixed"} top={"1em"} right={"1em"}>
+
                 Menu
             </Button>
+
+            {
+                context.debugMode && (
+                    <Box _hover={{ opacity: 1 }} backgroundColor={"white"} zIndex={zIndex} opacity={fixedButtonOpacity}
+                        position={"fixed"} top={"4em"} right={"1em"}>
+
+                        {DebugSessionStateSelect(context.sessionState)}
+                    </Box>
+                )
+            }
 
             <Modal motionPreset={"none"} isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay />

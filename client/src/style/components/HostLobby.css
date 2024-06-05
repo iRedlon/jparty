@@ -1,7 +1,7 @@
 /* logo box */
 
 .state-change-appear #logo-box, 
-.state-enter #logo-box {
+.state-change-enter #logo-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
@@ -19,10 +19,10 @@
 /* players joined box */
 
 .state-change-appear #players-joined-box, 
-.state-enter #players-joined-box {
+.state-change-enter #players-joined-box {
     animation-name: slide-from-right;
     animation-duration: 1s;
-    animation-timing-function: ease-in-out;
+    animation-timing-function: ease-out;
     animation-fill-mode: both;
 }
 

@@ -1,40 +1,50 @@
 
+import "../../style/components/ResponderInfo.css";
+
 import { LayoutContext } from "../common/Layout";
 import { formatDollarValue } from "../../misc/format";
 
 import { Box, Heading, Stack } from "@chakra-ui/react";
-import { Player, PlayerResponseType, SessionState, TriviaClue, TriviaClueBonus } from "jparty-shared";
-import { useContext } from "react";
+import { Player, PlayerResponseType, SessionState, TriviaClue } from "jparty-shared";
+import { useContext, useRef } from "react";
+import { CSSTransition, SwitchTransition } from "react-transition-group";
 
 interface ResponderInfoProps {
     triviaClue: TriviaClue,
     responder: Player | undefined,
     responseType: PlayerResponseType,
+    showClueDecision?: boolean,
     numSubmittedResponders?: number,
     numResponders?: number
 }
 
 // todo: give this variable height and width so it can be used in other places (i.e. the game over screen)
-export default function ResponderInfo({ triviaClue, responder, responseType, numSubmittedResponders, numResponders }: ResponderInfoProps) {
+export default function ResponderInfo({ triviaClue, responder, responseType, showClueDecision, numSubmittedResponders, numResponders }: ResponderInfoProps) {
+    const responderInfoStateChangeRef = useRef(null);
+
     const context = useContext(LayoutContext);
 
     const isWagerResponse = context.sessionState === SessionState.WagerResponse;
-    const isAllWagerResponse = isWagerResponse && (triviaClue.bonus === TriviaClueBonus.AllWager) && (numSubmittedResponders !== undefined) && (numResponders !== undefined);
-
     const isClueResponse = context.sessionState === SessionState.ClueResponse;
-    const isAllPlayResponse = isClueResponse && (triviaClue.bonus === TriviaClueBonus.AllPlay) && (numSubmittedResponders !== undefined) && (numResponders !== undefined);
+    const isResponse = isWagerResponse || isClueResponse;
 
-    // todo: switch transition here to go between all response info box and individual reponse info box
-    if (isAllWagerResponse || isAllPlayResponse) {
-        return (
+    const showSubmittedResponders = !triviaClue.isTossupClue() && isResponse;
+
+    // this should be enum-ified conceptually, but the state can be static values as well as player IDs which are dynamic so *shrug*
+    let responderInfoState: any = "none";
+    let responderInfoBox = <></>;
+
+    if (showSubmittedResponders) {
+        responderInfoState = isWagerResponse ? "submitted-wager-responses" : "submitted-clue-responses";
+        responderInfoBox = (
             <Box id={"responder-info-box"} className={"box"} marginLeft={"auto"} marginRight={"auto"}
                 padding={"1em"} height={"5em"} minWidth={"25vw"} display={"flex"} justifyContent={"center"} alignItems={"center"}>
 
-                <Heading size={"lg"} fontFamily={"clue"}>{numSubmittedResponders}/{numResponders} responders submitted</Heading>
+                <Heading size={"lg"} fontFamily={"clue"}>{numSubmittedResponders}/{numResponders} players submitted</Heading>
             </Box>
-        )
+        );
     }
-    else if ((isWagerResponse || isClueResponse) && responder) {
+    else if (responder) {
         let response = "";
 
         if (responseType === PlayerResponseType.Wager) {
@@ -44,16 +54,27 @@ export default function ResponderInfo({ triviaClue, responder, responseType, num
             response = responder.responses[responseType];
         }
 
-        return (
+        // label our current state with this responder's client ID. this way the switch transition knows to animate between one responder to another
+        responderInfoState = responder.clientID;
+
+        let signatureBox = <Box className={"box"} marginRight={"0.5em"} height={"7em"} width={"7em"} display={"flex"} justifyContent={"center"} alignItems={"center"} />;
+
+        let clueDecisionBox = (
+            <Box className={"box"} marginRight={"0.5em"} height={"7em"} width={"7em"} display={"flex"} justifyContent={"center"} alignItems={"center"}>
+                Correct for $200
+            </Box>
+        );
+
+        responderInfoBox = (
             <Stack id={"responder-info-box"} direction={"row"} justifyContent={"center"}>
                 {/* signature box */}
-                <Box className={"box"} marginRight={"0.5em"} height={"7em"} width={"7em"} />
+                {showClueDecision ? clueDecisionBox : signatureBox}
 
                 {/* name and response box */}
                 <Box className={"box"} padding={"1em"} width={"25vw"} height={"7em"}>
                     {
                         responder && (
-                            <Stack direction={"column"} alignItems={"stretch"} paddingRight={"1em"} overflow={"hidden"}>
+                            <Stack direction={"column"} paddingRight={"1em"} overflow={"hidden"}>
                                 <Box textAlign={"left"}>
                                     <b>{responder.name.toUpperCase()}</b>
                                 </Box>
@@ -69,5 +90,15 @@ export default function ResponderInfo({ triviaClue, responder, responseType, num
         );
     }
 
-    return <></>;
+    return (
+        <SwitchTransition>
+            <CSSTransition key={responderInfoState} nodeRef={responderInfoStateChangeRef} timeout={1000} classNames={"responder-info-state-change"}
+                appear mountOnEnter unmountOnExit>
+
+                <Box ref={responderInfoStateChangeRef}>
+                    {responderInfoBox}
+                </Box>
+            </CSSTransition>
+        </SwitchTransition>
+    );
 }
