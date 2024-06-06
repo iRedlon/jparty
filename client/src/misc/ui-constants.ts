@@ -1,5 +1,5 @@
 
-import { FeedbackType, SessionAnnouncement, SessionTimeout, TriviaClueBonus, TriviaRoundType } from "jparty-shared";
+import { FeedbackType, SessionAnnouncement, TriviaClueBonus, TriviaRoundType } from "jparty-shared";
 
 export const BACKGROUND_COLOR = "#0d47a1";
 export const BACKGROUND_ACCENT_COLOR = "#00008b";

@@ -1,0 +1,51 @@
+/* game over box */
+.state-change-appear #game-over-box, 
+.state-change-enter #game-over-box {
+    animation-name: slide-from-top;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.state-change-exit #game-over-box {
+    animation-name: slide-from-top;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}
+
+/* scoreboard player box */
+.state-change-appear .scoreboard-player-box.even, 
+.state-change-enter .scoreboard-player-box.even {
+    animation-name: slide-from-left;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.state-change-appear .scoreboard-player-box.odd, 
+.state-change-enter .scoreboard-player-box.odd {
+    animation-name: slide-from-right;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.state-change-exit 
+.scoreboard-player-box.even {
+    animation-name: slide-from-left;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}
+
+.state-change-exit 
+.scoreboard-player-box.odd {
+    animation-name: slide-from-right;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}

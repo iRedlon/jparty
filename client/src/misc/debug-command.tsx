@@ -23,8 +23,12 @@ function getPlaceholderSessionPlayers(triviaCategory?: TriviaCategory, triviaClu
     let player5 = new Player("", "sanji");
     let player6 = new Player("", "chopper");
 
+    player1.score = 10000;
+    player2.score = 2353;
+    player3.score = -2000;
+
     if (triviaCategory && triviaClue) {
-        player1.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.id, triviaCategory.name, triviaClue, "romance dawn", TriviaClueDecision.Correct, 200, false);
+        player1.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.id, triviaCategory.name, triviaClue, "romance dawn", TriviaClueDecision.Incorrect, 14132, false);
         player1.responses[PlayerResponseType.Wager] = 1234;
         player1.minWager = 0;
         player1.maxWager = 10000;
@@ -37,7 +41,8 @@ function getPlaceholderSessionPlayers(triviaCategory?: TriviaCategory, triviaClu
 
     player1.responses[PlayerResponseType.Clue] = "shearing a sheep in the place at the time at the word word"
 
-    return { "socket1": player1, "socket2": player2, "socket3": player3, "socket4": player4, "socket5": player5, "socket6": player6 };
+    return { "socket1": player1, "sockt2": player2, "socket3": player3, "socket4": player4, "socket5": player5, "socket6": player6 };
+    return { "socket1": player1, "socket2": player2, "socket3": player3, };
 }
 
 export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
@@ -143,7 +148,7 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
             {
                 mockSocket.dispatchEvent(new CustomEvent(ServerSocket.StartTimeout, {
                     detail: {
-                        params: [SessionTimeout.Announcement, 60000]
+                        params: [SessionTimeout.Announcement, 6000]
                     }
                 }));
             }

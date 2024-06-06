@@ -1,3 +1,18 @@
+.show-clue-decision-change-enter {
+    animation-name: fade-in;
+    animation-duration: 0.5s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.show-clue-decision-change-exit {
+    animation-name: fade-in;
+    animation-duration: 0.5s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}
+
 .responder-info-state-change-appear, 
 .responder-info-state-change-enter {
     animation-name: slide-from-bottom;

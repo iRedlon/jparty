@@ -22,7 +22,7 @@
 .state-change-enter #players-joined-box {
     animation-name: slide-from-right;
     animation-duration: 1s;
-    animation-timing-function: ease-out;
+    animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 

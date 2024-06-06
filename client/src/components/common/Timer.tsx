@@ -1,15 +1,20 @@
 
+import "../../style/components/Timer.css";
+
 import { LayoutContext } from "./Layout";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
 
 import { Box, Text } from "@chakra-ui/react";
 import { ServerSocket, SessionTimeout } from "jparty-shared";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
+import { CSSTransition } from "react-transition-group";
 
 addMockSocketEventHandler
 
 export default function Timer() {
+    const timerRef = useRef(null);
+
     const context = useContext(LayoutContext);
     const [currentTimeout, setCurrentTimeout] = useState<SessionTimeout | undefined>();
     const [currentTimeoutEndTimeMs, setCurrentTimeoutEndTimeMs] = useState(0);
@@ -17,7 +22,7 @@ export default function Timer() {
 
     useEffect(() => {
         const interval = setInterval(() => setTimeMs(Date.now()), 500);
-        
+
         socket.on(ServerSocket.StartTimeout, handleStartTimeout);
         socket.on(ServerSocket.StopTimeout, handleStopTimeout);
 
@@ -45,35 +50,24 @@ export default function Timer() {
     const getTimeRemainingSec = () => {
         let timeRemainingSec = Math.round((currentTimeoutEndTimeMs - timeMs) / 1000);
 
-        if (timeRemainingSec <= 0) {
+        if ((currentTimeout !== undefined) && timeRemainingSec <= 0) {
             setCurrentTimeout(undefined);
         }
 
         return Math.max(timeRemainingSec, 0);
     }
 
-    if (currentTimeout === undefined) {
-        return <></>;
-    }
+    return (
+        <CSSTransition nodeRef={timerRef} in={currentTimeout !== undefined} timeout={500} classNames={"timer"}
+            appear mountOnEnter unmountOnExit>
 
-    if (context.isPlayer) {
-        return (
-            <Box position={"fixed"} top={"1em"} left={"1em"} height={"3em"} width={"3em"}
-                outline={"black solid 3px"} boxShadow={"5px 5px black"} backgroundColor={"white"} zIndex={"999"}>
-                <Box display={"flex"} justifyContent={"center"} alignItems={"center"} width={"100%"} height={"100%"}>
-                    <Text fontSize={"2em"}>{getTimeRemainingSec()}</Text>
+            <Box ref={timerRef}>
+                <Box id={"host-timer-wrapper"} className={"box"} zIndex={"999"}>
+                    <Box id={"host-timer"}>
+                        <Text fontFamily={"logo"} fontSize={"5em"}>{getTimeRemainingSec()}</Text>
+                    </Box>
                 </Box>
             </Box>
-        );
-    }
-    else {
-        return (
-            <Box position={"fixed"} top={"1em"} left={"1em"} height={"6em"} width={"6em"}
-                outline={"black solid 3px"} boxShadow={"7px 7px black"} backgroundColor={"white"} zIndex={"999"}>
-                <Box display={"flex"} justifyContent={"center"} alignItems={"center"} width={"100%"} height={"100%"}>
-                    <Text fontSize={"4em"}>{getTimeRemainingSec()}</Text>
-                </Box>
-            </Box>
-        );
-    }
+        </CSSTransition>
+    )
 }

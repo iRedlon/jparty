@@ -1,0 +1,31 @@
+#host-timer-wrapper {
+    position: fixed;
+    top: 1em;
+    left: 1em;
+    height: 6em;
+    width: 6em;
+}
+
+#host-timer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+}
+
+.timer-appear #host-timer-wrapper,
+.timer-enter #host-timer-wrapper {
+    animation-name: slide-from-left;
+    animation-duration: 0.5s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: both;
+}
+
+.timer-exit #host-timer-wrapper {
+    animation-name: slide-from-left;
+    animation-duration: 0.5s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+    animation-direction: reverse;
+}

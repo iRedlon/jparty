@@ -33,15 +33,13 @@ export default function CategoryBox({ triviaCategory, triviaClue, wager, minWage
     }
 
     return (
-        <>
-            <Box id={"category-box"} className={"box"} padding={"1em"} onClick={() => handleDebugCommand(DebugCommand.UpdateSessionState, SessionState.ClueSelection)}>
-                <Heading size={"lg"} fontFamily={"clue"}>{triviaCategory.name.toUpperCase()} {clueValueString}</Heading>
+        <Box id={"category-box"} className={"box"} padding={"1em"} onClick={() => handleDebugCommand(DebugCommand.UpdateSessionState, SessionState.ClueSelection)}>
+            <Heading size={"lg"} fontFamily={"clue"}>{triviaCategory.name.toUpperCase()} {clueValueString}</Heading>
 
-                <Heading size={"sm"} fontFamily={"clue"}>
-                    type: {TriviaCategoryType[triviaCategory.settings.type]}{"\t-\t"}
-                    year: {triviaClue.year}
-                </Heading>
-            </Box>
-        </>
+            <Heading size={"sm"} fontFamily={"clue"}>
+                type: {TriviaCategoryType[triviaCategory.settings.type]}{"\t-\t"}
+                year: {triviaClue.year}
+            </Heading>
+        </Box>
     )
 }
