@@ -6,7 +6,7 @@ import SpotlightResponder from "./ResponderInfo";
 import { LayoutContext } from "../common/Layout";
 
 import { Box } from "@chakra-ui/react";
-import { PlayerResponseType, SessionState, TriviaCategory, TriviaClue, TriviaClueBonus } from "jparty-shared";
+import { PlayerResponseType, TriviaCategory, TriviaClue } from "jparty-shared";
 import { useContext } from "react";
 
 interface HostWagerProps {

@@ -1,7 +1,7 @@
 
 import { LayoutContext } from "../common/Layout";
 import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
-import { formatDollarValue } from "../../misc/format";
+import { formatDollarValue } from "../../misc/client-utils";
 
 import { Box, Heading } from "@chakra-ui/react";
 import { SessionState, TriviaCategory, TriviaCategoryType, TriviaClue, TriviaClueBonus } from "jparty-shared";

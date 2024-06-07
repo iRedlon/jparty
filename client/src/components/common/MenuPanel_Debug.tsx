@@ -13,6 +13,7 @@ export function DebugSessionStateSelect(sessionState: SessionState) {
         <Select
             value={sessionState} _hover={{ opacity: 1 }}
             onChange={(e) => handleDebugCommand(DebugCommand.UpdateSessionState, parseInt(e.target.value))}>
+
             {getEnumKeys(SessionState).map((_) => {
                 const state: SessionState = parseInt(_);
                 return (<option key={state} value={state}>{SessionState[state]}</option>);

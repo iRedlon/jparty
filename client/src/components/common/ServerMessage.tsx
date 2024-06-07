@@ -1,11 +1,12 @@
 
-const SERVER_MESSAGE_LIFETIME_MS = 5000;
-
 import { socket } from "../../misc/socket";
+import { Layer } from "../../misc/ui-constants";
 
 import { Alert, AlertIcon, AlertDescription, CloseButton } from "@chakra-ui/react";
 import { ServerSocket, ServerSocketMessage } from "jparty-shared";
 import { useEffect, useState } from "react";
+
+const SERVER_MESSAGE_LIFETIME_MS = 5000;
 
 // a pop-up alert fixed to the bottom of the screen that displays a message sent directly from the server
 export default function ServerMessage() {
@@ -39,7 +40,7 @@ export default function ServerMessage() {
     }
 
     return (
-        <Alert status={serverMessage.isError ? "error" : "success"} position={"fixed"} bottom={0} justifyContent={"center"} zIndex={"9999"}>
+        <Alert status={serverMessage.isError ? "error" : "success"} position={"fixed"} bottom={0} justifyContent={"center"} zIndex={Layer.Fixed}>
             <AlertIcon />
             <AlertDescription>{serverMessage.message}</AlertDescription>
             <CloseButton onClick={hideServerMessage} position={"relative"} alignSelf={"flex-start"} right={-1} />

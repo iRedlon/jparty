@@ -1,14 +1,14 @@
 /* logo box */
 
-.state-change-appear #logo-box, 
-.state-change-enter #logo-box {
+.session-state-appear #logo-box, 
+.session-state-enter #logo-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.state-change-exit #logo-box {
+.session-state-exit #logo-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
@@ -18,15 +18,15 @@
 
 /* players joined box */
 
-.state-change-appear #players-joined-box, 
-.state-change-enter #players-joined-box {
+.session-state-appear #players-joined-box, 
+.session-state-enter #players-joined-box {
     animation-name: slide-from-right;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.state-change-exit #players-joined-box {
+.session-state-exit #players-joined-box {
     animation-name: slide-from-right;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;

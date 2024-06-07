@@ -6,7 +6,7 @@ import ResponderInfo from "./ResponderInfo";
 import { LayoutContext } from "../common/Layout";
 
 import { Box, Heading, Stack, Text } from "@chakra-ui/react";
-import { PlayerResponseType, SessionState, TriviaCategory, TriviaClue, TriviaClueBonus } from "jparty-shared";
+import { PlayerResponseType, SessionState, TriviaCategory, TriviaClue } from "jparty-shared";
 import { useContext, useRef } from "react";
 import { CSSTransition } from "react-transition-group";
 
@@ -40,6 +40,7 @@ interface HostClueProps {
 
 export default function HostClue({ triviaCategory, triviaClue, displayCorrectAnswer, numSubmittedResponders, numResponders }: HostClueProps) {
     const questionBoxRef = useRef(null);
+    const correctAnswerRef = useRef(null);
     const responderInfoRef = useRef(null);
 
     const context = useContext(LayoutContext);
@@ -86,15 +87,15 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
                             {triviaClue.question}
                         </Text>
 
-                        {
-                            displayCorrectAnswer && (
-                                <Box id={"correct-answer"}>
-                                    <Heading size={"lg"} fontFamily={"clue"}>
-                                        <i>"{triviaClue.answer}"</i>
-                                    </Heading>
-                                </Box>
-                            )
-                        }
+                        <CSSTransition nodeRef={correctAnswerRef} in={displayCorrectAnswer} timeout={500} classNames={"correct-answer-anim"}
+                            appear mountOnEnter unmountOnExit>
+
+                            <Box ref={correctAnswerRef} id={"correct-answer"}>
+                                <Heading size={"lg"} fontFamily={"clue"}>
+                                    <i>"{triviaClue.answer}"</i>
+                                </Heading>
+                            </Box>
+                        </CSSTransition>
                     </Box>
                 </CSSTransition>
             </Box>
@@ -102,7 +103,7 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
             <Box margin={"0.25em"} />
 
             <Box height={"7em"}>
-                <CSSTransition nodeRef={responderInfoRef} in={showSpotlightResponder} timeout={1000} classNames={"responder-info-box-anim"}
+                <CSSTransition nodeRef={responderInfoRef} in={showSpotlightResponder} timeout={1000} classNames={"responder-info-anim"}
                     appear mountOnEnter unmountOnExit>
 
                     <Box ref={responderInfoRef}>

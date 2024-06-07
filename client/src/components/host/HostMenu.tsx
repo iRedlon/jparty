@@ -4,6 +4,7 @@ import { LayoutContext } from "../common/Layout";
 import MenuPanel_Debug, { DebugSessionStateSelect } from "../common/MenuPanel_Debug";
 import MenuPanel_Feedback from "../common/MenuPanel_Feedback";
 import MenuPanel_Settings from "../common/MenuPanel_Settings";
+import { Layer } from "../../misc/ui-constants";
 
 import {
     Box, Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay,
@@ -32,7 +33,7 @@ export default function HostMenu() {
 
     // menu button should be visible and accessible in any session state without obscuring the game
     const fixedButtonOpacity = (context.sessionState === SessionState.Lobby) ? 1 : 0.5;
-    const zIndex = context.debugMode ? "9999" : "99";
+    const zIndex = context.debugMode ? Layer.Fixed : Layer.Middle;
 
     return (
         <>
@@ -55,7 +56,7 @@ export default function HostMenu() {
             <Modal motionPreset={"none"} isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay />
                 <ModalContent overflowY={"auto"} height={"80vh"} minWidth={"60vw"} marginTop={"auto"} marginBottom={"auto"}>
-                    <ModalCloseButton zIndex={10} />
+                    <ModalCloseButton zIndex={Layer.Middle} />
                     <ModalBody>
                         <Tabs>
                             <TabList overflowX={"auto"} overflowY={"hidden"}>{menuTabs}</TabList>

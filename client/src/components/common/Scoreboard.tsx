@@ -1,6 +1,6 @@
 
 import { LayoutContext } from "./Layout";
-import { formatDollarValue } from "../../misc/format";
+import { formatDollarValue } from "../../misc/client-utils";
 
 import { Box, Stack } from "@chakra-ui/react";
 import { getSortedSessionPlayerIDs, SocketID } from "jparty-shared";

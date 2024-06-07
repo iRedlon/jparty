@@ -1,6 +1,6 @@
 
 import { LayoutContext } from "../common/Layout";
-import { formatDollarValue } from "../../misc/format";
+import { formatDollarValue } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
 
 import { Box, Button, Heading, Stack, Text } from "@chakra-ui/react";

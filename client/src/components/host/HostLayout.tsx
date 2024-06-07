@@ -14,6 +14,7 @@ import Timer from "../common/Timer";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
 import { playOpenAIVoice, playSoundEffect, playSpeechSynthesisVoice } from "../../misc/sound-fx";
+import { Layer } from "../../misc/ui-constants";
 
 import { Box, Center, Flex } from "@chakra-ui/react";
 import { HostServerSocket, ServerSocket, SessionAnnouncement, SessionState, SoundEffect, VoiceType } from "jparty-shared";
@@ -22,7 +23,8 @@ import { GoMute } from "react-icons/go";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 
 // a less specific version of session state. this enum stores which game component the host is currently displaying
-// i.e. "clue tossup" and "clue response" are different session states but they both show the same game component
+// i.e. "clue tossup" and "clue response" are different session states but they both show the same game component so there
+// shouldn't be an animation when the state changes from one to the other
 enum GameComponentState {
     Announcement,
     Lobby,
@@ -66,9 +68,10 @@ function getGameComponentState(sessionState: SessionState, announcement?: Sessio
 }
 
 export default function HostLayout() {
-    const stateChangeRef = useRef(null);
+    const sessionStateRef = useRef(null);
 
     const context = useContext(LayoutContext);
+
     const [isMuted, setIsMuted] = useState(true);
     const [announcement, setAnnouncement] = useState<SessionAnnouncement | undefined>();
     const [queuedToHideAnnouncement, setQueuedToHideAnnouncement] = useState(false);
@@ -216,12 +219,12 @@ export default function HostLayout() {
             <HostMenu />
 
             <Flex height={"100vh"} width={"100vw"} alignContent={"center"} justifyContent={"center"}>
-                <Center zIndex={9}>
+                <Center zIndex={Layer.Bottom}>
                     <SwitchTransition>
-                        <CSSTransition key={getGameComponentState(context.sessionState, announcement)} nodeRef={stateChangeRef} timeout={1000} classNames={"state-change"}
+                        <CSSTransition key={getGameComponentState(context.sessionState, announcement)} nodeRef={sessionStateRef} timeout={1000} classNames={"session-state"}
                             appear mountOnEnter unmountOnExit>
 
-                            <Box ref={stateChangeRef}>
+                            <Box ref={sessionStateRef}>
                                 {getGameComponent()}
                             </Box>
                         </CSSTransition>

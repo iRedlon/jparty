@@ -1,11 +1,13 @@
-.show-clue-decision-change-enter {
+/* clue decision */
+
+.clue-decision-enter {
     animation-name: fade-in;
     animation-duration: 0.5s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.show-clue-decision-change-exit {
+.clue-decision-exit {
     animation-name: fade-in;
     animation-duration: 0.5s;
     animation-timing-function: ease-in-out;
@@ -13,18 +15,31 @@
     animation-fill-mode: both;
 }
 
-.responder-info-state-change-appear, 
-.responder-info-state-change-enter {
+/* responder info */
+
+.responder-info-appear, 
+.responder-info-enter {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.responder-info-state-change-exit {
+.responder-info-exit {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-direction: reverse;
     animation-fill-mode: both;
+}
+
+.submitted-responders-box {
+    margin-left: auto;
+    margin-right: auto;
+    padding: 1em;
+    height: 5em;
+    min-width: 25vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

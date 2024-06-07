@@ -1,13 +1,13 @@
 
 import "../../style/components/Timer.css";
 
-import { LayoutContext } from "./Layout";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
+import { Layer } from "../../misc/ui-constants";
 
 import { Box, Text } from "@chakra-ui/react";
 import { ServerSocket, SessionTimeout } from "jparty-shared";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CSSTransition } from "react-transition-group";
 
 addMockSocketEventHandler
@@ -15,7 +15,6 @@ addMockSocketEventHandler
 export default function Timer() {
     const timerRef = useRef(null);
 
-    const context = useContext(LayoutContext);
     const [currentTimeout, setCurrentTimeout] = useState<SessionTimeout | undefined>();
     const [currentTimeoutEndTimeMs, setCurrentTimeoutEndTimeMs] = useState(0);
     const [timeMs, setTimeMs] = useState(Date.now());
@@ -50,6 +49,7 @@ export default function Timer() {
     const getTimeRemainingSec = () => {
         let timeRemainingSec = Math.round((currentTimeoutEndTimeMs - timeMs) / 1000);
 
+        // no need to wait for a "stop timeout" message from the server if we know the timer expired
         if ((currentTimeout !== undefined) && timeRemainingSec <= 0) {
             setCurrentTimeout(undefined);
         }
@@ -62,7 +62,7 @@ export default function Timer() {
             appear mountOnEnter unmountOnExit>
 
             <Box ref={timerRef}>
-                <Box id={"host-timer-wrapper"} className={"box"} zIndex={"999"}>
+                <Box id={"host-timer-wrapper"} className={"box"} zIndex={Layer.Top}>
                     <Box id={"host-timer"}>
                         <Text fontFamily={"logo"} fontSize={"5em"}>{getTimeRemainingSec()}</Text>
                     </Box>

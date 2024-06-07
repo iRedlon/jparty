@@ -3,7 +3,7 @@ import { BACKGROUND_COLOR, BACKGROUND_ACCENT_COLOR } from "../../misc/ui-constan
 
 import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function Background() {
     useEffect(() => {

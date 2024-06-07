@@ -1,7 +1,7 @@
 
 import PlayerScoreboard from "./PlayerScoreboard";
 import { LayoutContext } from "../common/Layout";
-import { formatDollarValue } from "../../misc/format";
+import { formatDollarValue } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
 
 import { Button, Heading } from "@chakra-ui/react";

@@ -45,15 +45,15 @@
     padding: 1em;
 }
 
-.state-change-appear .announcement-box,
-.state-change-enter .announcement-box {
+.session-state-appear .announcement-box,
+.session-state-enter .announcement-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.state-change-exit .announcement-box {
+.session-state-exit .announcement-box {
     animation-name: slide-from-right;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;

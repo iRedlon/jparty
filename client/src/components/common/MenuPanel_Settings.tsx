@@ -19,11 +19,12 @@ export function emitLeaveSession(isPlayer: boolean) {
     location.reload();
 }
 
-// volume needs to be clamped between 0 and 1 when it's actually used, but as a UI value: it needs to be on the scale of 0 to 100 instead
+// volume needs to be clamped between 0 and 1 when it's actually used, but as a UI value: it needs to be on the scale of 0 to 100
 const VOLUME_STATE_MULTIPLIER = 100;
 
 export default function MenuPanel_Settings() {
     const context = useContext(LayoutContext);
+    
     const [musicVolume, setMusicVolume] = useState(getVolume(VolumeType.Music) * VOLUME_STATE_MULTIPLIER);
     const [voiceVolume, setVoiceVolume] = useState(getVolume(VolumeType.Voice) * VOLUME_STATE_MULTIPLIER);
     const [soundEffectsVolume, setSoundEffectsVolume] = useState(getVolume(VolumeType.SoundEffects) * VOLUME_STATE_MULTIPLIER);

@@ -1,21 +1,29 @@
 
 import "../../style/components/HostBoard.css";
 
-import { LayoutContext } from "../common/Layout";
 import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
-import { formatDollarValue } from "../../misc/format";
+import { formatDollarValue } from "../../misc/client-utils";
 
 import { Box, Heading, SimpleGrid } from "@chakra-ui/react";
 import { TriviaRound } from "jparty-shared";
-import { useContext } from "react";
+
+function getBoardPanelFontSize(isDollarValue: boolean, content: string) {
+    if (isDollarValue) {
+        return "4.5em";
+    }
+
+    if (content.length > 30) {
+        return "2em";
+    }
+
+    return "2.25em";
+}
 
 interface HostBoardProps {
     triviaRound: TriviaRound
 }
 
 export default function HostBoard({ triviaRound }: HostBoardProps) {
-    const context = useContext(LayoutContext);
-
     const numCategories = triviaRound.settings.numCategories;
     const numClues = triviaRound.settings.numClues;
 
@@ -34,7 +42,7 @@ export default function HostBoard({ triviaRound }: HostBoardProps) {
                 height={boardPanelHeight} width={boardPanelWidth}>
 
                 <Box onClick={() => handleDebugCommand(DebugCommand.SelectClue, categoryIndex, panelIndex - 1)} className={"board-panel box"}>
-                    <Heading fontFamily={"board"} size={panelIndex > 0 ? "4xl" : "xl"} fontWeight={0}>{content}</Heading>
+                    <Heading fontFamily={"board"} fontSize={getBoardPanelFontSize(panelIndex > 0, content)} fontWeight={0}>{content}</Heading>
                 </Box>
             </Box>
         )

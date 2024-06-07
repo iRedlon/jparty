@@ -139,7 +139,7 @@ export default function Layout() {
 
     const handleCancelGame = (serverCrashed?: boolean) => {
         if (serverCrashed && (sessionState > SessionState.Lobby)) {
-            alert("We apologize: the jparty server just crashed. Your game can't continue. This incident has been reported.");
+            alert("We apologize: the jparty server just crashed. Your game cannot continue. This incident has been reported.");
         }
 
         location.reload();

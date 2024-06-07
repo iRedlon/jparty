@@ -1,14 +1,14 @@
 /* category box */
 
-.state-change-appear #category-box, 
-.state-change-enter #category-box {
+.session-state-appear #category-box, 
+.session-state-enter #category-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.state-change-exit #category-box {
+.session-state-exit #category-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
@@ -35,7 +35,7 @@
 }
 
 .question-box-anim-exit, 
-.state-change-exit #question-box {
+.session-state-exit #question-box {
     animation-name: slide-from-right;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
@@ -54,17 +54,31 @@
     animation-timing-function: ease-in-out;
 }
 
+.correct-answer-anim-appear,
+.correct-answer-anim-enter {
+    animation-name: fade-in;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+}
+
+.correct-answer-anim-exit {
+    animation-name: fade-in;
+    animation-duration: 1s;
+    animation-direction: reverse;
+    animation-timing-function: ease-in-out;
+}
+
 /* responder info */
 
-.responder-info-box-anim-appear, 
-.responder-info-box-anim-enter {
+.responder-info-anim-appear, 
+.responder-info-anim-enter {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.responder-info-box-anim-exit {
+.responder-info-anim-exit {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;

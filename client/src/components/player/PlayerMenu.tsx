@@ -4,6 +4,7 @@ import MenuPanel_Debug from "../common/MenuPanel_Debug";
 import MenuPanel_Feedback from "../common/MenuPanel_Feedback";
 import MenuPanel_Settings from "../common/MenuPanel_Settings";
 import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
+import { Layer } from "../../misc/ui-constants";
 
 import {
     Box, Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay,
@@ -43,17 +44,17 @@ export default function PlayerMenu({ checkScoreboardButton }: PlayerMenuProps) {
         context.debugMode && <MenuPanel_Debug key={"debug-panel"} customDebugElement={debugPlayerStateSelect} />
     ];
 
-    const zIndex = context.debugMode ? "9999" : "99";
+    const zIndex = context.debugMode ? Layer.Fixed : Layer.Middle;
 
     return (
         <>
             <Button onClick={onOpen} position={"fixed"} bottom={"1em"} right={"1em"} colorScheme={"red"} zIndex={zIndex}>Menu</Button>
-            <Box position={"fixed"} bottom={"4em"} right={"1em"} zIndex={"99"}>{checkScoreboardButton}</Box>
+            <Box position={"fixed"} bottom={"4em"} right={"1em"} zIndex={Layer.Middle}>{checkScoreboardButton}</Box>
 
             <Modal motionPreset={"none"} isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay />
                 <ModalContent overflowY={"scroll"} height={"80vh"} width={"80vw"} marginTop={"auto"} marginBottom={"auto"}>
-                    <ModalCloseButton zIndex={10} />
+                    <ModalCloseButton zIndex={Layer.Bottom} />
                     <ModalBody>
                         <Tabs>
                             <TabList overflowX={"scroll"} overflowY={"hidden"} marginRight={"1em"}>{menuTabs}</TabList>

@@ -1,14 +1,14 @@
 /* category box */
 
-.state-change-appear #category-box, 
-.state-change-enter #category-box {
+.session-state-appear #category-box, 
+.session-state-enter #category-box {
     animation-name: slide-from-top;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.state-change-exit #category-box {
+.session-state-exit #category-box {
     animation-name: slide-from-top;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
@@ -18,15 +18,15 @@
 
 /* responder info */
 
-.state-change-appear #responder-info-box, 
-.state-change-enter #responder-info-box {
+.session-state-appear #responder-info-box, 
+.session-state-enter #responder-info-box {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.state-change-exit #responder-info-box {
+.session-state-exit #responder-info-box {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;

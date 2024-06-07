@@ -4,6 +4,14 @@ import { FeedbackType, SessionAnnouncement, TriviaClueBonus, TriviaRoundType } f
 export const BACKGROUND_COLOR = "#0d47a1";
 export const BACKGROUND_ACCENT_COLOR = "#00008b";
 
+// z-index values for UI components
+export enum Layer {
+    Bottom = "9",
+    Middle = "99",
+    Top = "999",
+    Fixed = "9999"
+}
+
 export const TRIVIA_ROUND_TYPE_DISPLAY_NAMES: Record<TriviaRoundType, string> = {
     [TriviaRoundType.Standard]: "Standard"
 }

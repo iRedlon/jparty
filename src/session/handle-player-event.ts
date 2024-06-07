@@ -391,6 +391,9 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
     }
 
     stopTimeout(sessionName, SessionTimeout.RevealClueDecision);
+    
+    // turn off the client timer while we wait for a decision. it's an async process, so we can't guarantee how long it will take
+    io.in(sessionName).emit(ServerSocket.StopTimeout);
 
     const responderID = session.findUndecidedResponderID();
 
@@ -409,9 +412,6 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
 
         return;
     }
-
-    // turn off the client timer while we wait for a decision. it's an async process, so we can't guarantee how long it will take
-    io.in(sessionName).emit(ServerSocket.StopTimeout);
 
     let decision = TriviaClueDecision.Incorrect;
 

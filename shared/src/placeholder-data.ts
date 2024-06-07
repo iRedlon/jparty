@@ -6,7 +6,7 @@ const PLACEHOLDER_TRIVIA_ROUND_CATEGORIES: TriviaCategory[] = [
     {
         settings: { type: 2 } as TriviaCategorySettings,
         id: 11196,
-        name: 'the joy of sects',
+        name: 'also a 2-letter postal abbreviation',
         clues: [
             {
                 id: 125427,

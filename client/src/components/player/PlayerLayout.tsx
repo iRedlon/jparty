@@ -5,11 +5,11 @@ import PlayerIdle from "./PlayerIdle";
 import PlayerLobby from "./PlayerLobby";
 import PlayerMenu from "./PlayerMenu";
 import PlayerResponse from "./PlayerResponse";
-import Announcement from "../common/Announcement";
 import { LayoutContext } from "../common/Layout";
 import ServerMessageAlert from "../common/ServerMessage";
 import Timer from "../common/Timer";
 import { socket } from "../../misc/socket";
+import { Layer } from "../../misc/ui-constants";
 
 import { AbsoluteCenter, Box, Button, Flex, Text } from "@chakra-ui/react";
 import { PlayerResponseType, PlayerState, SessionState } from "jparty-shared";
@@ -141,7 +141,7 @@ export default function PlayerLayout() {
             <PlayerMenu checkScoreboardButton={checkScoreboardButton} />
             <Flex height={"100vh"} width={"100vw"}>
                 <AbsoluteCenter
-                    zIndex={9}
+                    zIndex={Layer.Bottom}
                     axis={"horizontal"} width={contentWidth} minWidth={"50%"}
                     padding={"1em"} marginTop={"1em"} marginBottom={"1em"} style={wrapperBoxStyle}>
                     {playerComponent}

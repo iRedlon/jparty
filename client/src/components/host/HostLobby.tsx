@@ -12,6 +12,7 @@ import { useContext, useEffect, useState } from "react";
 
 export default function HostLobby() {
     const context = useContext(LayoutContext);
+    
     const [spectateSessionName, setSpectateSessionName] = useState("");
     const [gameSettingsPreset, setGameSettingsPreset] = useState(TriviaGameSettingsPreset.Default);
 

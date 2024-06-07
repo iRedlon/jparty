@@ -2,11 +2,10 @@
 import "../../style/components/ResponderInfo.css";
 
 import { LayoutContext } from "../common/Layout";
-import { getClueDecisionString } from "../../misc/client-utils";
-import { formatDollarValue } from "../../misc/format";
+import { formatDollarValue } from "../../misc/client-utils";
 
-import { Box, Heading, Stack } from "@chakra-ui/react";
-import { Player, PlayerResponseType, SessionState, TriviaClue } from "jparty-shared";
+import { Box, Heading, Stack, Text } from "@chakra-ui/react";
+import { Player, PlayerResponseType, SessionState, TriviaClue, TriviaClueDecision } from "jparty-shared";
 import { useContext, useRef } from "react";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 
@@ -21,8 +20,8 @@ interface ResponderInfoProps {
 
 // todo: give this variable height and width so it can be used in other places (i.e. the game over screen)
 export default function ResponderInfo({ triviaClue, responder, responseType, showClueDecision, numSubmittedResponders, numResponders }: ResponderInfoProps) {
-    const responderInfoStateChangeRef = useRef(null);
-    const showClueDecisionChangeRef = useRef(null);
+    const responderInfoRef = useRef(null);
+    const clueDecisionRef = useRef(null);
 
     const context = useContext(LayoutContext);
 
@@ -39,8 +38,7 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
     if (showSubmittedResponders) {
         responderInfoState = isWagerResponse ? "submitted-wager-responses" : "submitted-clue-responses";
         responderInfoBox = (
-            <Box id={"responder-info-box"} className={"box"} marginLeft={"auto"} marginRight={"auto"}
-                padding={"1em"} height={"5em"} minWidth={"25vw"} display={"flex"} justifyContent={"center"} alignItems={"center"}>
+            <Box id={"responder-info-box"} className={"box submitted-responders-box"}>
 
                 <Heading size={"lg"} fontFamily={"clue"}>{numSubmittedResponders}/{numResponders} players submitted</Heading>
             </Box>
@@ -56,20 +54,32 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
             response = responder.responses[responseType];
         }
 
+        let clueDecisionInfo = responder.clueDecisionInfo;
+        let clueValueString = "";
+
+        if (clueDecisionInfo) {
+            const decisionModifier = (clueDecisionInfo.decision === TriviaClueDecision.Incorrect) ? -1 : 1;
+            clueValueString = formatDollarValue(clueDecisionInfo.clueValue * decisionModifier);
+        }
+
         // label our current state with this responder's client ID. this way the switch transition knows to animate between one responder to another
         responderInfoState = responder.clientID;
         responderInfoBox = (
             <Stack id={"responder-info-box"} direction={"row"} justifyContent={"center"}>
                 <SwitchTransition>
-                    <CSSTransition key={showClueDecision ? "show-clue-decision" : "show-signature"} nodeRef={showClueDecisionChangeRef} timeout={500} classNames={"show-clue-decision-change"}
+                    <CSSTransition key={showClueDecision ? "show-clue-decision" : "show-signature"} nodeRef={clueDecisionRef} timeout={500} classNames={"clue-decision"}
                         appear mountOnEnter unmountOnExit>
 
-                        <Box className={"box"} marginRight={"0.5em"} height={"7em"} width={"7em"} display={"flex"} justifyContent={"center"} alignItems={"center"} padding={"1em"}>
-                            <Box ref={showClueDecisionChangeRef}>
-                                <b>{showClueDecision && responder.clueDecisionInfo ? getClueDecisionString(responder.clueDecisionInfo) : ""}</b>
+                        <Box className={"box"} marginRight={"0.5em"} height={"7em"} width={"7em"} display={"flex"} justifyContent={"center"} alignItems={"center"} padding={"1em"} overflow={"hidden"}>
+                            <Box ref={clueDecisionRef}>
+                                {(showClueDecision && clueDecisionInfo) ?
+                                    <>
+                                        <Text><b>{clueDecisionInfo.decision.toUpperCase()}</b></Text>
+                                        {clueDecisionInfo.decision !== TriviaClueDecision.NeedsMoreDetail && <Heading fontFamily={"board"} fontWeight={0}>$10000</Heading>}
+                                    </> :
+                                    <></>}
                             </Box>
                         </Box>
-
                     </CSSTransition>
                 </SwitchTransition>
 
@@ -94,10 +104,10 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
 
     return (
         <SwitchTransition>
-            <CSSTransition key={responderInfoState} nodeRef={responderInfoStateChangeRef} timeout={1000} classNames={"responder-info-state-change"}
+            <CSSTransition key={responderInfoState} nodeRef={responderInfoRef} timeout={1000} classNames={"responder-info"}
                 appear mountOnEnter unmountOnExit>
 
-                <Box ref={responderInfoStateChangeRef}>
+                <Box ref={responderInfoRef}>
                     {responderInfoBox}
                 </Box>
             </CSSTransition>

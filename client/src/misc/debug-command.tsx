@@ -1,7 +1,9 @@
 
+import { emitMockSocketEvent } from "./mock-socket";
+
 import {
     HostServerSocket, PLACEHOLDER_TRIVIA_ROUND, Player, PlayerResponseType, PlayerState, ServerSocket,
-    SessionAnnouncement, SessionState, SessionTimeout, SoundEffect, TriviaCategory, TriviaClue,
+    SessionAnnouncement, SessionState, SessionTimeout, TriviaCategory, TriviaClue,
     TriviaClueDecision, TriviaClueDecisionInfo, TriviaRound, VoiceType
 } from "jparty-shared";
 
@@ -28,7 +30,7 @@ function getPlaceholderSessionPlayers(triviaCategory?: TriviaCategory, triviaClu
     player3.score = -2000;
 
     if (triviaCategory && triviaClue) {
-        player1.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.id, triviaCategory.name, triviaClue, "romance dawn", TriviaClueDecision.Incorrect, 14132, false);
+        player1.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.id, triviaCategory.name, triviaClue, "romance dawn", TriviaClueDecision.Correct, 14132, false);
         player1.responses[PlayerResponseType.Wager] = 1234;
         player1.minWager = 0;
         player1.maxWager = 10000;
@@ -42,7 +44,7 @@ function getPlaceholderSessionPlayers(triviaCategory?: TriviaCategory, triviaClu
     player1.responses[PlayerResponseType.Clue] = "shearing a sheep in the place at the time at the word word"
 
     return { "socket1": player1, "sockt2": player2, "socket3": player3, "socket4": player4, "socket5": player5, "socket6": player6 };
-    return { "socket1": player1, "socket2": player2, "socket3": player3, };
+    // return { "socket1": player1, "socket2": player2, "socket3": player3, };
 }
 
 export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
@@ -62,44 +64,16 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
                 const triviaCategory = triviaRound.categories[0];
                 const triviaClue = triviaCategory.clues[0];
 
-                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.UpdateSessionName, {
-                    detail: {
-                        params: ["test"]
-                    }
-                }));
-
-                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.UpdateSessionPlayers, {
-                    detail: {
-                        params: [getPlaceholderSessionPlayers(triviaCategory, triviaClue)]
-                    }
-                }));
-
-                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.UpdateTriviaRound, {
-                    detail: {
-                        params: [triviaRound]
-                    }
-                }));
-
-                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.SelectClue, {
-                    detail: {
-                        params: [0, 0]
-                    }
-                }));
-
-                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.UpdateSpotlightResponderID, {
-                    detail: {
-                        params: ["socket1"]
-                    }
-                }));
+                emitMockSocketEvent(ServerSocket.UpdateSessionName, "test");
+                emitMockSocketEvent(ServerSocket.UpdateSessionPlayers, getPlaceholderSessionPlayers(triviaCategory, triviaClue));
+                emitMockSocketEvent(ServerSocket.UpdateTriviaRound, triviaRound);
+                emitMockSocketEvent(ServerSocket.SelectClue, 0, 0);
+                emitMockSocketEvent(ServerSocket.UpdateSpotlightResponderID, "socket1");
             }
             break;
         case DebugCommand.UpdateSessionState:
             {
-                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.UpdateSessionState, {
-                    detail: {
-                        params: args
-                    }
-                }));
+                emitMockSocketEvent(ServerSocket.UpdateSessionState, ...args);
             }
             break;
         case DebugCommand.UpdatePlayerState:
@@ -107,11 +81,7 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
                 let sessionPlayers = getPlaceholderSessionPlayers();
                 sessionPlayers["socket1"].state = args[0] as PlayerState;
 
-                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.UpdateSessionPlayers, {
-                    detail: {
-                        params: [sessionPlayers]
-                    }
-                }));
+                emitMockSocketEvent(ServerSocket.UpdateSessionPlayers, sessionPlayers);
             }
             break;
         case DebugCommand.SelectClue:
@@ -120,11 +90,7 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
                     return;
                 }
                 
-                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.SelectClue, {
-                    detail: {
-                        params: args
-                    }
-                }));
+                emitMockSocketEvent(ServerSocket.SelectClue, ...args);
 
                 const triviaRound = TriviaRound.clone(PLACEHOLDER_TRIVIA_ROUND);
                 const triviaCategory = triviaRound.categories[args[0]];
@@ -137,20 +103,12 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
                     handleDebugCommand(DebugCommand.UpdateSessionState, SessionState.ClueTossup);
                 }
 
-                mockSocket.dispatchEvent(new CustomEvent(HostServerSocket.PlayVoice, {
-                    detail: {
-                        params: [VoiceType.ClassicMasculine, triviaClue.question]
-                    }
-                }));
+                emitMockSocketEvent(HostServerSocket.PlayVoice, VoiceType.ClassicMasculine, triviaClue.question);
             }
             break;
         case DebugCommand.StartTimeout:
             {
-                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.StartTimeout, {
-                    detail: {
-                        params: [SessionTimeout.Announcement, 6000]
-                    }
-                }));
+                emitMockSocketEvent(ServerSocket.StartTimeout, SessionTimeout.Announcement, 6000);
             }
             break;
         case DebugCommand.ShowAnnouncement:
@@ -161,20 +119,12 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
                     }
                 }));
 
-                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.PlaySoundEffect, {
-                    detail: {
-                        params: [SoundEffect.BuzzWindowTimeout]
-                    }
-                }));
+                emitMockSocketEvent(ServerSocket.ShowAnnouncement, SessionAnnouncement.StartGame);
             }
             break;
         case DebugCommand.HideAnnouncement:
             {
-                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.HideAnnouncement, {
-                    detail: {
-                        params: [true]
-                    }
-                }));
+                emitMockSocketEvent(ServerSocket.HideAnnouncement, true);
             }
             break;
     }
