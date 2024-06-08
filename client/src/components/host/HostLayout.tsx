@@ -22,10 +22,8 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { GoMute } from "react-icons/go";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 
-// a less specific version of session state. this enum stores which game component the host is currently displaying
-// i.e. "clue tossup" and "clue response" are different session states but they both show the same game component so there
-// shouldn't be an animation when the state changes from one to the other
-enum GameComponentState {
+// each state represents the component currently being displayed. the top-level components in this enum are labelled with the "Host" prefix
+enum HostComponentState {
     Announcement,
     Lobby,
     Board,
@@ -34,18 +32,18 @@ enum GameComponentState {
     GameOver
 }
 
-function getGameComponentState(sessionState: SessionState, announcement?: SessionAnnouncement) {
+function getHostComponentState(sessionState: SessionState, announcement?: SessionAnnouncement) {
     if (announcement !== undefined) {
-        return GameComponentState.Announcement;
+        return HostComponentState.Announcement;
     }
     switch (sessionState) {
         case SessionState.Lobby:
             {
-                return GameComponentState.Lobby;
+                return HostComponentState.Lobby;
             }
         case SessionState.ClueSelection:
             {
-                return GameComponentState.Board;
+                return HostComponentState.Board;
             }
         case SessionState.ReadingClueSelection:
         case SessionState.ReadingClue:
@@ -54,23 +52,22 @@ function getGameComponentState(sessionState: SessionState, announcement?: Sessio
         case SessionState.WaitingForClueDecision:
         case SessionState.ReadingClueDecision:
             {
-                return GameComponentState.Clue;
+                return HostComponentState.Clue;
             }
         case SessionState.WagerResponse:
             {
-                return GameComponentState.Wager;
+                return HostComponentState.Wager;
             }
         case SessionState.GameOver:
             {
-                return GameComponentState.GameOver;
+                return HostComponentState.GameOver;
             }
     }
 }
 
 export default function HostLayout() {
-    const sessionStateRef = useRef(null);
-
     const context = useContext(LayoutContext);
+    const sessionStateRef = useRef(null);
 
     const [isMuted, setIsMuted] = useState(true);
     const [announcement, setAnnouncement] = useState<SessionAnnouncement | undefined>();
@@ -163,13 +160,14 @@ export default function HostLayout() {
         }
     }
 
-    const getGameComponent = () => {
+    // see comparison in PlayerLayout. returns both the JSX component and a state representing the specific component that was returned
+    const getHostComponent = () => {
         if (announcement !== undefined) {
-            return <Announcement announcement={announcement} />;
+            return [<Announcement announcement={announcement} />, HostComponentState.Announcement];
         }
 
         if (context.sessionState === SessionState.Lobby) {
-            return <HostLobby />;
+            return [<HostLobby />, HostComponentState.Lobby];
         }
 
         if (!context.triviaRound) {
@@ -177,7 +175,7 @@ export default function HostLayout() {
         }
 
         if (context.sessionState === SessionState.ClueSelection) {
-            return <HostBoard triviaRound={context.triviaRound} />;
+            return [<HostBoard triviaRound={context.triviaRound} />, HostComponentState.Board];
         }
 
         if (context.categoryIndex < 0 || context.clueIndex < 0) {
@@ -188,25 +186,29 @@ export default function HostLayout() {
         const triviaClue = triviaCategory.clues[context.clueIndex];
 
         if ((context.sessionState === SessionState.ReadingClueSelection) || (context.sessionState === SessionState.ReadingClue) || (context.sessionState === SessionState.ClueTossup)) {
-            return <HostClue triviaCategory={triviaCategory} triviaClue={triviaClue} />;
+            return [<HostClue triviaCategory={triviaCategory} triviaClue={triviaClue} />, HostComponentState.Clue];
         }
 
         if (context.sessionState === SessionState.ClueResponse) {
-            return <HostClue triviaCategory={triviaCategory} triviaClue={triviaClue} numSubmittedResponders={numSubmittedResponders} numResponders={numResponders} />;
+            return [<HostClue triviaCategory={triviaCategory} triviaClue={triviaClue} numSubmittedResponders={numSubmittedResponders} numResponders={numResponders} />, HostComponentState.Clue];
         }
 
         if (context.sessionState === SessionState.WagerResponse) {
-            return <HostWager triviaCategory={triviaCategory} triviaClue={triviaClue} numSubmittedResponders={numSubmittedResponders} numResponders={numResponders} />;
+            return [<HostWager triviaCategory={triviaCategory} triviaClue={triviaClue} numSubmittedResponders={numSubmittedResponders} numResponders={numResponders} />, HostComponentState.Wager];
         }
 
         if ((context.sessionState === SessionState.WaitingForClueDecision) || (context.sessionState === SessionState.ReadingClueDecision)) {
-            return <HostClue triviaCategory={triviaCategory} triviaClue={triviaClue} displayCorrectAnswer={displayCorrectAnswer} />;
+            return [<HostClue triviaCategory={triviaCategory} triviaClue={triviaClue} displayCorrectAnswer={displayCorrectAnswer} />, HostComponentState.Clue]
         }
 
         if (context.sessionState === SessionState.GameOver) {
-            return <HostGameOver />;
+            return [<HostGameOver />, HostComponentState.GameOver];
         }
+
+        return [<HostLobby />, HostComponentState.Lobby];
     }
+
+    const [HostComponent, componentState] = getHostComponent();
 
     return (
         <Box onClick={() => toggleMute(false)}>
@@ -221,11 +223,11 @@ export default function HostLayout() {
             <Flex height={"100vh"} width={"100vw"} alignContent={"center"} justifyContent={"center"}>
                 <Center zIndex={Layer.Bottom}>
                     <SwitchTransition>
-                        <CSSTransition key={getGameComponentState(context.sessionState, announcement)} nodeRef={sessionStateRef} timeout={1000} classNames={"session-state"}
+                        <CSSTransition key={componentState as HostComponentState} nodeRef={sessionStateRef} timeout={1000} classNames={"session-state"}
                             appear mountOnEnter unmountOnExit>
 
                             <Box ref={sessionStateRef}>
-                                {getGameComponent()}
+                                {HostComponent}
                             </Box>
                         </CSSTransition>
                     </SwitchTransition>

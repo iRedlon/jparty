@@ -11,13 +11,28 @@ import Timer from "../common/Timer";
 import { socket } from "../../misc/socket";
 import { Layer } from "../../misc/ui-constants";
 
-import { AbsoluteCenter, Box, Button, Flex, Text } from "@chakra-ui/react";
+import { AbsoluteCenter, Box, Button, Center, Flex } from "@chakra-ui/react";
 import { PlayerResponseType, PlayerState, SessionState } from "jparty-shared";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { isMobile } from "react-device-detect";
+import { CSSTransition, SwitchTransition } from "react-transition-group";
+import PlayerScoreboard from "./PlayerScoreboard";
+
+// each state represents the component currently being displayed. the top-level components in this enum are labelled with the "Player" prefix
+enum PlayerComponentState {
+    Lobby,
+    Idle,
+    ClueSelection,
+    Buzzer,
+    Response
+}
 
 export default function PlayerLayout() {
     const context = useContext(LayoutContext);
+    const sessionStateRef = useRef(null);
+
+    // "force idle" is a state where the player isn't idle (i.e. responding to a clue) but has "switched tabs" to check the scoreboard
+    // anytime a player isn't idle, they see a button that allows them to switch between the scoreboard and whatever their normal state component is
     const [forceIdle, setForceIdle] = useState(false);
 
     useEffect(() => {
@@ -34,119 +49,89 @@ export default function PlayerLayout() {
     }
 
     const player = getPlayer();
+    const isIdle = player ? ((player.state === PlayerState.Idle) || (player.state === PlayerState.WaitingToStartGame)) : false;
 
-    const getCheckScoreboardButton = () => {
-        if (!player) {
-            return <></>;
-        }
-
-        if ((player.state === PlayerState.Idle) || (player.state === PlayerState.WaitingToStartGame)) {
-            return <></>;
+    const ForceIdleButton = () => {
+        // no need to force yourself to be idle if you already are!
+        if (!player || isIdle) {
+            return;
         }
 
-        if (forceIdle) {
-            return <Button colorScheme={"gray"} onClick={() => setForceIdle(false)}>Go back</Button>;
-        }
-        else {
-            return <Button colorScheme={"gray"} onClick={() => setForceIdle(true)}>Check scoreboard</Button>;
-        }
+        return <Button colorScheme={"gray"} onClick={() => setForceIdle(!forceIdle)}>{forceIdle ? "Go back" : "Check scoreboard"}</Button>;
     }
 
+    // see comparison in HostLayout. returns both the JSX component and a state representing the specific component that was returned
     const getPlayerComponent = () => {
-        if (player && player.state === PlayerState.Idle) {
-            return <PlayerIdle player={player} />;
-        }
-        else if (player && player.state === PlayerState.WaitingToStartGame) {
-            return <PlayerIdle player={player} canStartGame={true} />;
+        if (player && (isIdle || forceIdle)) {
+            return [<PlayerIdle player={player} promptStartGame={player.state === PlayerState.WaitingToStartGame} />, PlayerComponentState.Idle];
         }
 
         if (context.sessionState === SessionState.Lobby) {
-            return <PlayerLobby />;
+            return [<PlayerLobby />, PlayerComponentState.Lobby];
         }
 
         if (!player) {
-            return <Text>Player isn't populated in state: {SessionState[context.sessionState]}</Text>;
+            throw new Error(`PlayerLayout: missing player`);
         }
 
-        const idleComponent = <PlayerIdle player={player} />;
-
-        // stateful child components need to be rendered with "display: none" while force idle is active so it can maintain its state while still displaying the idle component
-        // (the alternative is not rendering the stateful child, which would dump its state)
+        // players are idle by default unless there's a specific combination of session and player state that indicates they're
+        // doing something else (i.e. responding, selecting a clue)
         switch (context.sessionState) {
             case SessionState.ClueSelection:
                 {
                     if (player.state === PlayerState.SelectingClue) {
-                        return (
-                            <>
-                                {forceIdle && idleComponent}
-                                <PlayerClueSelection renderComponent={!forceIdle} />
-                            </>
-                        );
+                        return [<PlayerClueSelection />, PlayerComponentState.ClueSelection];
                     }
                 }
                 break;
             case SessionState.ClueTossup:
                 {
                     if (player.state === PlayerState.WaitingToBuzz) {
-                        return (
-                            <>
-                                {forceIdle && idleComponent}
-                                <PlayerBuzzer renderComponent={!forceIdle} />
-                            </>
-                        );
+                        return [<PlayerBuzzer />, PlayerComponentState.Buzzer];
                     }
                 }
                 break;
             case SessionState.ClueResponse:
                 {
                     if (player.state === PlayerState.RespondingToClue) {
-                        return (
-                            <>
-                                {forceIdle && idleComponent}
-                                <PlayerResponse player={player} responseType={PlayerResponseType.Clue} renderComponent={!forceIdle} />
-                            </>
-                        );
+                        return [<PlayerResponse player={player} responseType={PlayerResponseType.Clue} />, PlayerComponentState.Response];
                     }
                 }
                 break;
             case SessionState.WagerResponse:
                 {
                     if (player.state === PlayerState.Wagering) {
-                        return (
-                            <>
-                                {forceIdle && idleComponent}
-                                <PlayerResponse player={player} responseType={PlayerResponseType.Wager} renderComponent={!forceIdle} />
-                            </>
-                        );
+                        return [<PlayerResponse player={player} responseType={PlayerResponseType.Wager} />, PlayerComponentState.Response];
                     }
                 }
                 break;
         }
 
-        return idleComponent;
+        return [<PlayerIdle player={player} />, PlayerComponentState.Idle];
     }
 
-    const checkScoreboardButton = getCheckScoreboardButton();
-    const playerComponent = getPlayerComponent();
-
-    const contentWidth = isMobile ? "80%" : "50%";
-    const hideWrapperBox = (context.sessionState === SessionState.ClueTossup) && (player?.state === PlayerState.WaitingToBuzz) && !forceIdle;
-    const wrapperBoxStyle = hideWrapperBox ? {} : { backgroundColor: "white", outline: "black solid 3px", boxShadow: "7px 7px black" };
+    const [PlayerComponent, componentState] = getPlayerComponent();
 
     return (
-        <Box>
-            {/* <Announcement /> */}
+        <>
             <Timer />
             <ServerMessageAlert />
-            <PlayerMenu checkScoreboardButton={checkScoreboardButton} />
-            <Flex height={"100vh"} width={"100vw"}>
-                <AbsoluteCenter
-                    zIndex={Layer.Bottom}
-                    axis={"horizontal"} width={contentWidth} minWidth={"50%"}
-                    padding={"1em"} marginTop={"1em"} marginBottom={"1em"} style={wrapperBoxStyle}>
-                    {playerComponent}
-                </AbsoluteCenter>
+            <PlayerMenu />
+            <Box position={"fixed"} bottom={"4em"} right={"1em"} zIndex={Layer.Middle}>{ForceIdleButton()}</Box>
+
+            <Flex height={"100vh"} width={"100vw"} justifyContent={"center"} alignItems={"flex-start"} overflow={"auto"}>
+                <Center margin={"2em"} zIndex={Layer.Bottom}>
+                    <SwitchTransition>
+                        <CSSTransition key={componentState as PlayerComponentState} nodeRef={sessionStateRef} timeout={1} classNames={"session-state"}
+                            appear mountOnEnter unmountOnExit>
+
+                            <Box ref={sessionStateRef}>
+                                {PlayerComponent}
+                            </Box>
+                        </CSSTransition>
+                    </SwitchTransition>
+                </Center>
             </Flex>
-        </Box>
+        </>
     );
 }

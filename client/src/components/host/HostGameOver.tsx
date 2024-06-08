@@ -1,8 +1,8 @@
 
 import "../../style/components/HostGameOver.css";
 
+import HostScoreboard from "./HostScoreboard";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
-import Scoreboard from "../common/Scoreboard";
 import { socket } from "../../misc/socket";
 
 import { Box, Button, Heading } from "@chakra-ui/react";
@@ -29,7 +29,7 @@ export default function HostGameOver() {
                 </Box>
             </Box>
 
-            <Scoreboard />
+            <HostScoreboard />
         </>
     );
 }

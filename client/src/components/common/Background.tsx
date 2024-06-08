@@ -4,6 +4,7 @@ import { BACKGROUND_COLOR, BACKGROUND_ACCENT_COLOR } from "../../misc/ui-constan
 import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 import { useEffect } from "react";
+import { isMobile } from "react-device-detect";
 
 export default function Background() {
     useEffect(() => {
@@ -11,6 +12,8 @@ export default function Background() {
             await loadSlim(engine);
         });
     }, []);
+
+    const numParticles = isMobile ? 6 : 16;
 
     return (
         <Particles
@@ -24,7 +27,7 @@ export default function Background() {
                 },
                 particles: {
                     number: {
-                        value: 12,
+                        value: numParticles,
                     },
                     color: {
                         value: BACKGROUND_ACCENT_COLOR,

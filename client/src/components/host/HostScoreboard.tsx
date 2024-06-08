@@ -1,12 +1,12 @@
 
-import { LayoutContext } from "./Layout";
+import { LayoutContext } from "../common/Layout";
 import { formatDollarValue } from "../../misc/client-utils";
 
 import { Box, Stack } from "@chakra-ui/react";
 import { getSortedSessionPlayerIDs, SocketID } from "jparty-shared";
 import { useContext } from "react";
 
-export default function Scoreboard() {
+export default function HostScoreboard() {
     const context = useContext(LayoutContext);
 
     return (

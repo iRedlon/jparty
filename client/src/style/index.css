@@ -9,3 +9,14 @@ body {
     background-color: white;
     box-shadow: 8px 8px black;
 }
+
+.mobile-box {
+    background-color: white;
+    box-shadow: 5px 5px black;
+}
+
+.child-box {
+    background-color: white;
+    box-shadow: 4px 4px black;
+    outline: black solid 2px;
+}

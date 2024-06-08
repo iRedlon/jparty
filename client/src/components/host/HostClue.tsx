@@ -39,11 +39,10 @@ interface HostClueProps {
 }
 
 export default function HostClue({ triviaCategory, triviaClue, displayCorrectAnswer, numSubmittedResponders, numResponders }: HostClueProps) {
+    const context = useContext(LayoutContext);
     const questionBoxRef = useRef(null);
     const correctAnswerRef = useRef(null);
     const responderInfoRef = useRef(null);
-
-    const context = useContext(LayoutContext);
 
     const showQuestion = context.sessionState !== SessionState.ReadingClueSelection;
     let showSpotlightResponder = false;

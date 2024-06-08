@@ -9,11 +9,10 @@ import { useContext, useEffect, useState } from "react";
 
 interface PlayerResponseProps {
     player: Player,
-    responseType: PlayerResponseType,
-    renderComponent: boolean
+    responseType: PlayerResponseType
 }
 
-export default function PlayerResponse({ player, responseType, renderComponent }: PlayerResponseProps) {
+export default function PlayerResponse({ player, responseType }: PlayerResponseProps) {
     const context = useContext(LayoutContext);
     const [response, setResponse] = useState("");
 
@@ -65,7 +64,7 @@ export default function PlayerResponse({ player, responseType, renderComponent }
                 }
 
                 return (
-                    <Box display={renderComponent ? "auto" : "none"}>
+                    <Box>
                         <Heading size={"md"}>enter a wager between {formatDollarValue(player.minWager)} and {formatDollarValue(player.maxWager)}</Heading>
                         <Input 
                             onChange={(e) => emitUpdateResponse(e.target.value)}
@@ -80,7 +79,7 @@ export default function PlayerResponse({ player, responseType, renderComponent }
         default:
             {
                 return (
-                    <Box display={renderComponent ? "auto" : "none"}>
+                    <Box>
                         <Heading size={"md"}>enter your response</Heading>
                         <Input value={response} onChange={(e) => emitUpdateResponse(e.target.value)} /><br />
                         <Button onClick={emitSubmitResponse} isDisabled={!response} colorScheme={"blue"} marginTop={"1em"}>submit response</Button>

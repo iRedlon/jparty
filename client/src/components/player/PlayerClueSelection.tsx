@@ -6,11 +6,7 @@ import { Box, Button, Heading, Select, Stack } from "@chakra-ui/react";
 import { PlayerSocket, TriviaCategory, TriviaClue } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
 
-interface PlayerClueSelectionProps {
-    renderComponent: boolean
-}
-
-export default function PlayerClueSelection({ renderComponent }: PlayerClueSelectionProps) {
+export default function PlayerClueSelection() {
     const context = useContext(LayoutContext);
     const [categoryIndex, setCategoryIndex] = useState(-1);
     const [clueIndex, setClueIndex] = useState(-1);
@@ -46,7 +42,7 @@ export default function PlayerClueSelection({ renderComponent }: PlayerClueSelec
     const validSelection = categoryIndex >= 0 && clueIndex >= 0;
 
     return (
-        <Box display={renderComponent ? "auto" : "none"}>
+        <Box>
             <Heading size={"md"}>select a category and dollar value</Heading>
             <Stack direction={"column"}>
                 {categorySelect}

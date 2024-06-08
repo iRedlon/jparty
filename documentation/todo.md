@@ -2,13 +2,9 @@
 # Feature TODO (Isaac)
 
 - "completedBy" should be a companion of "completed" and store a client ID on the trivia game object (this should also own the 'cleared the whole category' helper)
-- Category names probably need some variable font sizing like trivia clues
 - Overall UI face lift
   - UI for clue selection where you see each board column individually and swipe between them
   - Margins/spacing/fonts/colors, small tweaks like that
-  - A background with some texture, not just a solid color
-  - Basic animations: constant idle motion like Balatro, an effect for session announcements, an effect for getting correct answers, an effect for scoreboard changes
-  - Timer as a clock, sliding on and off screen whenever it comes or goes
 - New clue tossup behavior
 - Hook up trivia cleanup functions implemented by Teddy to a new client debug interface
 

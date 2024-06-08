@@ -7,17 +7,13 @@ import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
 import { Layer } from "../../misc/ui-constants";
 
 import {
-    Box, Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay,
+    Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay,
     Select, Tabs, TabList, TabPanels, Tab, useDisclosure
 } from "@chakra-ui/react";
 import { getEnumKeys, PlayerState } from "jparty-shared";
 import { useContext } from "react";
 
-interface PlayerMenuProps {
-    checkScoreboardButton: JSX.Element
-}
-
-export default function PlayerMenu({ checkScoreboardButton }: PlayerMenuProps) {
+export default function PlayerMenu() {
     const context = useContext(LayoutContext);
     const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -49,7 +45,6 @@ export default function PlayerMenu({ checkScoreboardButton }: PlayerMenuProps) {
     return (
         <>
             <Button onClick={onOpen} position={"fixed"} bottom={"1em"} right={"1em"} colorScheme={"red"} zIndex={zIndex}>Menu</Button>
-            <Box position={"fixed"} bottom={"4em"} right={"1em"} zIndex={Layer.Middle}>{checkScoreboardButton}</Box>
 
             <Modal motionPreset={"none"} isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay />

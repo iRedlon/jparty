@@ -19,6 +19,7 @@ export interface GameSettingsProps {
 
 export default function GameSettings({ onCloseHostMenu }: GameSettingsProps) {
     const context = useContext(LayoutContext);
+    
     const [gameSettings, setGameSettings] = useState(TriviaGameSettings.clone(DEFAULT_GAME_SETTINGS));
     const [selectedRoundIndex, setSelectedRoundIndex] = useState(-1);
     const [rating, setRating] = useState<TriviaGameRating>();

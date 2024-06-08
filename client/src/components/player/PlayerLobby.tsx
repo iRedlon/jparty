@@ -11,6 +11,7 @@ import { isMobile } from "react-device-detect";
 
 export default function PlayerLobby() {
     const context = useContext(LayoutContext);
+    
     const [sessionName, setSessionName] = useState("");
     const [playerName, setPlayerName] = useState("");
 
@@ -34,12 +35,14 @@ export default function PlayerLobby() {
     }
 
     return (
-        <>
-            <Heading size={"md"}>find a session by going to jparty.io on a computer</Heading>
+        <Box className={"mobile-box"} padding={"1em"}>
+            <Heading fontSize={"3em"} fontFamily={"logo"}>JPARTY.IO</Heading>
+            {isMobile && "find a session by going to jparty.io on your computer"}
+
             <Box margin={"0.5em"} />
 
-            <Input placeholder={"session name"} value={sessionName} onChange={(e) => setSessionName(e.target.value)} /><br />
-            <Input placeholder={"your name"} value={playerName} onChange={(e) => setPlayerName(e.target.value)} /><br />
+            <Input placeholder={"session name"} value={sessionName} onChange={(e) => setSessionName(e.target.value)} />
+            <Input placeholder={"your name"} value={playerName} onChange={(e) => setPlayerName(e.target.value)} />
 
             <Box margin={"1em"} />
             <Button isDisabled={!sessionName || !playerName} colorScheme={"blue"} onClick={emitConnect}>join session</Button>
@@ -53,6 +56,6 @@ export default function PlayerLobby() {
                     </Box>
                 )
             }
-        </>
+        </Box>
     );
 }

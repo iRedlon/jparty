@@ -1,20 +1,17 @@
 
 import PlayerScoreboard from "./PlayerScoreboard";
-import { LayoutContext } from "../common/Layout";
-import { formatDollarValue } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
 
-import { Button, Heading } from "@chakra-ui/react";
+import { Box, Button, Heading } from "@chakra-ui/react";
 import { Player, PlayerSocket } from "jparty-shared";
-import { useContext, useState } from "react";
+import { useState } from "react";
 
 interface PlayerIdleProps {
     player: Player;
-    canStartGame?: boolean
+    promptStartGame?: boolean
 }
 
-export default function PlayerIdle({ player, canStartGame }: PlayerIdleProps) {
-    const context = useContext(LayoutContext);
+export default function PlayerIdle({ player, promptStartGame }: PlayerIdleProps) {
     const [isLoading, setIsLoading] = useState(false);
 
     const emitStartGame = () => {
@@ -24,19 +21,17 @@ export default function PlayerIdle({ player, canStartGame }: PlayerIdleProps) {
 
         setIsLoading(true);
 
-        socket.emit(PlayerSocket.StartGame, (success: boolean) => {
+        socket.emit(PlayerSocket.StartGame, () => {
             setIsLoading(false);
         });
     }
 
     return (
-        <>
-            <Heading>jparty.io</Heading>
-            <Heading size={"sm"}>session name: {context.sessionName}</Heading>
-            <Heading size={"sm"} marginTop={"0.5em"} marginBottom={"0.5em"}>{player.name}: you have {formatDollarValue(player.score)}</Heading>
-            {canStartGame && <Button onClick={emitStartGame} isLoading={isLoading} margin={"0.5em"} colorScheme={"blue"}>start game</Button>}
+        <Box className={"mobile-box"} padding={"1em"}>
+            <Heading fontSize={"3em"} fontFamily={"logo"}>jparty.io</Heading>
+            {promptStartGame && <Button onClick={emitStartGame} isLoading={isLoading} margin={"0.5em"} colorScheme={"blue"}>start game</Button>}
             
             <PlayerScoreboard />
-        </>
+        </Box>
     );
 }

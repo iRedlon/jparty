@@ -65,7 +65,7 @@ export default function MenuPanel_Feedback() {
                     <Box margin={"1em"} />
 
                     <Textarea
-                        placeholder={"Please include details about what was happening in the game when the bug occurred, if applicable"}
+                        placeholder={"Please include details, if applicable"}
                         value={feedbackMessage}
                         onChange={e => setFeedbackMessage(e.target.value)} />
                 </Box>
