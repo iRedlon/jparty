@@ -1,0 +1,15 @@
+@keyframes change-scoreboard-position {
+    0% {
+        transform: translateY(var(--height-change));
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+.player-scoreboard-box {
+    animation-name: change-scoreboard-position;
+    animation-duration: 1s;
+    animation-timing-function: linear;
+}

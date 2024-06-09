@@ -39,7 +39,6 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
         responderInfoState = isWagerResponse ? "submitted-wager-responses" : "submitted-clue-responses";
         responderInfoBox = (
             <Box id={"responder-info-box"} className={"box submitted-responders-box"}>
-
                 <Heading size={"lg"} fontFamily={"clue"}>{numSubmittedResponders}/{numResponders} players submitted</Heading>
             </Box>
         );

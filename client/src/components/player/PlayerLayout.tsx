@@ -11,12 +11,11 @@ import Timer from "../common/Timer";
 import { socket } from "../../misc/socket";
 import { Layer } from "../../misc/ui-constants";
 
-import { AbsoluteCenter, Box, Button, Center, Flex } from "@chakra-ui/react";
+import { Box, Button, Center, Flex } from "@chakra-ui/react";
 import { PlayerResponseType, PlayerState, SessionState } from "jparty-shared";
 import { useContext, useEffect, useRef, useState } from "react";
 import { isMobile } from "react-device-detect";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
-import PlayerScoreboard from "./PlayerScoreboard";
 
 // each state represents the component currently being displayed. the top-level components in this enum are labelled with the "Player" prefix
 enum PlayerComponentState {
@@ -120,12 +119,12 @@ export default function PlayerLayout() {
             <Box position={"fixed"} bottom={"4em"} right={"1em"} zIndex={Layer.Middle}>{ForceIdleButton()}</Box>
 
             <Flex height={"100vh"} width={"100vw"} justifyContent={"center"} alignItems={"flex-start"} overflow={"auto"}>
-                <Center margin={"2em"} zIndex={Layer.Bottom}>
+                <Center id={"foo"} margin={"2em"} zIndex={Layer.Bottom}>
                     <SwitchTransition>
                         <CSSTransition key={componentState as PlayerComponentState} nodeRef={sessionStateRef} timeout={1} classNames={"session-state"}
                             appear mountOnEnter unmountOnExit>
 
-                            <Box ref={sessionStateRef}>
+                            <Box ref={sessionStateRef} width={isMobile ? "70vw" : "15vw"} minWidth={"15em"}>
                                 {PlayerComponent}
                             </Box>
                         </CSSTransition>

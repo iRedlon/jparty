@@ -1,13 +1,13 @@
 
 import { LayoutContext } from "../common/Layout";
-import MenuPanel_Debug from "../common/MenuPanel_Debug";
+import MenuPanel_Debug, { DebugSessionStateSelect } from "../common/MenuPanel_Debug";
 import MenuPanel_Feedback from "../common/MenuPanel_Feedback";
 import MenuPanel_Settings from "../common/MenuPanel_Settings";
 import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
 import { Layer } from "../../misc/ui-constants";
 
 import {
-    Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay,
+    Box, Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay,
     Select, Tabs, TabList, TabPanels, Tab, useDisclosure
 } from "@chakra-ui/react";
 import { getEnumKeys, PlayerState } from "jparty-shared";
@@ -45,6 +45,20 @@ export default function PlayerMenu() {
     return (
         <>
             <Button onClick={onOpen} position={"fixed"} bottom={"1em"} right={"1em"} colorScheme={"red"} zIndex={zIndex}>Menu</Button>
+
+            {
+                context.debugMode && (
+                    <>
+                        <Button onClick={() => handleDebugCommand(DebugCommand.PopulatePlaceholderData)} zIndex={zIndex} position={"fixed"} bottom={"7em"} right={"1em"}>
+                            Populate placeholder data
+                        </Button>
+
+                        <Box backgroundColor={"white"} zIndex={zIndex} position={"fixed"} bottom={"4em"} right={"1em"}>
+                            {DebugSessionStateSelect(context.sessionState)}
+                        </Box>
+                    </>
+                )
+            }
 
             <Modal motionPreset={"none"} isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay />

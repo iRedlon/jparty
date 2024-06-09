@@ -30,12 +30,6 @@ export default function ClueDecisionInfo({ playerID }: ClueDecisionInfoProps) {
     }
 
     const info = player.clueDecisionInfo;
-    const triviaCategory = context.triviaRound?.categories[context.categoryIndex];
-    const triviaClue = triviaCategory?.clues[context.clueIndex];
-
-    if (info.clue.id !== triviaClue?.id) {
-        return null;
-    }
 
     // ruling info
     const rulingString = info.isReversal ? "reversed to" : "ruled";
@@ -51,7 +45,7 @@ export default function ClueDecisionInfo({ playerID }: ClueDecisionInfoProps) {
 
     return (
         <Box key={playerID} className={"child-box"} padding={"0.5em"} margin={"0.5em"}>
-            <Text wordBreak={"keep-all"}> "<i>{info.response}</i>" ({player.name}) was {rulingString} {info.decision} {clueValueString}</Text>
+            <Text wordBreak={"keep-all"}> "<i>{info.response}</i>" was {rulingString} {info.decision} {clueValueString}</Text>
             {canVoteToReverseDecision && <Button onClick={() => emitVoteToReverseDecision(playerID)} size={"sm"} margin={"0.5em"}>vote to reverse</Button>}
             {hasVotedToReverseDecision && <Text>{numCurrentVoters}/{numRequiredVoters} required votes to reverse</Text>}
         </Box>

@@ -27,7 +27,7 @@ export default function PlayerIdle({ player, promptStartGame }: PlayerIdleProps)
     }
 
     return (
-        <Box className={"mobile-box"} padding={"1em"}>
+        <Box className={"mobile-box"} padding={"1em"} marginLeft={"auto"} marginRight={"auto"}>
             <Heading fontSize={"3em"} fontFamily={"logo"}>jparty.io</Heading>
             {promptStartGame && <Button onClick={emitStartGame} isLoading={isLoading} margin={"0.5em"} colorScheme={"blue"}>start game</Button>}
             

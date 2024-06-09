@@ -2,7 +2,7 @@
 import { emitMockSocketEvent } from "./mock-socket";
 
 import {
-    HostServerSocket, PLACEHOLDER_TRIVIA_ROUND, Player, PlayerResponseType, PlayerState, ServerSocket,
+    getRandomNum, HostServerSocket, PLACEHOLDER_TRIVIA_ROUND, Player, PlayerResponseType, PlayerState, ServerSocket,
     SessionAnnouncement, SessionState, SessionTimeout, TriviaCategory, TriviaClue,
     TriviaClueDecision, TriviaClueDecisionInfo, TriviaRound, VoiceType
 } from "jparty-shared";
@@ -18,30 +18,28 @@ export enum DebugCommand {
 }
 
 function getPlaceholderSessionPlayers(triviaCategory?: TriviaCategory, triviaClue?: TriviaClue) {
-    let player1 = new Player("", "luffy");
-    let player2 = new Player("", "zoro");
-    let player3 = new Player("", "nami");
-    let player4 = new Player("", "usopp");
-    let player5 = new Player("", "sanji");
-    let player6 = new Player("", "chopper");
+    let player1 = new Player("1", "luffy");
+    let player2 = new Player("2", "zoro");
+    let player3 = new Player("3", "nami");
+    let player4 = new Player("4", "usopp");
+    let player5 = new Player("5", "sanji");
+    let player6 = new Player("6", "chopper");
 
-    player1.score = 10000;
-    player2.score = 2353;
-    player3.score = -2000;
+    player1.score = getRandomNum(1000);
+    player2.score = getRandomNum(1000);
+    player3.score = getRandomNum(1000);
+    player4.score = getRandomNum(1000);
+    player5.score = getRandomNum(1000);
+    player6.score = getRandomNum(1000);
 
     if (triviaCategory && triviaClue) {
         player1.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.id, triviaCategory.name, triviaClue, "romance dawn", TriviaClueDecision.Correct, 14132, false);
         player1.responses[PlayerResponseType.Wager] = 1234;
         player1.minWager = 0;
         player1.maxWager = 10000;
-        // player2.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "romance dawn", TriviaClueDecision.Incorrect, 400, false);
-        // player3.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "arlong park", TriviaClueDecision.Incorrect, 10000, false);
-        // player4.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "syrup village", TriviaClueDecision.Incorrect, 23471, false);
-        // player5.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "baratie", TriviaClueDecision.Incorrect, 141, false);
-        // player3.clueDecisionInfo = new TriviaClueDecisionInfo(triviaCategory.name, triviaClue, "mountain?", TriviaClueDecision.Incorrect, 25235, false);
     }
 
-    player1.responses[PlayerResponseType.Clue] = "shearing a sheep in the place at the time at the word word"
+    player1.responses[PlayerResponseType.Clue] = "shearing a sheep in the place at the time at the word word";
 
     return { "socket1": player1, "sockt2": player2, "socket3": player3, "socket4": player4, "socket5": player5, "socket6": player6 };
     // return { "socket1": player1, "socket2": player2, "socket3": player3, };

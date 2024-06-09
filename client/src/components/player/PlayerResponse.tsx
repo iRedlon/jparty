@@ -79,9 +79,9 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
         default:
             {
                 return (
-                    <Box>
+                    <Box className={"box"} padding={"2em"}>
                         <Heading size={"md"}>enter your response</Heading>
-                        <Input value={response} onChange={(e) => emitUpdateResponse(e.target.value)} /><br />
+                        <Input value={response} onChange={(e) => emitUpdateResponse(e.target.value)} />
                         <Button onClick={emitSubmitResponse} isDisabled={!response} colorScheme={"blue"} marginTop={"1em"}>submit response</Button>
                     </Box>
                 );
