@@ -1,7 +1,13 @@
-#buzzer {
+.buzzer {
     height: 20em !important;
     width: 20em !important;
     --button-default-border-radius: 10em !important;
     --button-raise-level: 1em !important;
     --transform-speed: 0.1s !important;
+}
+
+.buzzer-text {
+    animation-name: blink;
+    animation-duration: 0.25s;
+    animation-iteration-count: Infinite;
 }

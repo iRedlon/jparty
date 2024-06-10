@@ -1,12 +1,20 @@
-#host-timer-wrapper {
+.timer-wrapper {
     position: fixed;
     top: 1em;
     left: 1em;
+}
+
+#desktop-timer-wrapper {
     height: 6em;
     width: 6em;
 }
 
-#host-timer {
+#mobile-timer-wrapper {
+    height: 3em;
+    width: 3em;
+}
+
+#timer {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -14,15 +22,15 @@
     width: 100%;
 }
 
-.timer-appear #host-timer-wrapper,
-.timer-enter #host-timer-wrapper {
+.timer-appear .timer-wrapper,
+.timer-enter .timer-wrapper {
     animation-name: slide-from-left;
     animation-duration: 0.5s;
     animation-timing-function: ease-out;
     animation-fill-mode: both;
 }
 
-.timer-exit #host-timer-wrapper {
+.timer-exit .timer-wrapper {
     animation-name: slide-from-left;
     animation-duration: 0.5s;
     animation-timing-function: ease-in-out;

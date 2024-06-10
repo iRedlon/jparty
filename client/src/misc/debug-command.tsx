@@ -106,7 +106,7 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
             break;
         case DebugCommand.StartTimeout:
             {
-                emitMockSocketEvent(ServerSocket.StartTimeout, SessionTimeout.Announcement, 6000);
+                emitMockSocketEvent(ServerSocket.StartTimeout, SessionTimeout.Announcement, 60000);
             }
             break;
         case DebugCommand.ShowAnnouncement:

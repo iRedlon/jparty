@@ -8,9 +8,8 @@ import { Layer } from "../../misc/ui-constants";
 import { Box, Text } from "@chakra-ui/react";
 import { ServerSocket, SessionTimeout } from "jparty-shared";
 import { useEffect, useRef, useState } from "react";
+import { isMobile } from "react-device-detect";
 import { CSSTransition } from "react-transition-group";
-
-addMockSocketEventHandler
 
 export default function Timer() {
     const timerRef = useRef(null);
@@ -62,9 +61,9 @@ export default function Timer() {
             appear mountOnEnter unmountOnExit>
 
             <Box ref={timerRef}>
-                <Box id={"host-timer-wrapper"} className={"box"} zIndex={Layer.Top}>
-                    <Box id={"host-timer"}>
-                        <Text fontFamily={"logo"} fontSize={"5em"}>{getTimeRemainingSec()}</Text>
+                <Box id={isMobile ? "mobile-timer-wrapper" : "desktop-timer-wrapper"} className={`timer-wrapper ${isMobile ? "mobile-box" : "box"}`} zIndex={Layer.Top}>
+                    <Box id={"timer"}>
+                        <Text fontFamily={"logo"} fontSize={isMobile ? "2em" : "4em"}>{getTimeRemainingSec()}</Text>
                     </Box>
                 </Box>
             </Box>

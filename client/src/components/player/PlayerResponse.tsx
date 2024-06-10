@@ -64,13 +64,14 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
                 }
 
                 return (
-                    <Box>
+                    <Box className={"box"} padding={"2em"}>
                         <Heading size={"md"}>enter a wager between {formatDollarValue(player.minWager)} and {formatDollarValue(player.maxWager)}</Heading>
-                        <Input 
+                        <Input
                             onChange={(e) => emitUpdateResponse(e.target.value)}
-                            value={response} min={player.minWager} max={player.maxWager} 
-                            isInvalid={isWagerInvalid()} 
-                            marginBottom={"1em"} type={"tel"} />
+                            value={response} min={player.minWager} max={player.maxWager}
+                            isInvalid={isWagerInvalid()}
+                            marginTop={"0.5em"} marginBottom={"1em"} type={"tel"} />
+
                         <Button onClick={emitSubmitResponse} isDisabled={!response} colorScheme={"blue"}>submit wager</Button>
                         {isWagerInvalid() && <Text>Wager will be clamped to {formatDollarValue(getClampedWager())}</Text>}
                     </Box>
@@ -81,7 +82,7 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
                 return (
                     <Box className={"box"} padding={"2em"}>
                         <Heading size={"md"}>enter your response</Heading>
-                        <Input value={response} onChange={(e) => emitUpdateResponse(e.target.value)} />
+                        <Input marginTop={"0.5em"} value={response} onChange={(e) => emitUpdateResponse(e.target.value)} />
                         <Button onClick={emitSubmitResponse} isDisabled={!response} colorScheme={"blue"} marginTop={"1em"}>submit response</Button>
                     </Box>
                 );

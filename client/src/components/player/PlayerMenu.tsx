@@ -46,7 +46,7 @@ export default function PlayerMenu() {
         <>
             <Button onClick={onOpen} position={"fixed"} bottom={"1em"} right={"1em"} colorScheme={"red"} zIndex={zIndex}>Menu</Button>
 
-            {
+            {/* {
                 context.debugMode && (
                     <>
                         <Button onClick={() => handleDebugCommand(DebugCommand.PopulatePlaceholderData)} zIndex={zIndex} position={"fixed"} bottom={"7em"} right={"1em"}>
@@ -58,7 +58,7 @@ export default function PlayerMenu() {
                         </Box>
                     </>
                 )
-            }
+            } */}
 
             <Modal motionPreset={"none"} isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay />

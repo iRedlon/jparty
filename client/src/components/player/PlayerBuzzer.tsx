@@ -17,7 +17,7 @@ export default function PlayerBuzzer() {
         <Box>
             <Box onClick={emitBuzz}>
                 <AwesomeButton className={"buzzer"} type={"danger"}>
-                    <Text className={"blink-fast"} fontSize={"2em"}>BUZZ</Text>
+                    <Text className={"buzzer-text"} fontSize={"3em"}>BUZZ</Text>
                 </AwesomeButton>
             </Box>
         </Box>

@@ -24,7 +24,7 @@ const VOLUME_STATE_MULTIPLIER = 100;
 
 export default function MenuPanel_Settings() {
     const context = useContext(LayoutContext);
-    
+
     const [musicVolume, setMusicVolume] = useState(getVolume(VolumeType.Music) * VOLUME_STATE_MULTIPLIER);
     const [voiceVolume, setVoiceVolume] = useState(getVolume(VolumeType.Voice) * VOLUME_STATE_MULTIPLIER);
     const [soundEffectsVolume, setSoundEffectsVolume] = useState(getVolume(VolumeType.SoundEffects) * VOLUME_STATE_MULTIPLIER);
@@ -58,7 +58,7 @@ export default function MenuPanel_Settings() {
     return (
         <TabPanel>
             {
-                context.sessionName && (
+                context.sessionName ? (
                     <>
                         <Stack direction={"column"}>
                             <Text>You are in session: <b>{context.sessionName}</b></Text>
@@ -67,6 +67,12 @@ export default function MenuPanel_Settings() {
                             Leave session
                         </Button>
                         <Divider margin={"1em"} />
+                    </>
+                ) : (
+                    <>
+                        {
+                            context.isPlayer && (<Text>Join a session to adjust settings</Text>)
+                        }
                     </>
                 )
             }

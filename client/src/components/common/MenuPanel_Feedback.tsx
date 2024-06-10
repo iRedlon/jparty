@@ -33,11 +33,11 @@ export default function MenuPanel_Feedback() {
     return (
         <TabPanel>
             <AbsoluteCenter axis={"horizontal"} width={"100%"}>
-                <Heading size={"md"}>Known issues</Heading>
+                {/* <Heading size={"md"}>Known issues</Heading>
                 
                 <UnorderedList listStylePosition={"inside"} margin={"0 auto"} marginBottom={"1em"}>
                     <ListItem>Border lines of player scoreboard sometimes don't update visually</ListItem>
-                </UnorderedList>
+                </UnorderedList> */}
 
                 <Heading size={"md"}>Submit feedback</Heading>
 

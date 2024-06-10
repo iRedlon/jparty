@@ -74,7 +74,9 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
                                 {(showClueDecision && clueDecisionInfo) ?
                                     <>
                                         <Text><b>{clueDecisionInfo.decision.toUpperCase()}</b></Text>
-                                        {clueDecisionInfo.decision !== TriviaClueDecision.NeedsMoreDetail && <Heading fontFamily={"board"} fontWeight={0}>$10000</Heading>}
+                                        {clueDecisionInfo.decision !== TriviaClueDecision.NeedsMoreDetail && <Heading fontFamily={"board"} fontWeight={0}>
+                                            {formatDollarValue(clueDecisionInfo.clueValue)}
+                                        </Heading>}
                                     </> :
                                     <></>}
                             </Box>

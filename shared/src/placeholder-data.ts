@@ -163,6 +163,7 @@ const PLACEHOLDER_TRIVIA_ROUND_CATEGORIES: TriviaCategory[] = [
         settings: { type: 3 },
         id: 773,
         name: 'animals in literature',
+        completed: true,
         clues: [
             {
                 "id": 87961,

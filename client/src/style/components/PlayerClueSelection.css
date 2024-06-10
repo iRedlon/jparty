@@ -1,0 +1,21 @@
+#selected-category-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    font-size: 1.5em;
+    height: 3.5em;
+    width: 100%;
+    padding: 0.25em;
+    line-height: 1em;
+}
+
+.arrow-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    height: 3.5em;
+    width: 2em;
+    cursor: pointer;
+}

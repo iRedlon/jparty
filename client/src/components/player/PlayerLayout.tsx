@@ -121,7 +121,7 @@ export default function PlayerLayout() {
             <Flex height={"100vh"} width={"100vw"} justifyContent={"center"} alignItems={"flex-start"} overflow={"auto"}>
                 <Center id={"foo"} margin={"2em"} zIndex={Layer.Bottom}>
                     <SwitchTransition>
-                        <CSSTransition key={componentState as PlayerComponentState} nodeRef={sessionStateRef} timeout={1} classNames={"session-state"}
+                        <CSSTransition key={componentState as PlayerComponentState} nodeRef={sessionStateRef} timeout={0} classNames={"session-state"}
                             appear mountOnEnter unmountOnExit>
 
                             <Box ref={sessionStateRef} width={isMobile ? "70vw" : "15vw"} minWidth={"15em"}>
