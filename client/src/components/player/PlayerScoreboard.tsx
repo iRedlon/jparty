@@ -1,21 +1,22 @@
 
-import "../../style/components/PlayerScoreboard.css";
+import { Box, Heading, Stack, Text } from "@chakra-ui/react";
+import { getSortedSessionPlayerIDs, SessionPlayers, SocketID, TriviaClueDecision } from "jparty-shared";
+import { useContext, useEffect, useRef } from "react";
+import { PiCrownSimpleFill } from "react-icons/pi";
 
 import ClueDecisionInfo from "./ClueDecisionInfo";
 import { LayoutContext } from "../common/Layout";
 import { formatDollarValue, getClientID } from "../../misc/client-utils";
 import { Layer } from "../../misc/ui-constants";
 
-import { Box, Heading, Stack, Text } from "@chakra-ui/react";
-import { getSortedSessionPlayerIDs, SessionPlayers, SocketID, TriviaClueDecision } from "jparty-shared";
-import { useContext, useEffect, useRef } from "react";
-import { PiCrownSimpleFill } from "react-icons/pi";
+import "../../style/components/PlayerScoreboard.css";
 
 export default function PlayerScoreboard() {
     const context = useContext(LayoutContext);
     const prevSessionPlayersRef = useRef<SessionPlayers>({});
 
     useEffect(() => {
+        // store the previous state of sessionPlayers so we can compare it with the updated data and animate the position changes
         prevSessionPlayersRef.current = context.sessionPlayers;
     }, [context.sessionPlayers]);
 
@@ -41,7 +42,7 @@ export default function PlayerScoreboard() {
 
     return (
         <>
-            <Heading size={"md"}>scoreboard</Heading>
+            <Heading size={"sm"} fontFamily={"logo"} marginTop={"0.5em"}>scoreboard</Heading>
 
             <Stack direction={"column"} gap={"1em"} alignItems={"center"} marginTop={"0.5em"}>
                 {sortedSessionPlayerIDs.map((playerID: SocketID, index: number) => {
@@ -53,26 +54,26 @@ export default function PlayerScoreboard() {
                     if (prevIndex >= 0) {
                         indexChange = prevIndex - index;
                     }
-                    else {
-                        // todo: this player wasn't on the scoreboard before... do something special? come from far below maybe?
-                    }
 
-                    const heightChange = `${indexChange * 2}em`;
+                    const height = 3.5;
+                    const heightEm = `${height}em`;
+
+                    const heightChange = `${indexChange * height}em`;
                     const zIndex = Layer.Bottom + (numPlayers - index);
 
                     const isViewingPlayer = player.clientID === getClientID();
 
                     return (
-                        <Box key={`${playerID}-${indexChange}`}
+                        <Box key={`${player.clientID}-${indexChange}`}
                             className={"player-scoreboard-box"} style={{ "--height-change": heightChange } as React.CSSProperties}
-                            height={"3.5em"} zIndex={zIndex}>
+                            height={heightEm} zIndex={zIndex}>
 
                             <Stack direction={"row"} justifyContent={"center"}>
-                                <Box className={"child-box"} height={"3.5em"} width={"3.5em"}>
+                                <Box className={"child-box"} height={heightEm} width={heightEm}>
                                     <img src={player.signatureImageBase64} />
                                 </Box>
 
-                                <Stack className={"child-box"} direction={"column"} gap={0} height={"3.5em"} width={"8em"} paddingLeft={"0.25em"} overflow={"hidden"}>
+                                <Stack className={"child-box"} direction={"column"} gap={0} height={heightEm} width={"8em"} paddingLeft={"0.25em"} overflow={"hidden"}>
                                     <Box textAlign={"left"} whiteSpace={"nowrap"}>
                                         <Stack direction={"row"} gap={"0.2em"} alignItems={"center"}>
                                             {index === 0 ? <PiCrownSimpleFill /> : <></>}
@@ -93,16 +94,16 @@ export default function PlayerScoreboard() {
             </Stack>
 
             {
-                clueDecisionInfoArray.length ? (
+                clueDecisionInfoArray.length > 0 && (
                     <>
                         <Box margin={"1em"} />
-                        <Heading size={"md"}>recent decisions</Heading>
+                        <Heading size={"sm"} fontFamily={"logo"}>recent decisions</Heading>
 
                         <Stack direction={"column"} gap={0}>
                             {clueDecisionInfoArray}
                         </Stack>
                     </>
-                ) : <></>
+                )
             }
         </>
     );

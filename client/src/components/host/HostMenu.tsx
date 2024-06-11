@@ -1,21 +1,35 @@
 
-import GameSettings from "./GameSettings";
-import { LayoutContext } from "../common/Layout";
-import MenuPanel_Debug, { DebugSessionStateSelect } from "../common/MenuPanel_Debug";
-import MenuPanel_Feedback from "../common/MenuPanel_Feedback";
-import MenuPanel_Settings from "../common/MenuPanel_Settings";
-import { Layer } from "../../misc/ui-constants";
-
 import {
-    Box, Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay,
+    Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay,
     Tabs, TabList, TabPanels, Tab, TabPanel, useDisclosure
 } from "@chakra-ui/react";
-import { SessionState } from "jparty-shared";
-import { useContext } from "react";
+import { HostServerSocket, SessionState, VoiceType } from "jparty-shared";
+import { useContext, useEffect, useState } from "react";
+
+import GameSettings from "./GameSettings";
+import { LayoutContext } from "../common/Layout";
+import MenuPanel_Debug from "../common/MenuPanel_Debug";
+import MenuPanel_Feedback from "../common/MenuPanel_Feedback";
+import MenuPanel_Settings from "../common/MenuPanel_Settings";
+import { socket } from "../../misc/socket";
+import { Layer } from "../../misc/ui-constants";
 
 export default function HostMenu() {
     const context = useContext(LayoutContext);
+    const [voiceType, setVoiceType] = useState(VoiceType.ModernMasculine);
     const { isOpen, onOpen, onClose } = useDisclosure();
+
+    useEffect(() => {
+        socket.on(HostServerSocket.UpdateVoiceType, handleUpdateVoiceType);
+
+        return () => {
+            socket.off(HostServerSocket.UpdateVoiceType, handleUpdateVoiceType);
+        }
+    }, []);
+
+    const handleUpdateVoiceType = (voiceType: VoiceType) => {
+        setVoiceType(voiceType);
+    }
 
     const menuTabs = [
         <Tab key={"settings-tab"}>Settings</Tab>,
@@ -25,7 +39,7 @@ export default function HostMenu() {
     ];
 
     const menuPanels = [
-        <MenuPanel_Settings key={"settings-tab-panel"} />,
+        <MenuPanel_Settings key={"settings-tab-panel"} voiceType={voiceType} />,
         <TabPanel key={"game-settings-tab-panel"}><GameSettings onCloseHostMenu={onClose} /></TabPanel>,
         <MenuPanel_Feedback key={"feedback-tab-panel"} />,
         context.debugMode && <MenuPanel_Debug key={"debug-tab-panel"} />
@@ -43,19 +57,9 @@ export default function HostMenu() {
                 Menu
             </Button>
 
-            {
-                context.debugMode && (
-                    <Box _hover={{ opacity: 1 }} backgroundColor={"white"} zIndex={zIndex} opacity={fixedButtonOpacity}
-                        position={"fixed"} top={"4em"} right={"1em"}>
-
-                        {DebugSessionStateSelect(context.sessionState)}
-                    </Box>
-                )
-            }
-
             <Modal motionPreset={"none"} isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay />
-                <ModalContent overflowY={"auto"} height={"80vh"} minWidth={"60vw"} marginTop={"auto"} marginBottom={"auto"}>
+                <ModalContent overflow={"auto"} height={"80vh"} minWidth={"60vw"} marginTop={"auto"} marginBottom={"auto"}>
                     <ModalCloseButton zIndex={Layer.Middle} />
                     <ModalBody>
                         <Tabs>

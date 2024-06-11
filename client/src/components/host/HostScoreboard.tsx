@@ -1,10 +1,10 @@
 
-import { LayoutContext } from "../common/Layout";
-import { formatDollarValue } from "../../misc/client-utils";
-
 import { Box, Stack } from "@chakra-ui/react";
 import { getSortedSessionPlayerIDs, SocketID } from "jparty-shared";
 import { useContext } from "react";
+
+import { LayoutContext } from "../common/Layout";
+import { formatDollarValue } from "../../misc/client-utils";
 
 export default function HostScoreboard() {
     const context = useContext(LayoutContext);
@@ -20,8 +20,9 @@ export default function HostScoreboard() {
                 }
 
                 return (
-                    <Stack className={`scoreboard-player-box ${isEvenPlayerIndex ? "even" : "odd"}`} direction={"row"} justifyContent={"center"}>
+                    <Stack key={player.clientID} className={`scoreboard-player-box ${isEvenPlayerIndex ? "even" : "odd"}`} direction={"row"} justifyContent={"center"}>
                         <Box className={"box"} marginRight={"0.5em"} height={"7em"} width={"7em"} display={"flex"} justifyContent={"center"} alignItems={"center"}>
+                            <img src={player.signatureImageBase64} />
                         </Box>
 
                         <Box className={"box"} padding={"1em"} width={"15vw"}>

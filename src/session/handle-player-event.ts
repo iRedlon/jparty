@@ -91,7 +91,7 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
 
     session.setPlayersIdle();
     emitStateUpdate(sessionName);
-    
+
     session.promptClueSelection();
 
     showAnnouncement(sessionName, SessionAnnouncement.StartGame, () => {
@@ -292,7 +292,7 @@ function finishBuzzWindow(sessionName: string) {
 
     stopTimeout(sessionName, SessionTimeout.BuzzWindow);
 
-    if (session.getCurrentClue()?.isTossupClue()) {
+    if (!session.getCurrentClue()?.isAllPlayClue()) {
         playAudio(sessionName, AudioType.BuzzWindowTimeout);
     }
 
@@ -300,11 +300,11 @@ function finishBuzzWindow(sessionName: string) {
     emitStateUpdate(sessionName);
 
     // we didn't actually get a response (because nobody buzzed in). we're just hooking into the decision reveal system so we can display the correct answer
-    const displayCorrectAnswer = true;
-    io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, displayCorrectAnswer);
-    playVoiceLine(sessionName, VoiceLineType.DisplayCorrectAnswer);
+    const showCorrectAnswer = true;
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
+    playVoiceLine(sessionName, VoiceLineType.showCorrectAnswer);
 
-    startTimeout(sessionName, SessionTimeout.ReadingClueDecision, () => finishRevealClueDecision(sessionName, displayCorrectAnswer));
+    startTimeout(sessionName, SessionTimeout.ReadingClueDecision, () => finishRevealClueDecision(sessionName, showCorrectAnswer));
 }
 
 function handleBuzz(socket: Socket, sessionName: string) {
@@ -369,10 +369,10 @@ async function finishResponseWindow(sessionName: string) {
 
                 // there's only one response window for an all play/wager, so we can safely announce the correct answer to begin with
                 // before finding any of the decisions
-                if (!session.getCurrentClue()?.isTossupClue()) {
-                    const displayCorrectAnswer = true;
-                    io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, displayCorrectAnswer);
-                    playVoiceLine(sessionName, VoiceLineType.DisplayCorrectAnswer);
+                if (session.getCurrentClue()?.isAllPlayClue()) {
+                    const showCorrectAnswer = true;
+                    io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
+                    playVoiceLine(sessionName, VoiceLineType.showCorrectAnswer);
 
                     startTimeout(sessionName, SessionTimeout.ReadingClueDecision, () => recursiveRevealClueDecision(sessionName, true));
                 }
@@ -391,14 +391,14 @@ async function finishResponseWindow(sessionName: string) {
 }
 
 // make a series of recursive calls to get a clue decision for each responder
-async function recursiveRevealClueDecision(sessionName: string, displayCorrectAnswer: boolean = false) {
+async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswer: boolean = false) {
     let session = getSession(sessionName);
     if (!session) {
         return;
     }
 
     stopTimeout(sessionName, SessionTimeout.ReadingClueDecision);
-    
+
     // turn off the client timer while we wait for a decision. it's an async process, so we can't guarantee how long it will take
     io.in(sessionName).emit(ServerSocket.StopTimeout);
 
@@ -409,8 +409,8 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
     if (!responderID) {
         debugLog(DebugLogType.ClueDecision, `done revealing clue decisions`);
 
-        if (session.currentResponderIDs.length || !session.getCurrentClue()?.isTossupClue()) {
-            finishRevealClueDecision(sessionName, displayCorrectAnswer);
+        if (session.currentResponderIDs.length || session.getCurrentClue()?.isAllPlayClue()) {
+            finishRevealClueDecision(sessionName, showCorrectAnswer);
         }
         else {
             // if we had no responders somehow... still make sure we display the correct answer before moving on
@@ -434,20 +434,20 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
     let noEligibleRespondersRemaining = (decision !== TriviaClueDecision.NeedsMoreDetail) && !session.getNumEligibleResponders();
 
     // decide if we should display the correct answer when we reveal this decision
-    if (session.getCurrentClue()?.isTossupClue()) {
-        displayCorrectAnswer = (decision === TriviaClueDecision.Correct) || noEligibleRespondersRemaining;
+    if (session.getCurrentClue()?.isAllPlayClue()) {
+        showCorrectAnswer = true;
     }
     else {
-        displayCorrectAnswer = true;
+        showCorrectAnswer = (decision === TriviaClueDecision.Correct) || noEligibleRespondersRemaining;
     }
 
-    session.displayingCorrectAnswer = displayCorrectAnswer;
+    session.displayingCorrectAnswer = showCorrectAnswer;
 
     emitStateUpdate(sessionName);
-    io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, displayCorrectAnswer);
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
 
-    if (session.getCurrentClue()?.isTossupClue() && noEligibleRespondersRemaining && decision === TriviaClueDecision.Incorrect) {
-        playVoiceLine(sessionName, VoiceLineType.DisplayCorrectAnswer);
+    if (!session.getCurrentClue()?.isAllPlayClue() && noEligibleRespondersRemaining && decision === TriviaClueDecision.Incorrect) {
+        playVoiceLine(sessionName, VoiceLineType.showCorrectAnswer);
     }
     else {
         playVoiceLine(sessionName, VoiceLineType.RevealClueDecision);
@@ -457,14 +457,14 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
         }
     }
 
-    debugLog(DebugLogType.ClueDecision, `got clue decision: ${decision}. display correct answer?: ${displayCorrectAnswer}`);
+    debugLog(DebugLogType.ClueDecision, `got clue decision: ${decision}. display correct answer?: ${showCorrectAnswer}`);
 
     startTimeout(sessionName, SessionTimeout.ReadingClueDecision, () => {
-        recursiveRevealClueDecision(sessionName, displayCorrectAnswer);
+        recursiveRevealClueDecision(sessionName, showCorrectAnswer);
     });
 }
 
-function finishRevealClueDecision(sessionName: string, displayCorrectAnswer: boolean) {
+function finishRevealClueDecision(sessionName: string, showCorrectAnswer: boolean) {
     let session = getSession(sessionName);
     if (!session) {
         return;
@@ -473,7 +473,7 @@ function finishRevealClueDecision(sessionName: string, displayCorrectAnswer: boo
     stopTimeout(sessionName, SessionTimeout.ReadingClueDecision);
 
     // if we displayed the correct answer for any reason, we need to move on to a new clue
-    if (displayCorrectAnswer) {
+    if (showCorrectAnswer) {
         session.promptClueSelection();
         playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
 
@@ -498,7 +498,7 @@ function finishRevealClueDecision(sessionName: string, displayCorrectAnswer: boo
 
         attemptForceSelectFinalClue(sessionName);
     }
-    else if (session.getCurrentClue()?.isTossupClue()) {
+    else if (!session.getCurrentClue()?.isAllPlayClue()) {
         const spotlightResponder = session.players[session.spotlightResponderID];
 
         let clueDecision = TriviaClueDecision.Incorrect;
@@ -522,7 +522,7 @@ function finishRevealClueDecision(sessionName: string, displayCorrectAnswer: boo
         }
     }
     else {
-        throw new Error(formatDebugLog(`failed to finish revealing clue decision. tossup?: ${session.getCurrentClue()?.isTossupClue()}, display correct answer?: ${displayCorrectAnswer}`));
+        throw new Error(formatDebugLog(`failed to finish revealing clue decision. all play?: ${session.getCurrentClue()?.isAllPlayClue()}, display correct answer?: ${showCorrectAnswer}`));
     }
 
     emitStateUpdate(sessionName);

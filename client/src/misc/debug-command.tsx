@@ -1,11 +1,11 @@
 
-import { emitMockSocketEvent } from "./mock-socket";
-
 import {
     getRandomNum, HostServerSocket, PLACEHOLDER_TRIVIA_ROUND, Player, PlayerResponseType, PlayerState, ServerSocket,
     SessionAnnouncement, SessionState, SessionTimeout, TriviaCategory, TriviaClue,
     TriviaClueDecision, TriviaClueDecisionInfo, TriviaRound, VoiceType
 } from "jparty-shared";
+
+import { emitMockSocketEvent } from "./mock-socket";
 
 export enum DebugCommand {
     PopulatePlaceholderData,
@@ -113,18 +113,18 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
             break;
         case DebugCommand.ShowAnnouncement:
             {
-                mockSocket.dispatchEvent(new CustomEvent(ServerSocket.ShowAnnouncement, {
+                mockSocket.dispatchEvent(new CustomEvent(HostServerSocket.ShowAnnouncement, {
                     detail: {
                         params: [SessionAnnouncement.StartGame]
                     }
                 }));
 
-                emitMockSocketEvent(ServerSocket.ShowAnnouncement, SessionAnnouncement.StartGame);
+                emitMockSocketEvent(HostServerSocket.ShowAnnouncement, SessionAnnouncement.StartGame);
             }
             break;
         case DebugCommand.HideAnnouncement:
             {
-                emitMockSocketEvent(ServerSocket.HideAnnouncement, true);
+                emitMockSocketEvent(HostServerSocket.HideAnnouncement, true);
             }
             break;
     }

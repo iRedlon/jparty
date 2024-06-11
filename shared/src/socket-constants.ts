@@ -19,18 +19,14 @@ export enum ServerSocket {
     BeginSpectate = "server_update_begin_spectate",
     Message = "server_message",
     CancelGame = "server_cancel_game",
-    UpdateVoiceType = "host_server_update_voice_type",
-    PlayAudio = "server_play_audio",
     UpdateSessionName = "server_update_session_name",
     UpdateSessionState = "server_update_session_state",
     UpdateSessionPlayers = "server_update_session_players",
     UpdateTriviaRound = "server_update_trivia_round",
-    SelectClue = "host_server_select_clue",
-    UpdateSpotlightResponderID = "host_server_update_spotlight_responder_id",
-    StartTimeout = "host_server_start_timeout",
-    StopTimeout = "host_server_stop_timeout",
-    ShowAnnouncement = "host_server_show_announcement",
-    HideAnnouncement = "host_server_hide_announcement"
+    SelectClue = "server_select_clue",
+    UpdateSpotlightResponderID = "server_update_spotlight_responder_id",
+    StartTimeout = "server_start_timeout",
+    StopTimeout = "server_stop_timeout"
 }
 
 export enum ClientSocket {
@@ -59,7 +55,11 @@ export type HostSocketCallback = {
 
 export enum HostServerSocket {
     UpdateGameSettingsPreset = "host_server_update_game_settings_preset",
+    UpdateVoiceType = "host_server_update_voice_type",
+    PlayAudio = "host_server_play_audio",
     PlayVoice = "host_server_play_voice",
+    ShowAnnouncement = "host_server_show_announcement",
+    HideAnnouncement = "host_server_hide_announcement",
     UpdateNumSubmittedResponders = "host_server_update_num_submitted_responders",
     RevealClueDecision = "host_server_reveal_clue_decision"
 }
@@ -85,7 +85,7 @@ export class ServerSocketMessage {
     message: string;
     isError: boolean;
 
-    constructor (message: string, isError?: boolean) {
+    constructor(message: string, isError?: boolean) {
         this.message = message;
         this.isError = isError || false;
     }

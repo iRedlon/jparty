@@ -713,7 +713,7 @@ export class Session {
             }
         }
 
-        if (this.getCurrentClue()?.isTossupClue() && (responderIDs.length === 1)) {
+        if (!this.getCurrentClue()?.isAllPlayClue() && (responderIDs.length === 1)) {
             this.spotlightResponderID = responderIDs[0];
         }
         else {
@@ -841,7 +841,7 @@ export class Session {
         const isFollowUpResponse = responder.clueDecisionInfo ? (responder.clueDecisionInfo.decision === TriviaClueDecision.NeedsMoreDetail) : false;
 
         // don't allow the decision to be "needs more detail" more than once in a row
-        if (needsMoreDetail && (isFollowUpResponse || !this.getCurrentClue()?.isTossupClue())) {
+        if (needsMoreDetail && (isFollowUpResponse || this.getCurrentClue()?.isAllPlayClue())) {
             decision = TriviaClueDecision.Incorrect;
         }
 

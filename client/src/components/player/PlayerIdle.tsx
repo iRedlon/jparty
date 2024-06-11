@@ -1,18 +1,17 @@
 
+import { Box, Button, Heading } from "@chakra-ui/react";
+import { PlayerSocket } from "jparty-shared";
+import { useState } from "react";
+
 import PlayerScoreboard from "./PlayerScoreboard";
 import { socket } from "../../misc/socket";
 
-import { Box, Button, Heading } from "@chakra-ui/react";
-import { Player, PlayerSocket } from "jparty-shared";
-import { useState } from "react";
-
 interface PlayerIdleProps {
-    player: Player;
-    setForceSignature: Function,
+    setIsEditingSignature: Function,
     promptStartGame?: boolean
 }
 
-export default function PlayerIdle({ player, setForceSignature, promptStartGame }: PlayerIdleProps) {
+export default function PlayerIdle({ setIsEditingSignature, promptStartGame }: PlayerIdleProps) {
     const [isLoading, setIsLoading] = useState(false);
 
     const emitStartGame = () => {
@@ -31,7 +30,7 @@ export default function PlayerIdle({ player, setForceSignature, promptStartGame 
         <Box className={"mobile-box"} padding={"1em"} marginLeft={"auto"} marginRight={"auto"}>
             <Heading fontSize={"3em"} fontFamily={"logo"}>jparty.io</Heading>
 
-            <Button onClick={() => setForceSignature(true)} size={"sm"} margin={"0.5em"}>edit signature</Button>
+            <Button onClick={() => setIsEditingSignature(true)} size={"sm"} margin={"0.5em"}>edit signature</Button><br />
             
             {promptStartGame && <Button onClick={emitStartGame} isLoading={isLoading} margin={"0.5em"} colorScheme={"blue"}>start game</Button>}
             

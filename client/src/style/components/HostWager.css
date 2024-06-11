@@ -1,4 +1,4 @@
-/* category box */
+/* category box anims */
 
 .session-state-appear #category-box, 
 .session-state-enter #category-box {
@@ -16,7 +16,7 @@
     animation-fill-mode: both;
 }
 
-/* responder info */
+/* responder info anims */
 
 .session-state-appear #responder-info-box, 
 .session-state-enter #responder-info-box {

@@ -1,11 +1,11 @@
 
-import { LayoutContext } from "../common/Layout";
-import { formatDollarValue } from "../../misc/client-utils";
-import { socket } from "../../misc/socket";
-
 import { Box, Button, Heading, Input, Text } from "@chakra-ui/react";
 import { Player, PlayerResponseType, PlayerSocket, SessionState } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
+
+import { LayoutContext } from "../common/Layout";
+import { formatDollarValue } from "../../misc/client-utils";
+import { socket } from "../../misc/socket";
 
 interface PlayerResponseProps {
     player: Player,
@@ -45,7 +45,7 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
         case PlayerResponseType.Wager:
             {
                 const isWagerInvalid = () => {
-                    if (response === "") {
+                    if (!response) {
                         return false;
                     }
 
@@ -64,8 +64,8 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
                 }
 
                 return (
-                    <Box className={"box"} padding={"2em"}>
-                        <Heading size={"md"}>you may wager up to {formatDollarValue(player.maxWager)}</Heading>
+                    <Box className={"mobile-box"} padding={"2em"}>
+                        <Heading size={"sm"} fontFamily={"logo"}>you may wager up to {formatDollarValue(player.maxWager)}</Heading>
                         <Input
                             onChange={(e) => emitUpdateResponse(e.target.value)}
                             value={response} min={player.minWager} max={player.maxWager}
@@ -73,15 +73,15 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
                             marginTop={"0.5em"} marginBottom={"1em"} type={"tel"} />
 
                         <Button onClick={emitSubmitResponse} isDisabled={!response} colorScheme={"blue"}>submit wager</Button>
-                        {isWagerInvalid() && <Text>Wager will be clamped to {formatDollarValue(getClampedWager())}</Text>}
+                        {isWagerInvalid() && <Text marginTop={"0.5em"}>Wager will be clamped to {formatDollarValue(getClampedWager())}</Text>}
                     </Box>
                 );
             }
         default:
             {
                 return (
-                    <Box className={"box"} padding={"2em"}>
-                        <Heading size={"md"}>enter your response</Heading>
+                    <Box className={"mobile-box"} padding={"2em"}>
+                        <Heading size={"sm"} fontFamily={"logo"}>enter your response</Heading>
                         <Input marginTop={"0.5em"} value={response} onChange={(e) => emitUpdateResponse(e.target.value)} />
                         <Button onClick={emitSubmitResponse} isDisabled={!response} colorScheme={"blue"} marginTop={"1em"}>submit response</Button>
                     </Box>

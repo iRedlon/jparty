@@ -1,9 +1,9 @@
 
-import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
-import { formatDollarValue } from "../../misc/client-utils";
-
 import { Box, Heading } from "@chakra-ui/react";
 import { SessionState, TriviaCategory, TriviaCategoryType, TriviaClue, TriviaClueBonus } from "jparty-shared";
+
+import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
+import { formatDollarValue } from "../../misc/client-utils";
 
 interface CategoryBoxProps {
     triviaCategory: TriviaCategory,
@@ -19,7 +19,7 @@ export default function CategoryBox({ triviaCategory, triviaClue }: CategoryBoxP
     }
 
     return (
-        <Box id={"category-box"} className={"box"} padding={"1em"} onClick={() => handleDebugCommand(DebugCommand.UpdateSessionState, SessionState.ClueSelection)}>
+        <Box id={"category-box"} className={"box"} padding={"1em"} onClick={() => handleDebugCommand(DebugCommand.UpdateSessionState, SessionState.PromptClueSelection)}>
             <Heading size={"lg"} fontFamily={"clue"}>{triviaCategory.name.toUpperCase()} {clueValueString}</Heading>
 
             <Heading size={"sm"} fontFamily={"clue"}>

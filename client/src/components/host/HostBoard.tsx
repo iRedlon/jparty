@@ -1,11 +1,11 @@
 
-import "../../style/components/HostBoard.css";
+import { Box, Heading, SimpleGrid } from "@chakra-ui/react";
+import { TriviaRound } from "jparty-shared";
 
 import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
 import { formatDollarValue } from "../../misc/client-utils";
 
-import { Box, Heading, SimpleGrid } from "@chakra-ui/react";
-import { TriviaRound } from "jparty-shared";
+import "../../style/components/HostBoard.css";
 
 function getBoardPanelFontSize(isDollarValue: boolean, content: string) {
     if (isDollarValue) {
@@ -32,7 +32,6 @@ export default function HostBoard({ triviaRound }: HostBoardProps) {
     const boardPanelHeight = `${100 / numPanels}vh`;
     const boardPanelWidth = `${100 / numCategories}vw`;
 
-    // CapitalCase cause this is just a mini-sized functional component. should this go into its own file? the jury is out...
     const BoardPanel = (content: any, categoryIndex: number, panelIndex: number) => {
         // give every other category column a different class so they can be animated differently
         const isEvenCategoryIndex = (categoryIndex % 2) === 0;

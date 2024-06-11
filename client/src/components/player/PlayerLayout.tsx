@@ -1,4 +1,10 @@
 
+import { Box, Button, Center, Flex } from "@chakra-ui/react";
+import { PlayerResponseType, PlayerState, SessionState } from "jparty-shared";
+import { useContext, useEffect, useRef, useState } from "react";
+import { isMobile } from "react-device-detect";
+import { CSSTransition, SwitchTransition } from "react-transition-group";
+
 import PlayerBuzzer from "./PlayerBuzzer";
 import PlayerClueSelection from "./PlayerClueSelection";
 import PlayerIdle from "./PlayerIdle";
@@ -12,14 +18,8 @@ import Timer from "../common/Timer";
 import { socket } from "../../misc/socket";
 import { Layer } from "../../misc/ui-constants";
 
-import { Box, Button, Center, Flex } from "@chakra-ui/react";
-import { PlayerResponseType, PlayerState, SessionState } from "jparty-shared";
-import { useContext, useEffect, useRef, useState } from "react";
-import { isMobile } from "react-device-detect";
-import { CSSTransition, SwitchTransition } from "react-transition-group";
-
-
-// each state represents the component currently being displayed. the top-level components in this enum are labelled with the "Player" prefix
+// each state represents the component currently being displayed
+// importantly: multiple session states may render the same component
 enum PlayerComponentState {
     None,
     Lobby,
@@ -31,17 +31,18 @@ enum PlayerComponentState {
 }
 
 export default function PlayerLayout() {
-    const context = useContext(LayoutContext);
     const sessionStateRef = useRef(null);
+
+    const context = useContext(LayoutContext);
 
     // "force idle" is a state where the player isn't idle (i.e. responding to a clue) but has "switched tabs" to check the scoreboard
     // anytime a player isn't idle, they see a button that allows them to switch between the scoreboard and whatever their normal state component is
     const [forceIdle, setForceIdle] = useState(false);
-    const [forceSignature, setForceSignature] = useState(false);
+    const [isEditingSignature, setIsEditingSignature] = useState(false);
 
     useEffect(() => {
         setForceIdle(false);
-        setForceSignature(false);
+        setIsEditingSignature(false);
     }, [context.sessionState]);
 
     const getPlayer = () => {
@@ -54,7 +55,7 @@ export default function PlayerLayout() {
     }
 
     const player = getPlayer();
-    const isIdle = player ? ((player.state === PlayerState.Idle) || (player.state === PlayerState.WaitingToStartGame)) : false;
+    const isIdle = player ? ((player.state === PlayerState.Idle) || (player.state === PlayerState.PromptStartGame)) : false;
 
     const ForceIdleButton = () => {
         // no need to force yourself to be idle if you already are!
@@ -62,65 +63,90 @@ export default function PlayerLayout() {
             return;
         }
 
-        return <Button colorScheme={"gray"}
-            onClick={() => { setForceIdle(!forceIdle); setForceSignature(false); }}>
+        let returnText = "Go back";
+        switch (player.state) {
+            case PlayerState.PromptClueSelection:
+                {
+                    returnText = "Select a clue";
+                }
+                break;
+            case PlayerState.PromptBuzz:
+                {
+                    returnText = "Buzz in";
+                }
+                break;
+            case PlayerState.PromptClueResponse:
+                {
+                    returnText = "Enter your response";
+                }
+                break;
+            case PlayerState.PromptWager:
+                {
+                    returnText = "Make your wager";
+                }
+                break;
+        }
 
-            {forceIdle ? "Go back" : "Check scoreboard"}
-        </Button>;
+        return (
+            <Button colorScheme={"gray"}
+                onClick={() => { setForceIdle(!forceIdle); setIsEditingSignature(false); }}>
+                {forceIdle ? returnText : "Check scoreboard"}
+            </Button>
+        );
     }
 
-    // see comparison in HostLayout. returns both the JSX component and a state representing the specific component that was returned
+    // returns both the JSX component and a state representing the specific component that was returned
     const getPlayerComponent = () => {
         if (!player) {
             if (context.sessionState === SessionState.Lobby) {
                 return [<PlayerLobby />, PlayerComponentState.Lobby];
             }
             else {
-                return [<></>, PlayerComponentState.None];
+                return [null, PlayerComponentState.None];
             }
         }
 
-        if (forceSignature) {
-            return [<PlayerSignature player={player} setForceSignature={setForceSignature} />, PlayerComponentState.Signature];
+        if (isEditingSignature) {
+            return [<PlayerSignature player={player} setIsEditingSignature={setIsEditingSignature} />, PlayerComponentState.Signature];
         }
         else if (isIdle || forceIdle) {
-            return [<PlayerIdle player={player} setForceSignature={setForceSignature} promptStartGame={player.state === PlayerState.WaitingToStartGame} />, PlayerComponentState.Idle];
+            return [<PlayerIdle setIsEditingSignature={setIsEditingSignature} promptStartGame={player.state === PlayerState.PromptStartGame} />, PlayerComponentState.Idle];
         }
 
         // players are idle by default unless there's a specific combination of session and player state that indicates they're
         // doing something else (i.e. responding, selecting a clue)
         switch (context.sessionState) {
-            case SessionState.ClueSelection:
+            case SessionState.PromptClueSelection:
                 {
-                    if (player.state === PlayerState.SelectingClue) {
+                    if (player.state === PlayerState.PromptClueSelection) {
                         return [<PlayerClueSelection />, PlayerComponentState.ClueSelection];
                     }
                 }
                 break;
             case SessionState.ClueTossup:
                 {
-                    if (player.state === PlayerState.WaitingToBuzz) {
+                    if (player.state === PlayerState.PromptBuzz) {
                         return [<PlayerBuzzer />, PlayerComponentState.Buzzer];
                     }
                 }
                 break;
             case SessionState.ClueResponse:
                 {
-                    if (player.state === PlayerState.RespondingToClue) {
+                    if (player.state === PlayerState.PromptClueResponse) {
                         return [<PlayerResponse player={player} responseType={PlayerResponseType.Clue} />, PlayerComponentState.Response];
                     }
                 }
                 break;
             case SessionState.WagerResponse:
                 {
-                    if (player.state === PlayerState.Wagering) {
+                    if (player.state === PlayerState.PromptWager) {
                         return [<PlayerResponse player={player} responseType={PlayerResponseType.Wager} />, PlayerComponentState.Response];
                     }
                 }
                 break;
         }
 
-        return [<PlayerIdle player={player} setForceSignature={setForceSignature} />, PlayerComponentState.Idle];
+        return [<PlayerIdle setIsEditingSignature={setIsEditingSignature} />, PlayerComponentState.Idle];
     }
 
     const [PlayerComponent, componentState] = getPlayerComponent();

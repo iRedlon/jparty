@@ -1,15 +1,14 @@
 
+import { AbsoluteCenter, Box, Button, Heading, Select, TabPanel, Textarea } from "@chakra-ui/react";
+import { ClientSocket, Feedback, FeedbackType, getEnumKeys, TriviaCategory } from "jparty-shared";
+import { useContext, useState } from "react";
+
 import { LayoutContext } from "./Layout";
 import { socket } from "../../misc/socket";
 import { FEEDBACK_TYPE_DISPLAY_NAMES } from "../../misc/ui-constants";
 
-import { AbsoluteCenter, Box, Button, Heading, ListItem, Select, TabPanel, Textarea, UnorderedList } from "@chakra-ui/react";
-import { ClientSocket, Feedback, FeedbackType, getEnumKeys, TriviaCategory } from "jparty-shared";
-import { useContext, useState } from "react";
-
 export default function MenuPanel_Feedback() {
     const context = useContext(LayoutContext);
-
     const [feedbackType, setFeedbackType] = useState(FeedbackType.Bug);
     const [feedbackMessage, setFeedbackMessage] = useState("");
     const [feedbackCategoryIndex, setFeedbackCategoryIndex] = useState(-1);
@@ -36,13 +35,14 @@ export default function MenuPanel_Feedback() {
                 {/* <Heading size={"md"}>Known issues</Heading>
                 
                 <UnorderedList listStylePosition={"inside"} margin={"0 auto"} marginBottom={"1em"}>
-                    <ListItem>Border lines of player scoreboard sometimes don't update visually</ListItem>
+                    <ListItem></ListItem>
                 </UnorderedList> */}
 
                 <Heading size={"md"}>Submit feedback</Heading>
 
                 <Box marginTop={"1em"} marginBottom={"1em"}>
                     <Select
+                        id={"feedback-type"}
                         value={feedbackType}
                         onChange={e => setFeedbackType(parseInt(e.target.value))}>
 
@@ -53,6 +53,7 @@ export default function MenuPanel_Feedback() {
                     </Select>
 
                     <Select
+                        id={"feedback-category-index"}
                         value={feedbackCategoryIndex}
                         onChange={e => setFeedbackCategoryIndex(parseInt(e.target.value))}
                         marginTop={"1em"} placeholder={"(optional) specify a category"}>
@@ -65,6 +66,7 @@ export default function MenuPanel_Feedback() {
                     <Box margin={"1em"} />
 
                     <Textarea
+                        id={"feedback-text"}
                         placeholder={"Please include details, if applicable"}
                         value={feedbackMessage}
                         onChange={e => setFeedbackMessage(e.target.value)} />

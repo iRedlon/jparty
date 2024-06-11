@@ -1,17 +1,16 @@
 
-import { LayoutContext } from "../common/Layout";
-import { emitLeaveSession } from "../common/MenuPanel_Settings";
-import { getClientID } from "../../misc/client-utils";
-import { socket } from "../../misc/socket";
-
 import { Box, Button, Heading, Input } from "@chakra-ui/react";
 import { HostSocket, PlayerSocket } from "jparty-shared";
 import { useContext, useState } from "react";
 import { isMobile } from "react-device-detect";
 
+import { LayoutContext } from "../common/Layout";
+import { emitLeaveSession } from "../common/MenuPanel_Settings";
+import { getClientID } from "../../misc/client-utils";
+import { socket } from "../../misc/socket";
+
 export default function PlayerLobby() {
     const context = useContext(LayoutContext);
-    
     const [sessionName, setSessionName] = useState("");
     const [playerName, setPlayerName] = useState("");
 
@@ -52,7 +51,7 @@ export default function PlayerLobby() {
                 !isMobile && (
                     <Box>
                         or, use your computer to host instead:<br />
-                        <Button onClick={switchToHost} colorScheme={"blue"}>switch to host</Button>
+                        <Button onClick={switchToHost} colorScheme={"blue"} marginTop={"0.25em"}>switch to host</Button>
                     </Box>
                 )
             }

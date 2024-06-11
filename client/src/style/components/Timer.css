@@ -22,6 +22,8 @@
     width: 100%;
 }
 
+/* timer anims */
+
 .timer-appear .timer-wrapper,
 .timer-enter .timer-wrapper {
     animation-name: slide-from-left;

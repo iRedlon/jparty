@@ -180,16 +180,16 @@ export class TriviaClue {
         return Object.assign(new TriviaClue(), source);
     }
 
-    isTossupClue() {
+    isAllPlayClue() {
         switch (this.bonus) {
             case TriviaClueBonus.AllWager:
             case TriviaClueBonus.AllPlay:
                 {
-                    return false;
+                    return true;
                 }
         }
 
-        return true;
+        return false;
     }
 
     // only the selecting player can attempt a personal clue, even if they get it wrong

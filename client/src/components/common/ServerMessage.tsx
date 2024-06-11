@@ -1,10 +1,10 @@
 
-import { socket } from "../../misc/socket";
-import { Layer } from "../../misc/ui-constants";
-
 import { Alert, AlertIcon, AlertDescription, CloseButton } from "@chakra-ui/react";
 import { ServerSocket, ServerSocketMessage } from "jparty-shared";
 import { useEffect, useState } from "react";
+
+import { socket } from "../../misc/socket";
+import { Layer } from "../../misc/ui-constants";
 
 const SERVER_MESSAGE_LIFETIME_MS = 5000;
 
@@ -36,7 +36,7 @@ export default function ServerMessage() {
     }
 
     if (!serverMessage) {
-        return <></>;
+        return null;
     }
 
     return (

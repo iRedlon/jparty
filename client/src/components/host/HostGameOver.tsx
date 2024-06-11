@@ -1,13 +1,13 @@
 
-import "../../style/components/HostGameOver.css";
+import { Box, Button, Heading } from "@chakra-ui/react";
+import { HostSocket, ServerSocket, SessionState } from "jparty-shared";
 
 import HostScoreboard from "./HostScoreboard";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
+import { emitMockSocketEvent } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
 
-import { Box, Button, Heading } from "@chakra-ui/react";
-import { HostSocket, ServerSocket, SessionState } from "jparty-shared";
-import { emitMockSocketEvent } from "../../misc/mock-socket";
+import "../../style/components/HostGameOver.css";
 
 export default function HostGameOver() {
     const emitPlayAgain = () => {
@@ -24,7 +24,7 @@ export default function HostGameOver() {
                 <Heading size={"sm"} fontFamily={"logo"}>thanks for playing</Heading>
 
                 <Box paddingTop={"1em"}>
-                    <Button onClick={emitPlayAgain} colorScheme={"blue"} variant={"outline"} margin={"0.1em"}>back to lobby</Button>
+                    <Button onClick={emitPlayAgain} colorScheme={"blue"} variant={"outline"} margin={"0.1em"}>play again</Button>
                     <Button onClick={() => emitLeaveSession(false)} colorScheme={"blue"} variant={"outline"} margin={"0.1em"}>leave session</Button>
                 </Box>
             </Box>

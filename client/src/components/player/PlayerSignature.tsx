@@ -8,10 +8,10 @@ import { socket } from "../../misc/socket";
 
 interface PlayerSignatureProps {
     player: Player,
-    setForceSignature: Function
+    setIsEditingSignature: Function
 }
 
-export default function PlayerSignature({ player, setForceSignature }: PlayerSignatureProps) {
+export default function PlayerSignature({ player, setIsEditingSignature }: PlayerSignatureProps) {
     const canvasRef = createRef<ReactSketchCanvasRef>();
 
     const [canUpdate, setCanUpdate] = useState(false);
@@ -22,7 +22,7 @@ export default function PlayerSignature({ player, setForceSignature }: PlayerSig
 
     const emitUpdateSignature = (imageBase64: string, canvasPath: CanvasPath[]) => {
         socket.emit(PlayerSocket.UpdateSignature, imageBase64, canvasPath);
-        setForceSignature(false);
+        setIsEditingSignature(false);
     }
 
     const saveSignature = () => {
@@ -39,11 +39,14 @@ export default function PlayerSignature({ player, setForceSignature }: PlayerSig
         <Box className={"mobile-box"} padding={"1em"}>
 
             <Heading fontFamily={"logo"} fontSize={"3em"}>jparty.io</Heading>
-            <Button onClick={() => setForceSignature(false)} size={"sm"} margin={"0.5em"}>back to scoreboard</Button>
+            <Button onClick={() => setIsEditingSignature(false)} size={"sm"} margin={"0.5em"}>
+                back to scoreboard
+            </Button>
 
             <Box className={"child-box"} height={"15em"} width={"15em"} marginLeft={"auto"} marginRight={"auto"} marginTop={"1em"}>
                 <ReactSketchCanvas
                     ref={canvasRef}
+                    style={{}}
                     onStroke={() => !canUpdate && setCanUpdate(true)}
                     strokeWidth={4}
                     strokeColor={"black"}

@@ -1,4 +1,25 @@
-/* clue decision */
+#signature-box {
+    margin-right: 0.5em;
+    height: 7em;
+    width: 7em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.submitted-responders-box {
+    margin-left: auto;
+    margin-right: auto;
+    padding: 1em;
+    height: 5em;
+    min-width: 25vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* clue decision anims */
 
 .clue-decision-enter {
     animation-name: fade-in;
@@ -15,9 +36,9 @@
     animation-fill-mode: both;
 }
 
-/* responder info */
+/* responder info anims */
 
-.responder-info-appear, 
+.responder-info-appear,
 .responder-info-enter {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
@@ -31,25 +52,4 @@
     animation-timing-function: ease-in-out;
     animation-direction: reverse;
     animation-fill-mode: both;
-}
-
-.submitted-responders-box {
-    margin-left: auto;
-    margin-right: auto;
-    padding: 1em;
-    height: 5em;
-    min-width: 25vw;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-#signature-box {
-    margin-right: 0.5em;
-    height: 7em;
-    width: 7em;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
 }

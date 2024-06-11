@@ -1,31 +1,3 @@
-/* @keyframes move-x-axis {
-    from {
-        left: 0;
-    }
-
-    to {
-        left: calc(100% - 20em);
-    }
-}
-
-@keyframes move-y-axis {
-    from {
-        top: 0;
-    }
-
-    to {
-        top: calc(100% - 30em);
-    }
-}
-
-.dvd-anim {
-    animation-name: move-x-axis, move-y-axis;
-    animation-duration: 3.25s, 4s;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-    animation-direction: alternate;
-} */
-
 .announcement-box {
     display: flex;
     justify-content: center;
@@ -38,12 +10,7 @@
     padding: 5em;
 }
 
-#mobile-announcement-box {
-    height: 50%;
-    width: 75%;
-    margin-top: 10%;
-    padding: 1em;
-}
+/* announcement-box anims */
 
 .session-state-appear .announcement-box,
 .session-state-enter .announcement-box {

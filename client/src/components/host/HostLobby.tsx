@@ -1,35 +1,35 @@
 
-import "../../style/components/HostLobby.css";
+import { Box, Button, Divider, Heading, Input, ListItem, Stack, Text, Tooltip, UnorderedList } from "@chakra-ui/react";
+import { getSortedSessionPlayerIDs, HostServerSocket, HostSocket, Player, SocketID, TriviaGameSettingsPreset } from "jparty-shared";
+import { useContext, useEffect, useRef, useState } from "react";
 
 import { LayoutContext } from "../common/Layout";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
 import { getClientID } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
 
-import { Box, Button, Divider, Heading, Input, ListItem, Stack, Text, Tooltip, UnorderedList } from "@chakra-ui/react";
-import { getSortedSessionPlayerIDs, HostServerSocket, HostSocket, Player, SocketID, TriviaGameSettingsPreset } from "jparty-shared";
-import { useContext, useEffect, useRef, useState } from "react";
+import "../../style/components/HostLobby.css";
 
 function JoinedPlayerBox(player: Player) {
     return (
-        <Stack direction={"row"} justifyContent={"center"} paddingTop={"1em"}>
-            <Box className={"child-box"} height={"4em"} width={"4em"}>
+        <Stack key={player.clientID} direction={"row"} justifyContent={"center"} paddingTop={"1em"} gap={"1em"}>
+            <Box className={"child-box"} height={"4em"} minHeight={"4em"} width={"4em"} minWidth={"4em"}>
                 <img src={player.signatureImageBase64} />
             </Box>
 
             <Box className={"child-box"} height={"4em"} flexGrow={1} overflow={"hidden"} display={"flex"} justifyContent={"left"} alignItems={"center"} paddingLeft={"0.5em"}>
-                <Text fontSize={"1em"} whiteSpace={"nowrap"}><b>{player.name}</b></Text>
+                <Text fontSize={"1.5em"} whiteSpace={"nowrap"}><b>{player.name}</b></Text>
             </Box>
         </Stack>
     );
 }
 
 export default function HostLobby() {
-    const context = useContext(LayoutContext);
     const joinedPlayersBoxRef = useRef(null);
 
+    const context = useContext(LayoutContext);
     const [spectateSessionName, setSpectateSessionName] = useState("");
-    const [gameSettingsPreset, setGameSettingsPreset] = useState(TriviaGameSettingsPreset.Default);
+    const [gameSettingsPreset, setGameSettingsPreset] = useState(TriviaGameSettingsPreset.Normal);
 
     useEffect(() => {
         socket.on(HostServerSocket.UpdateGameSettingsPreset, handleUpdateGameSettingsPreset);
@@ -107,13 +107,12 @@ export default function HostLobby() {
                 <Box marginTop={"0.5em"} marginBottom={"0.5em"} />
 
                 <Box id={"game-settings-preset-box"} className={"box"} padding={"1.5em"}>
-
-
                     <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"} marginBottom={"0.25em"}>game presets</Heading>
+
                     <Stack direction={"column"}>
                         <Tooltip label={"standard rules. counts for public leaderboard"} placement={"top"}>
-                            <Button onClick={() => handleUpdateGameSettingsPreset(TriviaGameSettingsPreset.Default)}
-                                colorScheme={"blue"} variant={gameSettingsPreset === TriviaGameSettingsPreset.Default ? "solid" : "outline"}
+                            <Button onClick={() => handleUpdateGameSettingsPreset(TriviaGameSettingsPreset.Normal)}
+                                colorScheme={"blue"} variant={gameSettingsPreset === TriviaGameSettingsPreset.Normal ? "solid" : "outline"}
                                 marginLeft={"auto"} marginRight={"auto"}>
                                 normal mode
                             </Button>
@@ -145,13 +144,11 @@ export default function HostLobby() {
                         <ListItem>Change text size with Ctrl-/Ctrl+</ListItem>
                         <ListItem>Go fullscreen with F11</ListItem>
                     </UnorderedList>
-
-
                 </Box>
             </Stack>
 
             <Box id={"leaderboard-box"} className={"box side-box"}>
-                <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>leaderboard (wip)</Heading>
+                <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>leaderboard (placeholder)</Heading>
                 <UnorderedList justifyContent={"center"} listStyleType={"none"} margin={0}>
                     <ListItem>Leader #1</ListItem>
                     <ListItem>Leader #2</ListItem>

@@ -1,16 +1,17 @@
 
+import { AbsoluteCenter, Box, Button, Select, Stack, TabPanel } from "@chakra-ui/react";
+import { getEnumKeys, SessionState } from "jparty-shared";
+import { useContext } from "react";
+
 import { LayoutContext } from "./Layout";
 import { getClientID } from "../../misc/client-utils";
 import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
 import { socket } from "../../misc/socket";
 
-import { AbsoluteCenter, Box, Button, Select, Stack, TabPanel } from "@chakra-ui/react";
-import { getEnumKeys, SessionState } from "jparty-shared";
-import { useContext } from "react";
-
 export function DebugSessionStateSelect(sessionState: SessionState) {
     return (
         <Select
+            id={"debug-session-state-select"}
             value={sessionState} _hover={{ opacity: 1 }}
             onChange={(e) => handleDebugCommand(DebugCommand.UpdateSessionState, parseInt(e.target.value))}>
 

@@ -40,7 +40,6 @@ export enum TriviaClueDifficulty {
     Hardest
 }
 
-// see glossary/clue difficulty order
 export const RATED_CLUE_DIFFICULTY_ORDER = [
     TriviaClueDifficulty.Easiest,
     TriviaClueDifficulty.Easy,

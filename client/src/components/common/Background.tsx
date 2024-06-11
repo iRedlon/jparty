@@ -1,10 +1,10 @@
 
-import { BACKGROUND_COLOR, BACKGROUND_ACCENT_COLOR } from "../../misc/ui-constants";
-
 import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 import { useEffect } from "react";
 import { isMobile } from "react-device-detect";
+
+import { BACKGROUND_ACCENT_COLOR, BACKGROUND_COLOR } from "../../misc/ui-constants";
 
 export default function Background() {
     useEffect(() => {
@@ -17,7 +17,7 @@ export default function Background() {
 
     return (
         <Particles
-            id="tsparticles"
+            id={"tsparticles"}
             options={{
                 fpsLimit: 120,
                 background: {

@@ -1,17 +1,16 @@
 
+import {
+    AttemptReconnectResult, ClientSocket, cloneSessionPlayers, HostSocket,
+    ReservedEvent, ServerSocket, SessionPlayers, SessionState, SocketID, TriviaRound, VoiceType
+} from "jparty-shared";
+import { createContext, useEffect, useState } from "react";
+import { isMobile } from "react-device-detect";
+
 import HostLayout from "../host/HostLayout";
 import PlayerLayout from "../player/PlayerLayout";
 import { getClientID } from "../../misc/client-utils";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
-import { playSoundEffect } from "../../misc/sound-fx";
-
-import {
-    AttemptReconnectResult, ClientSocket, cloneSessionPlayers, HostSocket,
-    ReservedSocket, ServerSocket, SessionPlayers, SessionState, SocketID, SoundEffect, TriviaRound, VoiceType
-} from "jparty-shared";
-import { createContext, useEffect, useState } from "react";
-import { isMobile } from "react-device-detect";
 
 // shared state accessible by any client
 interface LayoutContextData {
@@ -25,8 +24,7 @@ interface LayoutContextData {
     triviaRound: TriviaRound | undefined,
     categoryIndex: number,
     clueIndex: number,
-    spotlightResponderID: SocketID,
-    voiceType: VoiceType
+    spotlightResponderID: SocketID
 };
 
 export const LayoutContext = createContext<LayoutContextData>({} as any);
@@ -35,7 +33,6 @@ export default function Layout() {
     const [debugMode, setDebugMode] = useState(process.env.NODE_ENV === "development");
     const [isSpectator, setIsSpectator] = useState(false);
     const [isPlayer, setIsPlayer] = useState(isMobile || localStorage.isPlayer);
-    const [voiceType, setVoiceType] = useState(VoiceType.ModernMasculine);
     const [sessionName, setSessionName] = useState("");
     const [sessionState, setSessionState] = useState(SessionState.Lobby);
     const [sessionPlayers, setSessionPlayers] = useState<SessionPlayers>({});
@@ -45,14 +42,12 @@ export default function Layout() {
     const [spotlightResponderID, setSpotlightResponderID] = useState<SocketID>("");
 
     useEffect(() => {
-        window.addEventListener(ReservedSocket.VisibilityChange, handleVisibilityChange);
+        window.addEventListener(ReservedEvent.VisibilityChange, handleVisibilityChange);
 
-        socket.on(ReservedSocket.Connect, handleConnect);
+        socket.on(ReservedEvent.Connect, handleConnect);
         socket.on(ServerSocket.EnableDebugMode, handleEnableDebugMode);
         socket.on(ServerSocket.BeginSpectate, handleBeginSpectate);
         socket.on(ServerSocket.CancelGame, handleCancelGame);
-        socket.on(ServerSocket.UpdateVoiceType, handleUpdateVoiceType);
-        socket.on(ServerSocket.PlaySoundEffect, handlePlaySoundEffect);
         socket.on(ServerSocket.UpdateSessionName, handleUpdateSessionName);
         socket.on(ServerSocket.UpdateSessionState, handleUpdateSessionState);
         socket.on(ServerSocket.UpdateSessionPlayers, handleUpdateSessionPlayers);
@@ -60,7 +55,6 @@ export default function Layout() {
         socket.on(ServerSocket.SelectClue, handleSelectClue);
         socket.on(ServerSocket.UpdateSpotlightResponderID, handleUpdateSpotlightResponderID);
 
-        addMockSocketEventHandler(ServerSocket.PlaySoundEffect, handlePlaySoundEffect);
         addMockSocketEventHandler(ServerSocket.UpdateSessionName, handleUpdateSessionName);
         addMockSocketEventHandler(ServerSocket.UpdateSessionState, handleUpdateSessionState);
         addMockSocketEventHandler(ServerSocket.UpdateSessionPlayers, handleUpdateSessionPlayers);
@@ -69,14 +63,12 @@ export default function Layout() {
         addMockSocketEventHandler(ServerSocket.UpdateSpotlightResponderID, handleUpdateSpotlightResponderID);
 
         return () => {
-            window.removeEventListener(ReservedSocket.VisibilityChange, handleVisibilityChange);
+            window.removeEventListener(ReservedEvent.VisibilityChange, handleVisibilityChange);
 
-            socket.off(ReservedSocket.Connect, handleConnect);
+            socket.off(ReservedEvent.Connect, handleConnect);
             socket.off(ServerSocket.EnableDebugMode, handleEnableDebugMode);
             socket.off(ServerSocket.BeginSpectate, handleBeginSpectate);
             socket.off(ServerSocket.CancelGame, handleCancelGame);
-            socket.off(ServerSocket.UpdateVoiceType, handleUpdateVoiceType);
-            socket.off(ServerSocket.PlaySoundEffect, handlePlaySoundEffect);
             socket.off(ServerSocket.UpdateSessionName, handleUpdateSessionName);
             socket.off(ServerSocket.UpdateSessionState, handleUpdateSessionState);
             socket.off(ServerSocket.UpdateSessionPlayers, handleUpdateSessionPlayers);
@@ -84,7 +76,6 @@ export default function Layout() {
             socket.off(ServerSocket.SelectClue, handleSelectClue);
             socket.off(ServerSocket.UpdateSpotlightResponderID, handleUpdateSpotlightResponderID);
 
-            removeMockSocketEventHandler(ServerSocket.PlaySoundEffect, handlePlaySoundEffect);
             removeMockSocketEventHandler(ServerSocket.UpdateSessionName, handleUpdateSessionName);
             removeMockSocketEventHandler(ServerSocket.UpdateSessionState, handleUpdateSessionState);
             removeMockSocketEventHandler(ServerSocket.UpdateSessionPlayers, handleUpdateSessionPlayers);
@@ -146,14 +137,6 @@ export default function Layout() {
         location.reload();
     }
 
-    const handleUpdateVoiceType = (voiceType: VoiceType) => {
-        setVoiceType(voiceType);
-    }
-
-    const handlePlaySoundEffect = (effect: SoundEffect) => {
-        playSoundEffect(effect);
-    }
-
     const handleUpdateSessionName = (sessionName: string) => {
         setSessionName(sessionName);
         localStorage.setItem("sessionName", sessionName);
@@ -200,8 +183,7 @@ export default function Layout() {
         triviaRound: triviaRound,
         categoryIndex: categoryIndex,
         clueIndex: clueIndex,
-        spotlightResponderID: spotlightResponderID,
-        voiceType: voiceType
+        spotlightResponderID: spotlightResponderID
     };
 
     return (

@@ -1,17 +1,17 @@
 
-import RoundSettings, { numberInputForm } from "./RoundSettings";
-import { LayoutContext } from "../common/Layout";
-import { socket } from "../../misc/socket";
-
 import {
     AbsoluteCenter, Box, Button, Collapse, Divider, FormControl, FormLabel, Heading,
     Radio, RadioGroup, Stack, Tab, Tabs, TabList, TabPanel, TabPanels, Text
 } from "@chakra-ui/react";
 import {
-    DEFAULT_SINGLE_ROUND_SETTINGS, DEFAULT_GAME_SETTINGS, HostSocket, PARTY_GAME_SETTINGS, SessionState, TEST_GAME_SETTINGS,
+    NORMAL_SINGLE_ROUND_SETTINGS, NORMAL_GAME_SETTINGS, HostSocket, PARTY_GAME_SETTINGS, SessionState, TEST_GAME_SETTINGS,
     TriviaGameDifficulty, TriviaGameRating, TriviaGameSettings, TriviaRoundSettings
 } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
+
+import RoundSettings, { numberInputForm } from "./RoundSettings";
+import { LayoutContext } from "../common/Layout";
+import { socket } from "../../misc/socket";
 
 export interface GameSettingsProps {
     onCloseHostMenu: Function
@@ -20,7 +20,7 @@ export interface GameSettingsProps {
 export default function GameSettings({ onCloseHostMenu }: GameSettingsProps) {
     const context = useContext(LayoutContext);
     
-    const [gameSettings, setGameSettings] = useState(TriviaGameSettings.clone(DEFAULT_GAME_SETTINGS));
+    const [gameSettings, setGameSettings] = useState(TriviaGameSettings.clone(NORMAL_GAME_SETTINGS));
     const [selectedRoundIndex, setSelectedRoundIndex] = useState(-1);
     const [rating, setRating] = useState<TriviaGameRating>();
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -63,7 +63,7 @@ export default function GameSettings({ onCloseHostMenu }: GameSettingsProps) {
         }
 
         let newGameSettings = TriviaGameSettings.clone(gameSettings);
-        newGameSettings.roundSettings.push(TriviaRoundSettings.clone(DEFAULT_SINGLE_ROUND_SETTINGS));
+        newGameSettings.roundSettings.push(TriviaRoundSettings.clone(NORMAL_SINGLE_ROUND_SETTINGS));
 
         setGameSettings(newGameSettings);
     }
@@ -108,7 +108,7 @@ export default function GameSettings({ onCloseHostMenu }: GameSettingsProps) {
 
     const presetButtons = canUpdateSettings() && (
         <Stack direction={"row"} justify={"center"} marginTop={"0.5em"} marginBottom={"0.5em"}>
-            <Button onClick={() => applySettings(DEFAULT_GAME_SETTINGS)} colorScheme={"blue"} variant={"outline"} size={"sm"} margin={"0.5em"}>Use default settings</Button>
+            <Button onClick={() => applySettings(NORMAL_GAME_SETTINGS)} colorScheme={"blue"} variant={"outline"} size={"sm"} margin={"0.5em"}>Use normal settings</Button>
             <Button onClick={() => applySettings(PARTY_GAME_SETTINGS)} colorScheme={"blue"} variant={"outline"} size={"sm"} margin={"0.5em"}>Use party settings</Button>
             {context.debugMode && (
                 <Button onClick={() => applySettings(TEST_GAME_SETTINGS)} colorScheme={"blue"} variant={"outline"} size={"sm"} margin={"0.5em"}>Use test settings</Button>

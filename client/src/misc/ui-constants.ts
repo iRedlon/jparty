@@ -50,3 +50,5 @@ export const FEEDBACK_TYPE_DISPLAY_NAMES: Record<FeedbackType, string> = {
     [FeedbackType.TriviaData]: "Report bad trivia data",
     [FeedbackType.Suggestion]: "Make a suggestion/comment"
 }
+
+// todo: make the game settings presets use a list like this

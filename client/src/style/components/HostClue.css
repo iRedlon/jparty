@@ -1,6 +1,21 @@
-/* category box */
+#question-box {
+    height: 50vh;
+    padding: 2em;
+    justify-content: center;
+    align-content: center;
+    overflow: auto;
+}
 
-.session-state-appear #category-box, 
+#correct-answer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin-top: 1em;
+}
+
+/* category box anims */
+
+.session-state-appear #category-box,
 .session-state-enter #category-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
@@ -16,17 +31,9 @@
     animation-fill-mode: both;
 }
 
-/* question box */
+/* question box anims */
 
-#question-box {
-    height: 50vh;
-    padding: 2em;
-    justify-content: center;
-    align-content: center;
-    overflow: auto;
-}
-
-.question-box-anim-appear, 
+.question-box-anim-appear,
 .question-box-anim-enter {
     animation-name: slide-from-right;
     animation-duration: 1s;
@@ -34,20 +41,13 @@
     animation-fill-mode: both;
 }
 
-.question-box-anim-exit, 
+.question-box-anim-exit,
 .session-state-exit #question-box {
     animation-name: slide-from-right;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-direction: reverse;
     animation-fill-mode: both;
-}
-
-#correct-answer {
-    position: absolute;
-    left: 0;
-    right: 0;
-    margin-top: 1em;
 }
 
 .correct-answer-anim-appear,
@@ -64,9 +64,9 @@
     animation-timing-function: ease-in-out;
 }
 
-/* responder info */
+/* responder info anims */
 
-.responder-info-anim-appear, 
+.responder-info-anim-appear,
 .responder-info-anim-enter {
     animation-name: slide-from-bottom;
     animation-duration: 1s;

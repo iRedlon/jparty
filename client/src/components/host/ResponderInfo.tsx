@@ -1,13 +1,13 @@
 
-import "../../style/components/ResponderInfo.css";
-
-import { LayoutContext } from "../common/Layout";
-import { formatDollarValue } from "../../misc/client-utils";
-
 import { Box, Heading, Stack, Text } from "@chakra-ui/react";
 import { Player, PlayerResponseType, SessionState, TriviaClue, TriviaClueDecision } from "jparty-shared";
 import { useContext, useRef } from "react";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
+
+import { LayoutContext } from "../common/Layout";
+import { formatDollarValue } from "../../misc/client-utils";
+
+import "../../style/components/ResponderInfo.css";
 
 interface ResponderInfoProps {
     triviaClue: TriviaClue,
@@ -18,7 +18,6 @@ interface ResponderInfoProps {
     numResponders?: number
 }
 
-// todo: give this variable height and width so it can be used in other places (i.e. the game over screen)
 export default function ResponderInfo({ triviaClue, responder, responseType, showClueDecision, numSubmittedResponders, numResponders }: ResponderInfoProps) {
     const responderInfoRef = useRef(null);
     const clueDecisionRef = useRef(null);
@@ -29,7 +28,7 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
     const isClueResponse = context.sessionState === SessionState.ClueResponse;
     const isResponse = isWagerResponse || isClueResponse;
 
-    const showSubmittedResponders = !triviaClue.isTossupClue() && isResponse;
+    const showSubmittedResponders = triviaClue.isAllPlayClue() && isResponse;
 
     // this should be enum-ified conceptually, but the state can be static values as well as player IDs which are dynamic so *shrug*
     let responderInfoState: any = "none";

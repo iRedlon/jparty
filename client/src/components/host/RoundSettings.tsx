@@ -1,12 +1,12 @@
 
-import { TRIVIA_CLUE_BONUS_DESCRIPTIONS, TRIVIA_CLUE_BONUS_DISPLAY_NAMES, TRIVIA_ROUND_TYPE_DESCRIPTIONS, TRIVIA_ROUND_TYPE_DISPLAY_NAMES } from "../../misc/ui-constants";
-
 import {
     AbsoluteCenter, Button, Checkbox, Divider, FormControl, FormErrorMessage, FormHelperText, FormLabel, Heading,
     NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper,
     Select, Stack, Text
 } from "@chakra-ui/react";
 import { getEnumKeys, getEnumSize, TriviaCategoryType, TriviaClueBonus, TriviaGameSettings, TriviaRoundSettings, TriviaRoundType } from "jparty-shared";
+
+import { TRIVIA_CLUE_BONUS_DESCRIPTIONS, TRIVIA_CLUE_BONUS_DISPLAY_NAMES, TRIVIA_ROUND_TYPE_DESCRIPTIONS, TRIVIA_ROUND_TYPE_DISPLAY_NAMES } from "../../misc/ui-constants";
 
 interface RoundSettingsProps {
     gameSettings: TriviaGameSettings,

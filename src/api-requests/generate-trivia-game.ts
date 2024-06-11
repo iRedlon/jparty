@@ -19,12 +19,16 @@ function generateTriviaClue(roundSettings: TriviaRoundSettings, clueSchema: Triv
     return new TriviaClue(clueSchema, roundSettings.clueValueStep, clueIndex);
 }
 
-// see glossary/clue difficulty order
+/*
+Clue difficulty order:
+An array storing the increasing order of clue difficulties that will appear in a category
+
+- For a rated game: this order is always: [1, 2, 3, 4, 5]. In other words, each category features one clue of each difficulty
+- For a custom game: this order can be weighted to control the difficulty (i.e. [1, 1, 2, 2, 3] for an easier category or [2, 3, 4, 5, 5] for a harder category)
+- This system is also how we support categories with more than 5 clues. In order to spread out the difficulty across a longer category the order may look like: [1, 1, 2, 3, 3, 4, 4, 5, 5, 5]
+- Difficulty order is found prior to generating the category, then we use it as a filter to specifically select for a category that can accommodate those settings
+*/
 function rollClueDifficultyOrder(gameSettings: TriviaGameSettings, roundSettings: TriviaRoundSettings): TriviaClueDifficulty[] {
-    // many categories have exactly 5 clues (1 of each difficulty, in other words: [1, 2, 3, 4, 5])
-    // allowing randomization of clue difficulty order when querying for exactly 5 clues would make such cateories much less likely to ever appear
-    // i.e. to use a category like that we'd need exactly: [1, 2, 3, 4, 5] but we'd probably get something like [2, 2, 3, 4, 4] instead
-    // to prevent this outcome... simply use the hard coded difficulty order of [1, 2, 3, 4, 5]
     if (gameSettings.getRating().isRated) {
         return RATED_CLUE_DIFFICULTY_ORDER;
     }

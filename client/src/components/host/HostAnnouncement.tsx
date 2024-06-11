@@ -1,16 +1,16 @@
 
-import "../../style/components/Announcement.css";
-
-import { SESSION_ANNOUNCEMENT_MESSAGES } from "../../misc/ui-constants";
-
 import { Box, Text } from "@chakra-ui/react";
 import { SessionAnnouncement } from "jparty-shared";
 
-interface AnnouncementProps {
+import { SESSION_ANNOUNCEMENT_MESSAGES } from "../../misc/ui-constants";
+
+import "../../style/components/HostAnnouncement.css";
+
+interface HostAnnouncementProps {
     announcement: SessionAnnouncement
 }
 
-export default function Announcement({ announcement }: AnnouncementProps) {
+export default function HostAnnouncement({ announcement }: HostAnnouncementProps) {
     const message = SESSION_ANNOUNCEMENT_MESSAGES[announcement];
 
     return (

@@ -87,13 +87,13 @@ export function joinSession(socket: Socket, sessionName: string) {
     }
 
     if (session.currentAnnouncement !== undefined) {
-        socket.emit(ServerSocket.ShowAnnouncement, session.currentAnnouncement, session.currentVoiceLine);
+        socket.emit(HostServerSocket.ShowAnnouncement, session.currentAnnouncement, session.currentVoiceLine);
     }
     else {
-        socket.emit(ServerSocket.HideAnnouncement);
+        socket.emit(HostServerSocket.HideAnnouncement);
     }
 
-    socket.emit(ServerSocket.UpdateVoiceType, session.voiceType);
+    socket.emit(HostServerSocket.UpdateVoiceType, session.voiceType);
 
     emitStateUpdate(session.name);
 }
@@ -258,7 +258,7 @@ export function showAnnouncement(sessionName: string, announcement: SessionAnnou
     session.setCurrentAnnouncement(announcement);
     playVoiceLine(sessionName, VoiceLineType.Announcement);
 
-    io.in(sessionName).emit(ServerSocket.ShowAnnouncement, announcement, session.currentVoiceLine);
+    io.in(sessionName).emit(HostServerSocket.ShowAnnouncement, announcement, session.currentVoiceLine);
 
     startTimeout(sessionName, SessionTimeout.Announcement, () => {
         let session = getSession(sessionName);
@@ -267,7 +267,7 @@ export function showAnnouncement(sessionName: string, announcement: SessionAnnou
         }
 
         stopTimeout(sessionName, SessionTimeout.Announcement);
-        io.in(sessionName).emit(ServerSocket.HideAnnouncement);
+        io.in(sessionName).emit(HostServerSocket.HideAnnouncement);
         session.setCurrentAnnouncement(undefined);
 
         callback();
@@ -280,7 +280,7 @@ export function playAudio(sessionName: string, audioType: AudioType) {
         return;
     }
 
-    io.to(Object.keys(session.hosts)).emit(ServerSocket.PlayAudio, audioType);
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayAudio, audioType);
 }
 
 export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
@@ -350,15 +350,15 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                     break;
                 }
 
-                if (session.getCurrentClue()?.isTossupClue()) {
-                    voiceLine = getRandomChoice(TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
+                if (session.getCurrentClue()?.isAllPlayClue()) {
+                    voiceLine = getRandomChoice(ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
                 }
                 else {
-                    voiceLine = getRandomChoice(ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
+                    voiceLine = getRandomChoice(TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
                 }
             }
             break;
-        case VoiceLineType.DisplayCorrectAnswer:
+        case VoiceLineType.showCorrectAnswer:
             {
                 voiceLine = getRandomChoice(DISPLAY_CORRECT_ANSWER_VOICE_LINES);
             }

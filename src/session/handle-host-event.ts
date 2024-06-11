@@ -39,7 +39,7 @@ function handleUpdateVoiceType(socket: Socket, sessionName: string, voiceType: V
     debugLog(DebugLogType.Voice, `updating session (${sessionName}) to use voice type: ${voiceType}`);
 
     session.voiceType = voiceType;
-    io.to(Object.keys(session.hosts)).emit(ServerSocket.UpdateVoiceType, voiceType);
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateVoiceType, voiceType);
 }
 
 function handleUpdateVoiceDuration(socket: Socket, sessionName: string, durationSec: number) {

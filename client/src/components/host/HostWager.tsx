@@ -1,13 +1,13 @@
 
-import "../../style/components/HostWager.css";
+import { Box } from "@chakra-ui/react";
+import { PlayerResponseType, TriviaCategory, TriviaClue } from "jparty-shared";
+import { useContext } from "react";
 
 import CategoryBox from "./CategoryBox";
 import SpotlightResponder from "./ResponderInfo";
 import { LayoutContext } from "../common/Layout";
 
-import { Box } from "@chakra-ui/react";
-import { PlayerResponseType, TriviaCategory, TriviaClue } from "jparty-shared";
-import { useContext } from "react";
+import "../../style/components/HostWager.css";
 
 interface HostWagerProps {
     triviaCategory: TriviaCategory,

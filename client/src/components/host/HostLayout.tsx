@@ -1,5 +1,9 @@
 
-import "../../style/components/HostLayout.css";
+import { Box, Center, Flex } from "@chakra-ui/react";
+import { AudioType, HostServerSocket, SessionAnnouncement, SessionState, VoiceType } from "jparty-shared";
+import { useContext, useEffect, useRef, useState } from "react";
+import { GoMute } from "react-icons/go";
+import { CSSTransition, SwitchTransition } from "react-transition-group";
 
 import HostBoard from "./HostBoard";
 import HostClue from "./HostClue";
@@ -7,22 +11,17 @@ import HostGameOver from "./HostGameOver";
 import HostLobby from "./HostLobby";
 import HostMenu from "./HostMenu";
 import HostWager from "./HostWager";
-import Announcement from "../common/Announcement";
+import Announcement from "./HostAnnouncement";
 import { LayoutContext } from "../common/Layout";
 import ServerMessageAlert from "../common/ServerMessage";
 import Timer from "../common/Timer";
+import { playAudio, playOpenAIVoice, playSpeechSynthesisVoice } from "../../misc/audio";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
-import { playOpenAIVoice, playSoundEffect, playSpeechSynthesisVoice } from "../../misc/sound-fx";
 import { Layer } from "../../misc/ui-constants";
 
-import { Box, Center, Flex } from "@chakra-ui/react";
-import { HostServerSocket, ServerSocket, SessionAnnouncement, SessionState, SoundEffect, VoiceType } from "jparty-shared";
-import { useContext, useEffect, useRef, useState } from "react";
-import { GoMute } from "react-icons/go";
-import { CSSTransition, SwitchTransition } from "react-transition-group";
+import "../../style/components/HostLayout.css";
 
-// each state represents the component currently being displayed. the top-level components in this enum are labelled with the "Host" prefix
 enum HostComponentState {
     Announcement,
     Lobby,
@@ -32,73 +31,44 @@ enum HostComponentState {
     GameOver
 }
 
-function getHostComponentState(sessionState: SessionState, announcement?: SessionAnnouncement) {
-    if (announcement !== undefined) {
-        return HostComponentState.Announcement;
-    }
-    switch (sessionState) {
-        case SessionState.Lobby:
-            {
-                return HostComponentState.Lobby;
-            }
-        case SessionState.ClueSelection:
-            {
-                return HostComponentState.Board;
-            }
-        case SessionState.ReadingClueSelection:
-        case SessionState.ReadingClue:
-        case SessionState.ClueTossup:
-        case SessionState.ClueResponse:
-        case SessionState.WaitingForClueDecision:
-        case SessionState.ReadingClueDecision:
-            {
-                return HostComponentState.Clue;
-            }
-        case SessionState.WagerResponse:
-            {
-                return HostComponentState.Wager;
-            }
-        case SessionState.GameOver:
-            {
-                return HostComponentState.GameOver;
-            }
-    }
-}
-
 export default function HostLayout() {
-    const context = useContext(LayoutContext);
     const sessionStateRef = useRef(null);
 
+    const context = useContext(LayoutContext);
     const [isMuted, setIsMuted] = useState(true);
     const [announcement, setAnnouncement] = useState<SessionAnnouncement | undefined>();
     const [queuedToHideAnnouncement, setQueuedToHideAnnouncement] = useState(false);
     const [numSubmittedResponders, setNumSubmittedResponders] = useState(0);
     const [numResponders, setNumResponders] = useState(0);
-    const [displayCorrectAnswer, setDisplayCorrectAnswer] = useState(false);
+    const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
 
     useEffect(() => {
-        socket.on(ServerSocket.ShowAnnouncement, handleShowAnnouncement);
-        socket.on(ServerSocket.HideAnnouncement, handleHideAnnouncement);
-        socket.on(HostServerSocket.PlayVoice, handlePlayVoice)
+        socket.on(HostServerSocket.PlayAudio, handlePlayAudio);
+        socket.on(HostServerSocket.PlayVoice, handlePlayVoice);
+        socket.on(HostServerSocket.ShowAnnouncement, handleShowAnnouncement);
+        socket.on(HostServerSocket.HideAnnouncement, handleHideAnnouncement);
         socket.on(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         socket.on(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
-        addMockSocketEventHandler(ServerSocket.ShowAnnouncement, handleShowAnnouncement);
-        addMockSocketEventHandler(ServerSocket.HideAnnouncement, handleHideAnnouncement);
+        addMockSocketEventHandler(HostServerSocket.PlayAudio, handlePlayAudio);
         addMockSocketEventHandler(HostServerSocket.PlayVoice, handlePlayVoice);
+        addMockSocketEventHandler(HostServerSocket.ShowAnnouncement, handleShowAnnouncement);
+        addMockSocketEventHandler(HostServerSocket.HideAnnouncement, handleHideAnnouncement);
         addMockSocketEventHandler(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         addMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
         return () => {
-            socket.off(ServerSocket.ShowAnnouncement, handleShowAnnouncement);
-            socket.off(ServerSocket.HideAnnouncement, handleHideAnnouncement);
-            socket.off(HostServerSocket.PlayVoice, handlePlayVoice)
+            socket.off(HostServerSocket.PlayAudio, handlePlayAudio);
+            socket.off(HostServerSocket.PlayVoice, handlePlayVoice);
+            socket.off(HostServerSocket.ShowAnnouncement, handleShowAnnouncement);
+            socket.off(HostServerSocket.HideAnnouncement, handleHideAnnouncement);
             socket.off(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
             socket.off(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
-            removeMockSocketEventHandler(ServerSocket.ShowAnnouncement, handleShowAnnouncement);
-            removeMockSocketEventHandler(ServerSocket.HideAnnouncement, handleHideAnnouncement);
+            removeMockSocketEventHandler(HostServerSocket.PlayAudio, handlePlayAudio);
             removeMockSocketEventHandler(HostServerSocket.PlayVoice, handlePlayVoice);
+            removeMockSocketEventHandler(HostServerSocket.ShowAnnouncement, handleShowAnnouncement);
+            removeMockSocketEventHandler(HostServerSocket.HideAnnouncement, handleHideAnnouncement);
             removeMockSocketEventHandler(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
             removeMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
         }
@@ -107,13 +77,26 @@ export default function HostLayout() {
     useEffect(() => {
         // switch to game music once the game starts
         if (context.sessionState > SessionState.Lobby) {
-            playSoundEffect(SoundEffect.GameMusic);
+            playAudio(AudioType.GameMusic);
         }
 
         if (queuedToHideAnnouncement) {
             setAnnouncement(undefined);
         }
     }, [context.sessionState]);
+
+    const handlePlayAudio = (audioType: AudioType) => {
+        playAudio(audioType);
+    }
+
+    const handlePlayVoice = (voiceType: VoiceType, voiceLine: string, audioBase64?: string) => {
+        if (audioBase64) {
+            playOpenAIVoice(audioBase64);
+        }
+        else {
+            playSpeechSynthesisVoice(voiceType, voiceLine);
+        }
+    }
 
     const handleShowAnnouncement = (announcement: SessionAnnouncement) => {
         setAnnouncement(announcement);
@@ -129,22 +112,13 @@ export default function HostLayout() {
         }
     }
 
-    const handlePlayVoice = (voiceType: VoiceType, voiceLine: string, audioBase64?: string) => {
-        if (audioBase64) {
-            playOpenAIVoice(audioBase64);
-        }
-        else {
-            playSpeechSynthesisVoice(voiceType, voiceLine);
-        }
-    }
-
     const handleUpdateNumSubmittedResponders = (numSubmittedResponders: number, numResponders: number) => {
         setNumSubmittedResponders(numSubmittedResponders);
         setNumResponders(numResponders);
     }
 
-    const handleRevealClueDecision = (displayCorrectAnswer: boolean) => {
-        setDisplayCorrectAnswer(displayCorrectAnswer);
+    const handleRevealClueDecision = (showCorrectAnswer: boolean) => {
+        setShowCorrectAnswer(showCorrectAnswer);
     }
 
     const toggleMute = (isMuted: boolean) => {
@@ -152,15 +126,15 @@ export default function HostLayout() {
 
         if (!isMuted) {
             if (context.sessionState > SessionState.Lobby) {
-                playSoundEffect(SoundEffect.GameMusic);
+                playAudio(AudioType.GameMusic);
             }
             else {
-                playSoundEffect(SoundEffect.LobbyMusic);
+                playAudio(AudioType.LobbyMusic);
             }
         }
     }
 
-    // see comparison in PlayerLayout. returns both the JSX component and a state representing the specific component that was returned
+    // returns both the JSX component and a state representing the specific component that was returned
     const getHostComponent = () => {
         if (announcement !== undefined) {
             return [<Announcement announcement={announcement} />, HostComponentState.Announcement];
@@ -174,7 +148,7 @@ export default function HostLayout() {
             throw new Error(`HostLayout: missing trivia round`);
         }
 
-        if (context.sessionState === SessionState.ClueSelection) {
+        if (context.sessionState === SessionState.PromptClueSelection) {
             return [<HostBoard triviaRound={context.triviaRound} />, HostComponentState.Board];
         }
 
@@ -198,7 +172,7 @@ export default function HostLayout() {
         }
 
         if ((context.sessionState === SessionState.WaitingForClueDecision) || (context.sessionState === SessionState.ReadingClueDecision)) {
-            return [<HostClue triviaCategory={triviaCategory} triviaClue={triviaClue} displayCorrectAnswer={displayCorrectAnswer} />, HostComponentState.Clue]
+            return [<HostClue triviaCategory={triviaCategory} triviaClue={triviaClue} showCorrectAnswer={showCorrectAnswer} />, HostComponentState.Clue]
         }
 
         if (context.sessionState === SessionState.GameOver) {

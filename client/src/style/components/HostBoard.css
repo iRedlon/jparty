@@ -13,6 +13,8 @@
     padding: 1em;
 }
 
+/* even board panel anims */
+
 .session-state-appear .board-panel-wrapper.even, 
 .session-state-enter .board-panel-wrapper.even {
     animation-name: slide-from-top;
@@ -20,6 +22,16 @@
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
+
+.session-state-exit .board-panel-wrapper.even {
+    animation-name: slide-from-top;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}
+
+/* odd board panel anims */
 
 .session-state-appear .board-panel-wrapper.odd, 
 .session-state-enter .board-panel-wrapper.odd {
@@ -29,17 +41,7 @@
     animation-fill-mode: both;
 }
 
-.session-state-exit 
-.board-panel-wrapper.even {
-    animation-name: slide-from-top;
-    animation-duration: 1s;
-    animation-timing-function: ease-in-out;
-    animation-direction: reverse;
-    animation-fill-mode: both;
-}
-
-.session-state-exit 
-.board-panel-wrapper.odd {
+.session-state-exit .board-panel-wrapper.odd {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;

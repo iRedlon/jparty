@@ -1,11 +1,11 @@
 
-import { LayoutContext } from "../common/Layout";
-import { formatDollarValue } from "../../misc/client-utils";
-import { socket } from "../../misc/socket";
-
 import { Box, Button, Text } from "@chakra-ui/react";
 import { PlayerSocket, SocketID, TriviaClueDecision } from "jparty-shared";
 import { useContext } from "react";
+
+import { LayoutContext } from "../common/Layout";
+import { formatDollarValue } from "../../misc/client-utils";
+import { socket } from "../../misc/socket";
 
 function getNumRequiredVoters(numPlayers: number) {
     const halfNumPlayers = numPlayers / 2;
@@ -21,6 +21,7 @@ interface ClueDecisionInfoProps {
     playerID: SocketID
 }
 
+// shows the recent
 export default function ClueDecisionInfo({ playerID }: ClueDecisionInfoProps) {
     const context = useContext(LayoutContext);
 
@@ -47,7 +48,7 @@ export default function ClueDecisionInfo({ playerID }: ClueDecisionInfoProps) {
     const canVoteToReverseDecision = !hasVotedToReverseDecision && (info.decision !== TriviaClueDecision.NeedsMoreDetail) && !info.isReversal;
 
     return (
-        <Box key={playerID} className={"child-box"} padding={"0.5em"} margin={"0.5em"}>
+        <Box key={player.clientID} className={"child-box"} padding={"0.5em"} margin={"0.5em"}>
             <Text wordBreak={"keep-all"}> "<i>{info.response}</i>" was {rulingString} {info.decision} {clueValueString}</Text>
             {canVoteToReverseDecision && <Button onClick={() => emitVoteToReverseDecision(playerID)} size={"sm"} margin={"0.5em"}>vote to reverse</Button>}
             {hasVotedToReverseDecision && <Text>{numCurrentVoters}/{numRequiredVoters} required votes to reverse</Text>}

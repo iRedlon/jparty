@@ -1,14 +1,14 @@
 
-import "../../style/components/HostClue.css";
+import { Box, Heading, Stack, Text } from "@chakra-ui/react";
+import { PlayerResponseType, SessionState, TriviaCategory, TriviaClue } from "jparty-shared";
+import { useContext, useRef } from "react";
+import { CSSTransition } from "react-transition-group";
 
 import CategoryBox from "./CategoryBox";
 import ResponderInfo from "./ResponderInfo";
 import { LayoutContext } from "../common/Layout";
 
-import { Box, Heading, Stack, Text } from "@chakra-ui/react";
-import { PlayerResponseType, SessionState, TriviaCategory, TriviaClue } from "jparty-shared";
-import { useContext, useRef } from "react";
-import { CSSTransition } from "react-transition-group";
+import "../../style/components/HostClue.css";
 
 function getQuestionFontSize(question: string) {
     if (question.length < 50) {
@@ -33,16 +33,17 @@ function getQuestionFontSize(question: string) {
 interface HostClueProps {
     triviaCategory: TriviaCategory,
     triviaClue: TriviaClue,
-    displayCorrectAnswer?: boolean,
+    showCorrectAnswer?: boolean,
     numSubmittedResponders?: number,
     numResponders?: number
 }
 
-export default function HostClue({ triviaCategory, triviaClue, displayCorrectAnswer, numSubmittedResponders, numResponders }: HostClueProps) {
-    const context = useContext(LayoutContext);
+export default function HostClue({ triviaCategory, triviaClue, showCorrectAnswer, numSubmittedResponders, numResponders }: HostClueProps) {
     const questionBoxRef = useRef(null);
     const correctAnswerRef = useRef(null);
     const responderInfoRef = useRef(null);
+
+    const context = useContext(LayoutContext);
 
     const showQuestion = context.sessionState !== SessionState.ReadingClueSelection;
     let showSpotlightResponder = false;
@@ -66,7 +67,7 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
     }
 
     // only show the correct answer if either: 1) nobody responded or 2) someone did respond and we're also showing their decision
-    displayCorrectAnswer = displayCorrectAnswer && (!spotlightResponder || showClueDecision);
+    showCorrectAnswer = showCorrectAnswer && (!spotlightResponder || showClueDecision);
 
     return (
         <Stack direction={"column"}>
@@ -83,7 +84,7 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
                             {triviaClue.question}
                         </Text>
 
-                        <CSSTransition nodeRef={correctAnswerRef} in={displayCorrectAnswer} timeout={500} classNames={"correct-answer-anim"}
+                        <CSSTransition nodeRef={correctAnswerRef} in={showCorrectAnswer} timeout={500} classNames={"correct-answer-anim"}
                             appear mountOnEnter unmountOnExit>
 
                             <Box ref={correctAnswerRef} id={"correct-answer"}>

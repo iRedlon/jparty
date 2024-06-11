@@ -1,12 +1,12 @@
 
+import { AudioType, HostSocket, VoiceType, VolumeType } from "jparty-shared";
+
 import { socket } from "./socket";
 import BuzzWindowTimeoutMP3 from "../assets/buzz-window-timeout.mp3";
 import ApplauseMP3 from "../assets/applause.mp3";
 import GameMusicMP3 from "../assets/game-music.mp3";
 import LobbyMusicMP3 from "../assets/lobby-music.mp3";
 import LongApplauseMP3 from "../assets/long-applause.mp3";
-
-import { HostSocket, SoundEffect, VoiceType, VolumeType } from "jparty-shared";
 
 // music
 const lobbyMusicAudio = new Audio(LobbyMusicMP3);
@@ -52,9 +52,9 @@ export function updateVolume(volumeType: VolumeType, volume: number) {
 updateVolume(VolumeType.Music, getVolume(VolumeType.Music));
 updateVolume(VolumeType.SoundEffects, getVolume(VolumeType.SoundEffects));
 
-export function playSoundEffect(effect: SoundEffect) {
-    switch (effect) {
-        case SoundEffect.LobbyMusic:
+export function playAudio(audioType: AudioType) {
+    switch (audioType) {
+        case AudioType.LobbyMusic:
             {
                 if (lobbyMusicAudio.paused || !lobbyMusicAudio.currentTime) {
                     gameMusicAudio.pause();
@@ -64,7 +64,7 @@ export function playSoundEffect(effect: SoundEffect) {
                 }
             }
             break;
-        case SoundEffect.GameMusic:
+        case AudioType.GameMusic:
             {
                 if (gameMusicAudio.paused || !gameMusicAudio.currentTime) {
                     lobbyMusicAudio.pause();
@@ -74,19 +74,19 @@ export function playSoundEffect(effect: SoundEffect) {
                 }
             }
             break;
-        case SoundEffect.BuzzWindowTimeout:
+        case AudioType.BuzzWindowTimeout:
             {
                 buzzWindowTimeoutAudio.currentTime = 0;
                 buzzWindowTimeoutAudio.play();
             }
             break;
-        case SoundEffect.Applause:
+        case AudioType.Applause:
             {
                 applauseAudio.currentTime = 0;
                 applauseAudio.play();
             }
             break;
-        case SoundEffect.LongApplause:
+        case AudioType.LongApplause:
             {
                 longApplauseAudio.currentTime = 0;
                 longApplauseAudio.play();
