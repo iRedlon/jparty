@@ -5,6 +5,7 @@ import PlayerIdle from "./PlayerIdle";
 import PlayerLobby from "./PlayerLobby";
 import PlayerMenu from "./PlayerMenu";
 import PlayerResponse from "./PlayerResponse";
+import PlayerSignature from "./PlayerSignature";
 import { LayoutContext } from "../common/Layout";
 import ServerMessageAlert from "../common/ServerMessage";
 import Timer from "../common/Timer";
@@ -17,10 +18,13 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { isMobile } from "react-device-detect";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 
+
 // each state represents the component currently being displayed. the top-level components in this enum are labelled with the "Player" prefix
 enum PlayerComponentState {
+    None,
     Lobby,
     Idle,
+    Signature,
     ClueSelection,
     Buzzer,
     Response
@@ -33,9 +37,11 @@ export default function PlayerLayout() {
     // "force idle" is a state where the player isn't idle (i.e. responding to a clue) but has "switched tabs" to check the scoreboard
     // anytime a player isn't idle, they see a button that allows them to switch between the scoreboard and whatever their normal state component is
     const [forceIdle, setForceIdle] = useState(false);
+    const [forceSignature, setForceSignature] = useState(false);
 
     useEffect(() => {
         setForceIdle(false);
+        setForceSignature(false);
     }, [context.sessionState]);
 
     const getPlayer = () => {
@@ -56,21 +62,29 @@ export default function PlayerLayout() {
             return;
         }
 
-        return <Button colorScheme={"gray"} onClick={() => setForceIdle(!forceIdle)}>{forceIdle ? "Go back" : "Check scoreboard"}</Button>;
+        return <Button colorScheme={"gray"}
+            onClick={() => { setForceIdle(!forceIdle); setForceSignature(false); }}>
+
+            {forceIdle ? "Go back" : "Check scoreboard"}
+        </Button>;
     }
 
     // see comparison in HostLayout. returns both the JSX component and a state representing the specific component that was returned
     const getPlayerComponent = () => {
-        if (player && (isIdle || forceIdle)) {
-            return [<PlayerIdle player={player} promptStartGame={player.state === PlayerState.WaitingToStartGame} />, PlayerComponentState.Idle];
-        }
-
-        if (context.sessionState === SessionState.Lobby) {
-            return [<PlayerLobby />, PlayerComponentState.Lobby];
-        }
-
         if (!player) {
-            throw new Error(`PlayerLayout: missing player`);
+            if (context.sessionState === SessionState.Lobby) {
+                return [<PlayerLobby />, PlayerComponentState.Lobby];
+            }
+            else {
+                return [<></>, PlayerComponentState.None];
+            }
+        }
+
+        if (forceSignature) {
+            return [<PlayerSignature player={player} setForceSignature={setForceSignature} />, PlayerComponentState.Signature];
+        }
+        else if (isIdle || forceIdle) {
+            return [<PlayerIdle player={player} setForceSignature={setForceSignature} promptStartGame={player.state === PlayerState.WaitingToStartGame} />, PlayerComponentState.Idle];
         }
 
         // players are idle by default unless there's a specific combination of session and player state that indicates they're
@@ -106,7 +120,7 @@ export default function PlayerLayout() {
                 break;
         }
 
-        return [<PlayerIdle player={player} />, PlayerComponentState.Idle];
+        return [<PlayerIdle player={player} setForceSignature={setForceSignature} />, PlayerComponentState.Idle];
     }
 
     const [PlayerComponent, componentState] = getPlayerComponent();
@@ -124,7 +138,7 @@ export default function PlayerLayout() {
                         <CSSTransition key={componentState as PlayerComponentState} nodeRef={sessionStateRef} timeout={0} classNames={"session-state"}
                             appear mountOnEnter unmountOnExit>
 
-                            <Box ref={sessionStateRef} width={isMobile ? "70vw" : "15vw"} minWidth={"15em"}>
+                            <Box ref={sessionStateRef} width={isMobile ? "70vw" : "15vw"} minWidth={"18em"}>
                                 {PlayerComponent}
                             </Box>
                         </CSSTransition>

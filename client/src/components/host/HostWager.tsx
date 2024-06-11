@@ -20,17 +20,10 @@ export default function HostWager({ triviaCategory, triviaClue, numSubmittedResp
     const context = useContext(LayoutContext);
 
     const spotlightResponder = context.spotlightResponderID ? context.sessionPlayers[context.spotlightResponderID] : undefined;
-    let minWager = 0;
-    let maxWager = 0;
-
-    if (spotlightResponder) {
-        minWager = spotlightResponder.minWager;
-        maxWager = spotlightResponder.maxWager;
-    }
 
     return (
         <>
-            <CategoryBox triviaCategory={triviaCategory} triviaClue={triviaClue} minWager={minWager} maxWager={maxWager} />
+            <CategoryBox triviaCategory={triviaCategory} triviaClue={triviaClue} />
             <Box margin={"1em"} />
 
             <SpotlightResponder triviaClue={triviaClue} responder={spotlightResponder} responseType={PlayerResponseType.Wager}

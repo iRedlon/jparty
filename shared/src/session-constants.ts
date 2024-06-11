@@ -4,7 +4,7 @@ import { TriviaClueDecision } from "./trivia-game-constants";
 
 export enum SessionState {
     Lobby,
-    ClueSelection,
+    PromptClueSelection,
     ReadingClueSelection,
     ReadingClue,
     ClueTossup,
@@ -21,7 +21,7 @@ export enum SessionTimeout {
     ReadingClue,
     BuzzWindow,
     ResponseWindow,
-    RevealClueDecision
+    ReadingClueDecision
 }
 
 export enum SessionAnnouncement {
@@ -29,9 +29,9 @@ export enum SessionAnnouncement {
     ClueBonusWager,
     ClueBonusAllWager,
     ClueBonusAllPlay,
+    FinalClue,
     StartRound,
     StartFinalRound,
-    FinalClue,
     GameOver
 }
 
@@ -45,11 +45,11 @@ export enum AttemptReconnectResult {
 
 export enum PlayerState {
     Idle,
-    WaitingToStartGame,
-    SelectingClue,
-    WaitingToBuzz,
-    RespondingToClue,
-    Wagering
+    PromptStartGame,
+    PromptClueSelection,
+    PromptBuzz,
+    PromptClueResponse,
+    PromptWager
 }
 
 export enum PlayerResponseType {
@@ -65,6 +65,8 @@ export interface PlayerResponses {
 export class Player {
     clientID: string;
     name: string;
+    signatureImageBase64: string;
+    signatureCanvasPath: any[];
     connected: boolean;
     state: PlayerState;
     score: number;
@@ -84,10 +86,15 @@ export class Player {
     }
 
     static clone(source: Player) {
-        return Object.assign(new Player("", ""), source);
+        let clonedPlayer = Object.assign(new Player("", ""), source);
+        clonedPlayer.signatureCanvasPath = JSON.parse(JSON.stringify(source.signatureCanvasPath));
+
+        return clonedPlayer;
     }
 
     reset() {
+        this.signatureImageBase64 = "";
+        this.signatureCanvasPath = [];
         this.connected = true;
         this.setIdle();
         this.score = 0;

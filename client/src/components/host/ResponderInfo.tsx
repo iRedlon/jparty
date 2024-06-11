@@ -54,11 +54,10 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
         }
 
         let clueDecisionInfo = responder.clueDecisionInfo;
-        let clueValueString = "";
+        let decisionModifier = 1;
 
-        if (clueDecisionInfo) {
-            const decisionModifier = (clueDecisionInfo.decision === TriviaClueDecision.Incorrect) ? -1 : 1;
-            clueValueString = formatDollarValue(clueDecisionInfo.clueValue * decisionModifier);
+        if (clueDecisionInfo && (clueDecisionInfo.decision === TriviaClueDecision.Incorrect)) {
+            decisionModifier = -1;
         }
 
         // label our current state with this responder's client ID. this way the switch transition knows to animate between one responder to another
@@ -69,16 +68,18 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
                     <CSSTransition key={showClueDecision ? "show-clue-decision" : "show-signature"} nodeRef={clueDecisionRef} timeout={500} classNames={"clue-decision"}
                         appear mountOnEnter unmountOnExit>
 
-                        <Box className={"box"} marginRight={"0.5em"} height={"7em"} width={"7em"} display={"flex"} justifyContent={"center"} alignItems={"center"} padding={"1em"} overflow={"hidden"}>
+                        <Box id={"signature-box"} className={"box"} padding={showClueDecision ? "1em" : "0em"}>
                             <Box ref={clueDecisionRef}>
                                 {(showClueDecision && clueDecisionInfo) ?
                                     <>
                                         <Text><b>{clueDecisionInfo.decision.toUpperCase()}</b></Text>
                                         {clueDecisionInfo.decision !== TriviaClueDecision.NeedsMoreDetail && <Heading fontFamily={"board"} fontWeight={0}>
-                                            {formatDollarValue(clueDecisionInfo.clueValue)}
+                                            {formatDollarValue(clueDecisionInfo.clueValue * decisionModifier)}
                                         </Heading>}
                                     </> :
-                                    <></>}
+                                    <>
+                                        <img src={responder.signatureImageBase64} />
+                                    </>}
                             </Box>
                         </Box>
                     </CSSTransition>

@@ -3,6 +3,7 @@ body {
     text-align: center;
     overflow-x: hidden;
     overflow-y: hidden;
+    user-select: none;
 }
 
 .box {

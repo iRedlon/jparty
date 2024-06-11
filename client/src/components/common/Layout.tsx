@@ -14,7 +14,7 @@ import { createContext, useEffect, useState } from "react";
 import { isMobile } from "react-device-detect";
 
 // shared state accessible by any client
-export interface LayoutContextData {
+interface LayoutContextData {
     debugMode: boolean,
     isSpectator: boolean,
     isPlayer: boolean,
@@ -70,6 +70,7 @@ export default function Layout() {
 
         return () => {
             window.removeEventListener(ReservedSocket.VisibilityChange, handleVisibilityChange);
+
             socket.off(ReservedSocket.Connect, handleConnect);
             socket.off(ServerSocket.EnableDebugMode, handleEnableDebugMode);
             socket.off(ServerSocket.BeginSpectate, handleBeginSpectate);
@@ -93,6 +94,10 @@ export default function Layout() {
         }
     }, []);
 
+    // clients disconnect all the time. it happens *UNRELIABLY* when changing tabs, apps, turning your phone on and off, etc.
+    // our approach to client reconnection is simply this: it doesn't hurt to get updated state from the server, so request such updates often; just in case we need them
+    // "often" meaning: anytime we hear a state update from the server, or anytime the user's tab visibility has changed for any reason
+
     useEffect(() => {
         handleConnect();
     }, [sessionState]);
@@ -107,10 +112,6 @@ export default function Layout() {
         if (isPlayer) {
             localStorage.setItem("isPlayer", "true");
         }
-
-        // clients disconnect all the time. it happens VERY UNRELIABLY when changing tabs, apps, turning your phone on and off, etc.
-        // our approach to client reconnection is simply this: it doesn't hurt to get updated state from the server, so request such updates often; just in case we need them
-        // "often" meaning: anytime we hear a state update from the server, or anytime the user's tab visibility has changed for any reason
 
         if (localStorage.sessionName) {
             socket.emit(ClientSocket.AttemptReconnect, localStorage.sessionName, getClientID(), (result: AttemptReconnectResult) => {

@@ -1,7 +1,8 @@
 
-import { DEFAULT_SINGLE_ROUND_SETTINGS, TriviaCategorySettings } from "./trivia-game-settings";
 import { TriviaCategory, TriviaRound } from "./trivia-game";
+import { NORMAL_SINGLE_ROUND_SETTINGS, TriviaCategorySettings } from "./trivia-game-settings";
 
+// used for testing a disconnected client with realistic trivia data
 const PLACEHOLDER_TRIVIA_ROUND_CATEGORIES: TriviaCategory[] = [
     {
         settings: { type: 2 } as TriviaCategorySettings,
@@ -323,4 +324,4 @@ const PLACEHOLDER_TRIVIA_ROUND_CATEGORIES: TriviaCategory[] = [
     } as TriviaCategory
 ];
 
-export const PLACEHOLDER_TRIVIA_ROUND = new TriviaRound(DEFAULT_SINGLE_ROUND_SETTINGS, PLACEHOLDER_TRIVIA_ROUND_CATEGORIES);
+export const PLACEHOLDER_TRIVIA_ROUND = new TriviaRound(NORMAL_SINGLE_ROUND_SETTINGS, PLACEHOLDER_TRIVIA_ROUND_CATEGORIES);

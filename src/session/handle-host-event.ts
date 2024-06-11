@@ -1,14 +1,14 @@
 
-import { createSession, deleteSession, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost } from "./session-utils.js";
-import { io } from "../controller.js";
-import { debugLog, DebugLogType } from "../misc/log.js";
-
 import {
     HostServerSocket, HostSocket, HostSocketCallback, ServerSocket, ServerSocketMessage, SessionState, SessionTimeout,
     TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
 } from "jparty-shared";
 import { generate as generateRandomWord } from "random-words";
 import { Socket } from "socket.io";
+
+import { createSession, deleteSession, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost } from "./session-utils.js";
+import { io } from "../controller.js";
+import { debugLog, DebugLogType } from "../misc/log.js";
 
 function handleConnect(socket: Socket, clientID: string) {
     let sessionName = "";
@@ -156,7 +156,8 @@ const handlers: Record<HostSocket, Function> = {
 
 export default function handleHostEvent(socket: Socket, event: HostSocket, ...args: any[]) {
     try {
-        // handle any events that could occur before this client has joined a session
+        // handle any events that could occur before this host has joined a session
+        // (these handlers won't take sessionName as their second param like all the other ones do)
         if ((event === HostSocket.Connect) || (event === HostSocket.AttemptSpectate)) {
             handlers[event](socket, ...args);
             return;

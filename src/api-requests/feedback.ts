@@ -1,14 +1,14 @@
 
-import { debugLog, DebugLogType } from "../misc/log";
-import { getSession } from "../session/session-utils";
-
 import { Feedback, FeedbackType, getDateStamp, ServerSocket, ServerSocketMessage } from "jparty-shared";
 import nodemailer from "nodemailer";
 import { Socket } from "socket.io";
 
+import { debugLog, DebugLogType } from "../misc/log";
+import { getSession } from "../session/session-utils";
+
 let mailConfig;
 
-// in production... send emails to our actual feedback inbox with a real SMTP service
+// in production: send emails to our actual feedback inbox with a real SMTP service
 if (process.env.NODE_ENV === "production") {
     mailConfig = {
         host: "mail.privateemail.com",
@@ -19,7 +19,7 @@ if (process.env.NODE_ENV === "production") {
             pass: process.env.FEEDBACK_EMAIL_PASSWORD
         }
     };
-// in dev... send emails to a fake inbox with Etheral, a fake SMTP service
+// in dev: send emails to a transient inbox with Etheral, a fake SMTP service
 } else {
     mailConfig = {
         host: "smtp.ethereal.email",

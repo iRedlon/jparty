@@ -14,9 +14,9 @@ export enum VolumeType {
     Music = "music_volume",
     Voice = "voice_volume",
     SoundEffects = "sound_effects_volume"
-} 
+}
 
-export enum SoundEffect {
+export enum AudioType {
     LobbyMusic,
     GameMusic,
     BuzzWindowTimeout,
@@ -40,6 +40,8 @@ export enum VoiceLineType {
     DisplayCorrectAnswer
 }
 
+// "voice line variables" are used to inject live game data into voice lines without needing to construct voice line strings during runtime
+// voice line randomization and variable data injection happens on the server in session-utils::playVoiceLine
 export enum VoiceLineVariable {
     RoundNumber = "{roundNumber}",
     CategoryName = "{categoryName}",
@@ -151,5 +153,7 @@ export const DISPLAY_CORRECT_ANSWER_VOICE_LINES = [
     `The correct answer was ${VoiceLineVariable.ClueAnswer}.`,
     `It was ${VoiceLineVariable.ClueAnswer}.`,
     `The answer was ${VoiceLineVariable.ClueAnswer}.`,
-    `The answer there was ${VoiceLineVariable.ClueAnswer}.`
+    `The answer there was ${VoiceLineVariable.ClueAnswer}.`,
+    `Answer there was ${VoiceLineVariable.ClueAnswer}.`,
+    `${VoiceLineVariable.ClueAnswer} was the answer.`
 ];

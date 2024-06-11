@@ -5,7 +5,7 @@
 ## [Patch Notes](documentation/patch-notes.md)
 
 ## Development
-Read the [overview](documentation/overview.md) for an overall description of the codebase. Refer to the [glossary](documentation/glossary.md) for detailed explanations of interal concepts
+Read the [overview](documentation/overview.md) for an overall description of the codebase
 
 ```
 -- install node modules in both projects

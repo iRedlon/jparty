@@ -1,11 +1,11 @@
 
-const MONGO_TRIVIA_DB_NAME = "trivia";
-
-import { formatDebugLog } from "../misc/log";
-
 import dotenv from "dotenv";
 import { TriviaCategorySchema, TriviaCategoryType, TriviaClueDifficulty } from "jparty-shared";
 import { MongoClient, ObjectId } from "mongodb";
+
+import { formatDebugLog } from "../misc/log";
+
+const MONGO_TRIVIA_DB_NAME = "trivia";
 
 dotenv.config();
 
@@ -81,7 +81,7 @@ export async function getRandomCategorySchema(type: TriviaCategoryType, minYear:
     }
 }
 
-
+// todo: hook these DB maintenance functions to some new UI in the client debug menu
 export async function changeClueDifficulty(type: TriviaCategoryType, subcategoryId: string, clueId: number, currentDifficulty: TriviaClueDifficulty, newDifficulty: TriviaClueDifficulty) {
     try {
         const db = client.db(MONGO_TRIVIA_DB_NAME);

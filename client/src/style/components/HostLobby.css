@@ -2,32 +2,83 @@
 
 .session-state-appear #logo-box, 
 .session-state-enter #logo-box {
-    animation-name: slide-from-left;
+    animation-name: slide-from-top;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
 .session-state-exit #logo-box {
-    animation-name: slide-from-left;
+    animation-name: slide-from-top;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-direction: reverse;
     animation-fill-mode: both;
 }
 
-/* players joined box */
+/* game settings preset box */
 
-.session-state-appear #players-joined-box, 
-.session-state-enter #players-joined-box {
+.session-state-appear #game-settings-preset-box, 
+.session-state-enter #game-settings-preset-box {
+    animation-name: slide-from-bottom;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.session-state-exit #game-settings-preset-box {
+    animation-name: slide-from-bottom;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}
+
+/* leaderboard box */
+
+#leaderboard-box {
+    margin-left: 2em;
+}
+
+.session-state-appear #leaderboard-box, 
+.session-state-enter #leaderboard-box {
     animation-name: slide-from-right;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.session-state-exit #players-joined-box {
+.session-state-exit #leaderboard-box {
     animation-name: slide-from-right;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}
+
+.side-box {
+    max-height: 40em;
+    width: 20em;
+    padding: 2em;
+    margin-top: auto;
+    margin-bottom: auto;
+    overflow: auto;
+}
+
+#joined-players-box {
+    margin-right: 2em;
+}
+
+.session-state-appear #joined-players-box, 
+.session-state-enter #joined-players-box {
+    animation-name: slide-from-left;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.session-state-exit #joined-players-box {
+    animation-name: slide-from-left;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-direction: reverse;

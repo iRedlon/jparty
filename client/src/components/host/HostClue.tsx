@@ -47,7 +47,6 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
     const showQuestion = context.sessionState !== SessionState.ReadingClueSelection;
     let showSpotlightResponder = false;
     let showClueDecision = false;
-    let wager = 0;
 
     const spotlightResponder = context.spotlightResponderID ? context.sessionPlayers[context.spotlightResponderID] : undefined;
     if (spotlightResponder) {
@@ -64,8 +63,6 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
         if (spotlightResponder.clueDecisionInfo && context.sessionState === SessionState.ReadingClueDecision) {
             showClueDecision = context.debugMode || (spotlightResponder.clueDecisionInfo.clue.id === triviaClue.id);
         }
-
-        wager = spotlightResponder.responses[PlayerResponseType.Wager];
     }
 
     // only show the correct answer if either: 1) nobody responded or 2) someone did respond and we're also showing their decision
@@ -73,7 +70,7 @@ export default function HostClue({ triviaCategory, triviaClue, displayCorrectAns
 
     return (
         <Stack direction={"column"}>
-            <CategoryBox triviaCategory={triviaCategory} triviaClue={triviaClue} wager={wager} />
+            <CategoryBox triviaCategory={triviaCategory} triviaClue={triviaClue} />
 
             <Box margin={"0.25em"} />
 

@@ -1,6 +1,6 @@
 
 import dotenv from "dotenv";
-import { getTimestamp } from "jparty-shared";
+import { getTimeStamp } from "jparty-shared";
 
 dotenv.config();
 
@@ -72,7 +72,7 @@ export function debugLog(type: DebugLogType, message?: any, isVerbose?: boolean)
 
 export function formatDebugLog(message: string) {
     // don't log a timestamp in production, that environment logs a timestamp already
-    const timestamp = (process.env.NODE_ENV === "production") ? "" : `(${getTimestamp()}) `;
+    const timestamp = (process.env.NODE_ENV === "production") ? "" : `(${getTimeStamp()}) `;
     
     return `${timestamp}[jparty-server]: ${message}`;
 }

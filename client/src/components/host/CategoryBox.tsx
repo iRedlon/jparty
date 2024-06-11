@@ -1,35 +1,21 @@
 
-import { LayoutContext } from "../common/Layout";
 import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
 import { formatDollarValue } from "../../misc/client-utils";
 
 import { Box, Heading } from "@chakra-ui/react";
 import { SessionState, TriviaCategory, TriviaCategoryType, TriviaClue, TriviaClueBonus } from "jparty-shared";
-import { useContext } from "react";
 
 interface CategoryBoxProps {
     triviaCategory: TriviaCategory,
-    triviaClue: TriviaClue,
-    wager?: number,
-    minWager?: number,
-    maxWager?: number
+    triviaClue: TriviaClue
 }
 
-export default function CategoryBox({ triviaCategory, triviaClue, wager, minWager, maxWager }: CategoryBoxProps) {
-    const context = useContext(LayoutContext);
-
-    const isWagerBonus = triviaClue.bonus === TriviaClueBonus.Wager;
-    const isAllWagerBonus = triviaClue.bonus === TriviaClueBonus.AllWager;
-    const showWagerLimits = isWagerBonus && (context.sessionState === SessionState.WagerResponse);
+export default function CategoryBox({ triviaCategory, triviaClue }: CategoryBoxProps) {
+    const isWagerBonus = (triviaClue.bonus === TriviaClueBonus.Wager) || (triviaClue.bonus === TriviaClueBonus.AllWager);
 
     let clueValueString = "";
-
-    if (showWagerLimits && (minWager !== undefined) && (maxWager !== undefined)) {
-        clueValueString = `for $(${minWager} - ${maxWager})`;
-    }
-    else if (!isAllWagerBonus) {
-        let clueValue = (isWagerBonus && wager !== undefined) ? wager : triviaClue.value;
-        clueValueString = `for ${formatDollarValue(clueValue)}`;
+    if (!isWagerBonus) {
+        clueValueString = `for ${formatDollarValue(triviaClue.value)}`;
     }
 
     return (

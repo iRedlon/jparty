@@ -25,11 +25,14 @@ export default function ClueDecisionInfo({ playerID }: ClueDecisionInfoProps) {
     const context = useContext(LayoutContext);
 
     const player = context.sessionPlayers[playerID];
-    if (!player || !player.clueDecisionInfo) {
+    if (!player) {
         return null;
     }
 
     const info = player.clueDecisionInfo;
+    if (!info) {
+        return null;
+    }
 
     // ruling info
     const rulingString = info.isReversal ? "reversed to" : "ruled";

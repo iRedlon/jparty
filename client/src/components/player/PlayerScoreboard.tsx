@@ -3,12 +3,13 @@ import "../../style/components/PlayerScoreboard.css";
 
 import ClueDecisionInfo from "./ClueDecisionInfo";
 import { LayoutContext } from "../common/Layout";
-import { formatDollarValue } from "../../misc/client-utils";
+import { formatDollarValue, getClientID } from "../../misc/client-utils";
 import { Layer } from "../../misc/ui-constants";
 
-import { Box, Heading, Stack } from "@chakra-ui/react";
-import { getSortedSessionPlayerIDs, SessionPlayers, SocketID } from "jparty-shared";
+import { Box, Heading, Stack, Text } from "@chakra-ui/react";
+import { getSortedSessionPlayerIDs, SessionPlayers, SocketID, TriviaClueDecision } from "jparty-shared";
 import { useContext, useEffect, useRef } from "react";
+import { PiCrownSimpleFill } from "react-icons/pi";
 
 export default function PlayerScoreboard() {
     const context = useContext(LayoutContext);
@@ -27,7 +28,7 @@ export default function PlayerScoreboard() {
 
     const clueDecisionInfoArray = getSortedSessionPlayerIDs(context.sessionPlayers).map((playerID: SocketID) => {
         const player = context.sessionPlayers[playerID];
-        if (!player || !player.clueDecisionInfo) {
+        if (!player || !player.clueDecisionInfo || player.clueDecisionInfo.decision === TriviaClueDecision.NeedsMoreDetail) {
             return;
         }
 
@@ -59,26 +60,33 @@ export default function PlayerScoreboard() {
                     const heightChange = `${indexChange * 2}em`;
                     const zIndex = Layer.Bottom + (numPlayers - index);
 
+                    const isViewingPlayer = player.clientID === getClientID();
+
                     return (
                         <Box key={`${playerID}-${indexChange}`}
                             className={"player-scoreboard-box"} style={{ "--height-change": heightChange } as React.CSSProperties}
-                            height={"3em"} zIndex={zIndex}>
+                            height={"3.5em"} zIndex={zIndex}>
 
                             <Stack direction={"row"} justifyContent={"center"}>
-                                <Box className={"child-box"} height={"3em"} width={"3em"} />
+                                <Box className={"child-box"} height={"3.5em"} width={"3.5em"}>
+                                    <img src={player.signatureImageBase64} />
+                                </Box>
 
-                                <Stack className={"child-box"} direction={"column"} gap={0} height={"3em"} width={"8em"} paddingLeft={"0.25em"} overflow={"hidden"}>
+                                <Stack className={"child-box"} direction={"column"} gap={0} height={"3.5em"} width={"8em"} paddingLeft={"0.25em"} overflow={"hidden"}>
                                     <Box textAlign={"left"} whiteSpace={"nowrap"}>
-                                        <b>{player.name}</b>
+                                        <Stack direction={"row"} gap={"0.2em"} alignItems={"center"}>
+                                            {index === 0 ? <PiCrownSimpleFill /> : <></>}
+                                            <b>{isViewingPlayer ? `you (${player.name})` : player.name}</b>
+                                        </Stack>
                                     </Box>
 
                                     <Box textAlign={"left"} whiteSpace={"nowrap"}>
-                                        {formatDollarValue(player.score)}
+                                        <Text fontSize={"1.5em"}>
+                                            <i>{formatDollarValue(player.score)}</i>
+                                        </Text>
                                     </Box>
                                 </Stack>
                             </Stack>
-
-
                         </Box>
                     );
                 })}

@@ -1,8 +1,8 @@
 
-import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
-
 import dotenv from "dotenv";
 import { VoiceType } from "jparty-shared";
+
+import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
 
 dotenv.config();
 
@@ -10,7 +10,7 @@ if (!process.env.OPENAI_SECRET_KEY) {
     throw new Error(formatDebugLog("attempted to connect to OpenAI without API key"));
 }
 
-export async function getVoiceBase64Audio(voiceType: VoiceType, voiceLine: string) {
+export async function getVoiceAudioBase64(voiceType: VoiceType, voiceLine: string) {
     if (!process.env.USE_OPENAI_TTS) {
         return;
     }

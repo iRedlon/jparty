@@ -1,11 +1,11 @@
 
-const CLUE_DECISION_TIMEOUT_DURATION_MS = 10000;
-
-import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
-
 import dotenv from "dotenv";
 import { TriviaClue, TriviaClueDecision } from "jparty-shared";
 import OpenAI from "openai";
+
+import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
+
+const CLUE_DECISION_TIMEOUT_DURATION_MS = 10000;
 
 dotenv.config();
 
@@ -84,6 +84,8 @@ export async function getClueDecision(clue: TriviaClue, response: string) {
 
         let decision = TriviaClueDecision.Incorrect;
 
+        // the assistant is instructed to return its answer in a very specific format but sometimes punctuation (like "correct.") or bad formatting (like "decision: incorrect")
+        // slip through the cracks. we do an inclusive search as a safety measure against that inconsistency
         const rawDecision = (latestMessage.content[0] as any).text.value.toLowerCase();
         if (rawDecision.includes(TriviaClueDecision.Incorrect)) {
             decision = TriviaClueDecision.Incorrect;

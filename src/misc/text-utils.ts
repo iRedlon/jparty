@@ -1,9 +1,10 @@
 
-const MAX_PLAYER_NAME_LENGTH = 20;
-
 import cleanTextUtils from "clean-text-utils";
 import { VoiceLineType } from "jparty-shared";
 import { containsProfanities, isProfane } from "no-profanity";
+
+const MAX_PLAYER_NAME_LENGTH = 20;
+const MAX_RESPONSE_LENGTH = 20;
 
 export interface ValidationResults {
     isValid: boolean,
@@ -23,6 +24,10 @@ export function formatText(text: string) {
     text = cleanTextUtils.replace.exoticChars(text);
 
     return text;
+}
+
+export function formatClueResponse(response: string) {
+    return formatText(response).slice(0, MAX_RESPONSE_LENGTH);
 }
 
 export function formatSpokenVoiceLine(text: string, type: VoiceLineType) {

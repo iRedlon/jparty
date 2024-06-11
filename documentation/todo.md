@@ -39,3 +39,7 @@
 
 - "Battle royale" round type: continue to answer questions, player with fewest correct gets eliminated every so often
 - Change phrasing of champion congratulations depending on game performance: "nice job" if you did poorly vs. "masterfully played" if you played really well
+
+# Nitpicks
+
+- a leading italic "j" gets cut off in the responder info box on HostClue

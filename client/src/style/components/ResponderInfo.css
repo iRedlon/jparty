@@ -43,3 +43,13 @@
     justify-content: center;
     align-items: center;
 }
+
+#signature-box {
+    margin-right: 0.5em;
+    height: 7em;
+    width: 7em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}

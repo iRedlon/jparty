@@ -8,10 +8,8 @@ import { socket } from "../../misc/socket";
 import { Box, Heading, Stack } from "@chakra-ui/react";
 import { PlayerSocket, TriviaClue } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
-
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { useDoubleTap } from "use-double-tap";
-
 
 export default function PlayerClueSelection() {
     const context = useContext(LayoutContext);
@@ -24,6 +22,7 @@ export default function PlayerClueSelection() {
     }
 
     useEffect(() => {
+        // if possible, set the default category index to be whatever was the last category this player selected
         const prevCategoryIndexString = localStorage.getItem("categoryIndex");
         if (prevCategoryIndexString) {
             const prevCategoryIndex = parseInt(prevCategoryIndexString);
@@ -84,7 +83,7 @@ export default function PlayerClueSelection() {
     });
 
     return (
-        <Box className={"mobile-box"} padding={"1em"} userSelect={"none"}>
+        <Box className={"mobile-box"} padding={"1em"}>
             <Heading size={"md"}>double tap to select a clue</Heading>
 
             <Stack direction={"column"} marginTop={"1em"} gap={"1em"} fontFamily={"board"}>

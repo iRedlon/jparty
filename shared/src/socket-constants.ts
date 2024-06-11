@@ -2,25 +2,25 @@
 import { AttemptReconnectResult } from "./session-constants";
 import { TriviaCategory } from "./trivia-game";
 
-// events whose names are specifically reserved by socket.io or HTML
-export enum ReservedSocket {
+// events whose names are specifically reserved by socket.io or built-in JS
+export enum ReservedEvent {
     Connect = "connect",
     Connection = "connection",
     Disconnect = "disconnect",
     VisibilityChange = "visibilitychange"
 }
 
-// each following enum is a list of possible socket messages, labelled by their sender
+// each enum below is a list of possible socket messages, labelled by their sender
 // the "callback" types define the callback signature for each socket message that uses one
 
-// messages that can be received by any client (host or player)
+// messages that can be received by any client
 export enum ServerSocket {
     EnableDebugMode = "server_enable_debug_mode",
     BeginSpectate = "server_update_begin_spectate",
     Message = "server_message",
     CancelGame = "server_cancel_game",
     UpdateVoiceType = "host_server_update_voice_type",
-    PlaySoundEffect = "server_play_sound_effect",
+    PlayAudio = "server_play_audio",
     UpdateSessionName = "server_update_session_name",
     UpdateSessionState = "server_update_session_state",
     UpdateSessionPlayers = "server_update_session_players",
@@ -31,28 +31,6 @@ export enum ServerSocket {
     StopTimeout = "host_server_stop_timeout",
     ShowAnnouncement = "host_server_show_announcement",
     HideAnnouncement = "host_server_hide_announcement"
-}
-
-export class ServerSocketMessage {
-    message: string;
-    isError: boolean;
-
-    constructor (message: string, isError?: boolean) {
-        this.message = message;
-        this.isError = isError || false;
-    }
-}
-
-export enum FeedbackType {
-    Bug,
-    TriviaData,
-    Suggestion
-}
-
-export interface Feedback {
-    type: FeedbackType,
-    message: string,
-    category?: TriviaCategory
 }
 
 export enum ClientSocket {
@@ -89,6 +67,7 @@ export enum HostServerSocket {
 export enum PlayerSocket {
     Connect = "player_connect",
     LeaveSession = "player_leave_session",
+    UpdateSignature = "player_update_signature",
     StartGame = "player_start_game",
     SelectClue = "player_select_clue",
     Buzz = "player_buzz",
@@ -100,4 +79,26 @@ export enum PlayerSocket {
 export type PlayerSocketCallback = {
     [PlayerSocket.Connect]: (resetSessionName: boolean, resetPlayerName: boolean) => any;
     [PlayerSocket.StartGame]: (success: boolean) => any;
+}
+
+export class ServerSocketMessage {
+    message: string;
+    isError: boolean;
+
+    constructor (message: string, isError?: boolean) {
+        this.message = message;
+        this.isError = isError || false;
+    }
+}
+
+export enum FeedbackType {
+    Bug,
+    TriviaData,
+    Suggestion
+}
+
+export interface Feedback {
+    type: FeedbackType,
+    message: string,
+    category?: TriviaCategory
 }

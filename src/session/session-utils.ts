@@ -1,19 +1,20 @@
 
+import {
+    ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES, AttemptReconnectResult, AudioType, CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES,
+    ClientSocket, ClientSocketCallback, DISPLAY_CORRECT_ANSWER_VOICE_LINES,
+    getEnumSize, getRandomChoice, HostServerSocket, PROMPT_CLUE_SELECTION_VOICE_LINES, READ_CLUE_SELECTION_VOICE_LINE,
+    ServerSocket, ServerSocketMessage, SessionAnnouncement, SESSION_ANNOUNCEMENT_VOICE_LINES, SessionState, SessionTimeout,
+    TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable
+} from "jparty-shared";
+import { Socket } from "socket.io";
+
 import { Session } from "./session.js";
-import { getVoiceBase64Audio } from "../api-requests/tts.js";
+import { getVoiceAudioBase64 } from "../api-requests/tts.js";
 import { io } from "../controller.js";
 import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
 import { formatSpokenVoiceLine } from "../misc/text-utils.js";
 
-import {
-    ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES, AttemptReconnectResult, CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES,
-    ClientSocket, ClientSocketCallback, DISPLAY_CORRECT_ANSWER_VOICE_LINES,
-    getEnumSize, getRandomChoice, HostServerSocket, PROMPT_CLUE_SELECTION_VOICE_LINES, READ_CLUE_SELECTION_VOICE_LINE,
-    ServerSocket, ServerSocketMessage, SessionAnnouncement, SESSION_ANNOUNCEMENT_VOICE_LINES, SessionState, SessionTimeout,
-    SoundEffect, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable
-} from "jparty-shared";
-import { Socket } from "socket.io";
-
+// don't let "the man" convince you that 1000 and 60 are magic numbers
 const SESSION_EXPIRATION_PERIOD_MS = 10 * 60 * 1000;
 const SESSION_EXPIRATION_CHECK_INTERVAL_MS = 1 * 60 * 1000;
 
@@ -130,7 +131,7 @@ export function joinSessionAsPlayer(socket: Socket, sessionName: string) {
     joinSession(socket, session.name);
 
     // if the session is waiting for a clue selection, and this newly joined player is the only one here... they need to select a clue
-    if (!session.currentAnnouncement && (session.state === SessionState.ClueSelection) && (session.getConnectedPlayerIDs().length === 1)) {
+    if (!session.currentAnnouncement && (session.state === SessionState.PromptClueSelection) && (session.getConnectedPlayerIDs().length === 1)) {
         session.promptClueSelection();
         emitStateUpdate(session.name);
     }
@@ -273,13 +274,13 @@ export function showAnnouncement(sessionName: string, announcement: SessionAnnou
     });
 }
 
-export function playSoundEffect(sessionName: string, soundEffect: SoundEffect) {
+export function playAudio(sessionName: string, audioType: AudioType) {
     let session = getSession(sessionName);
     if (!session) {
         return;
     }
 
-    io.to(Object.keys(session.hosts)).emit(ServerSocket.PlaySoundEffect, soundEffect);
+    io.to(Object.keys(session.hosts)).emit(ServerSocket.PlayAudio, audioType);
 }
 
 export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
@@ -323,7 +324,7 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                     voiceLine = getRandomChoice(PROMPT_CLUE_SELECTION_VOICE_LINES);
                 }
                 else if (currentCategory && clueSelector.getCorrectCluesInCategory(currentCategory.id) === currentCategory.clues.length) {
-                    playSoundEffect(sessionName, SoundEffect.Applause);
+                    playAudio(sessionName, AudioType.Applause);
                     voiceLine = getRandomChoice(CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES);
                 }
             }
@@ -397,26 +398,23 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
         voiceLine = voiceLine.replace(VoiceLineVariable.LeaderName, leader.name);
     }
 
-    // if we use this voice line as display text on client, we don't want it to be formatted for being spoken aloud
-    // so, set it as session data first so it can be accessed in its text form, then apply spoken formatting afterwards
-    session.setCurrentVoiceLine(voiceLine);
-
     voiceLine = formatSpokenVoiceLine(voiceLine, type);
+    session.setCurrentVoiceLine(voiceLine);
 
     debugLog(DebugLogType.Voice, `final spoken voice line: \"${voiceLine}\"`);
 
-    let voiceBase64Audio = undefined;
+    let voiceAudioBase64 = undefined;
 
     try {
-        voiceBase64Audio = await getVoiceBase64Audio(session.voiceType, voiceLine);
+        voiceAudioBase64 = await getVoiceAudioBase64(session.voiceType, voiceLine);
     }
     catch (e) {
         // normally we'd go through handleServerError, but if our external TTS request fails we can just fall back on the speech synthesis voice instead
-        // no need to recover the session; nothing's broken
+        // no need to recover the session; nothing's broken. but the TTS request failed so we should still log it
         console.error(e);
     }
 
-    io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayVoice, session.voiceType, voiceLine, voiceBase64Audio);
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayVoice, session.voiceType, voiceLine, voiceAudioBase64);
 }
 
 export function emitStateUpdate(sessionName: string) {
@@ -455,7 +453,7 @@ export function emitServerError(error: any, socket?: Socket, sessionName?: strin
 
     if (process.env.NODE_ENV === "production") {
         console.log(formatDebugLog(`error was caught in session: ${sessionName}`));
-        console.log(sessions);
+        console.log(session);
     }
 
     io.to(Object.keys(session.hosts)).emit(ServerSocket.Message, new ServerSocketMessage((error as Error).message, true));

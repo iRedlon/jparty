@@ -65,7 +65,7 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
 
                 return (
                     <Box className={"box"} padding={"2em"}>
-                        <Heading size={"md"}>enter a wager between {formatDollarValue(player.minWager)} and {formatDollarValue(player.maxWager)}</Heading>
+                        <Heading size={"md"}>you may wager up to {formatDollarValue(player.maxWager)}</Heading>
                         <Input
                             onChange={(e) => emitUpdateResponse(e.target.value)}
                             value={response} min={player.minWager} max={player.maxWager}

@@ -8,10 +8,11 @@ import { useState } from "react";
 
 interface PlayerIdleProps {
     player: Player;
+    setForceSignature: Function,
     promptStartGame?: boolean
 }
 
-export default function PlayerIdle({ player, promptStartGame }: PlayerIdleProps) {
+export default function PlayerIdle({ player, setForceSignature, promptStartGame }: PlayerIdleProps) {
     const [isLoading, setIsLoading] = useState(false);
 
     const emitStartGame = () => {
@@ -29,6 +30,9 @@ export default function PlayerIdle({ player, promptStartGame }: PlayerIdleProps)
     return (
         <Box className={"mobile-box"} padding={"1em"} marginLeft={"auto"} marginRight={"auto"}>
             <Heading fontSize={"3em"} fontFamily={"logo"}>jparty.io</Heading>
+
+            <Button onClick={() => setForceSignature(true)} size={"sm"} margin={"0.5em"}>edit signature</Button>
+            
             {promptStartGame && <Button onClick={emitStartGame} isLoading={isLoading} margin={"0.5em"} colorScheme={"blue"}>start game</Button>}
             
             <PlayerScoreboard />

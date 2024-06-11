@@ -1,16 +1,16 @@
 
-const GAME_GENERATION_TIMEOUT_DURATION_MS = 10000;
-
-import { getRandomCategorySchema } from "./trivia-db.js";
-import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
-import { formatText } from "../misc/text-utils.js";
-
 import {
     CLUE_DIFFICULTY_DISTRIBUTIONS, DEFAULT_CATEGORY_TYPE_DISTRIBUTION,
     getEnumSize, getRandomChoice, getRandomNum, getWeightedRandomNum,
     RATED_CLUE_BONUS_POSITION_DISTRIBUTION, RATED_CLUE_DIFFICULTY_ORDER, TriviaCategory, TriviaCategorySettings, TriviaCategoryType, 
     TriviaClueBonus, TriviaClue, TriviaClueDifficulty, TriviaCluePosition, TriviaClueSchema, TriviaGame, TriviaGameSettings, TriviaRoundSettings, TriviaRound,
 } from "jparty-shared";
+
+import { getRandomCategorySchema } from "./trivia-db.js";
+import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
+import { formatText } from "../misc/text-utils.js";
+
+const GAME_GENERATION_TIMEOUT_DURATION_MS = 10000;
 
 function generateTriviaClue(roundSettings: TriviaRoundSettings, clueSchema: TriviaClueSchema, clueIndex: number) {
     clueSchema.question = formatText(clueSchema.question);

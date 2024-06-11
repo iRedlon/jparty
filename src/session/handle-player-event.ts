@@ -1,17 +1,17 @@
 
 import {
-    emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, handleDisconnect, joinSession,
-    playSoundEffect, playVoiceLine, showAnnouncement, startTimeout, stopTimeout
-} from "./session-utils.js";
-import { io } from "../controller.js";
-import { formatText, validatePlayerName } from "../misc/text-utils.js";
-
-import {
-    DEFAULT_GAME_SETTINGS, HostServerSocket, PARTY_GAME_SETTINGS, PlayerResponseType, PlayerSocket, PlayerSocketCallback, ServerSocket, ServerSocketMessage,
-    SessionAnnouncement, SessionState, SessionTimeout, SocketID, SoundEffect, TriviaClueBonus, TriviaClueDecision, TriviaGameSettingsPreset, VoiceLineType
+    AudioType, HostServerSocket, NORMAL_GAME_SETTINGS, PARTY_GAME_SETTINGS, PlayerResponseType, PlayerSocket, PlayerSocketCallback, ServerSocket, ServerSocketMessage,
+    SessionAnnouncement, SessionState, SessionTimeout, SocketID, TriviaClueBonus, TriviaClueDecision, TriviaGameSettingsPreset, VoiceLineType
 } from "jparty-shared";
 import { Socket } from "socket.io";
+
+import {
+    emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, handleDisconnect, joinSession,
+    playAudio, playVoiceLine, showAnnouncement, startTimeout, stopTimeout
+} from "./session-utils.js";
+import { io } from "../controller.js";
 import { DebugLogType, debugLog, formatDebugLog } from "../misc/log.js";
+import { formatText, validatePlayerName } from "../misc/text-utils.js";
 
 function handleConnect(socket: Socket, sessionName: string, clientID: string, playerName: string, callback: PlayerSocketCallback[PlayerSocket.Connect]) {
     sessionName = sessionName.toLowerCase();
@@ -54,6 +54,16 @@ function handleLeaveSession(socket: Socket, sessionName: string) {
     emitStateUpdate(sessionName);
 }
 
+function handleUpdateSignature(socket: Socket, sessionName: string, imageBase64: string, canvasPath: any[]) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    session.updatePlayerSignature(socket.id, imageBase64, canvasPath);
+    emitStateUpdate(sessionName);
+}
+
 async function handleStartGame(socket: Socket, sessionName: string, callback: PlayerSocketCallback[PlayerSocket.StartGame]) {
     let session = getSession(sessionName);
     if (!session) {
@@ -61,7 +71,7 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
     }
 
     if (!session.triviaGame || (session.triviaGameSettingsPreset !== TriviaGameSettingsPreset.Custom)) {
-        let gameSettings = DEFAULT_GAME_SETTINGS;
+        let gameSettings = NORMAL_GAME_SETTINGS;
 
         if (session.triviaGameSettingsPreset === TriviaGameSettingsPreset.Party) {
             gameSettings = PARTY_GAME_SETTINGS;
@@ -79,6 +89,9 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
         emitTriviaRoundUpdate(sessionName);
     }
 
+    session.setPlayersIdle();
+    emitStateUpdate(sessionName);
+    
     session.promptClueSelection();
 
     showAnnouncement(sessionName, SessionAnnouncement.StartGame, () => {
@@ -104,13 +117,6 @@ function promptResponse(sessionName: string, responseType: PlayerResponseType, .
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateNumSubmittedResponders, 0, responderIDs.length);
 
     emitStateUpdate(sessionName);
-}
-
-function readClueSelection(sessionName: string) {
-    let session = getSession(sessionName);
-    if (!session) {
-        return;
-    }
 }
 
 function readClue(sessionName: string) {
@@ -205,6 +211,7 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
 
     session.selectClue(categoryIndex, clueIndex);
     io.in(sessionName).emit(ServerSocket.SelectClue, categoryIndex, clueIndex);
+    emitStateUpdate(sessionName);
 
     const handleSelectClueInternal = () => {
         let session = getSession(sessionName);
@@ -220,7 +227,7 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
                     // set the spotlight responder ID in advance, just in case their socket ID happens to change during the announcement
                     session.spotlightResponderID = socket.id;
 
-                    playSoundEffect(sessionName, SoundEffect.Applause);
+                    playAudio(sessionName, AudioType.Applause);
 
                     showAnnouncement(sessionName, SessionAnnouncement.ClueBonusWager, () => {
                         let session = getSession(sessionName);
@@ -264,7 +271,7 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
     const clue = session.getCurrentClue();
 
     // the clue selector has the slight advantage of knowing the category and clue value before everyone else... so we read it out to make sure everyone's on the same page
-    // if this isn't a tossup clue, then this info will be announced to the players some other way (i.e. with a "clue bonus" announcement)
+    // bonus clues are an exception to this rule, but the category and clue value info will be presented somehow else in those cases
     if (clue && !clue.bonus) {
         session.readClueSelection();
         playVoiceLine(sessionName, VoiceLineType.ReadClueSelection);
@@ -286,7 +293,7 @@ function finishBuzzWindow(sessionName: string) {
     stopTimeout(sessionName, SessionTimeout.BuzzWindow);
 
     if (session.getCurrentClue()?.isTossupClue()) {
-        playSoundEffect(sessionName, SoundEffect.BuzzWindowTimeout);
+        playAudio(sessionName, AudioType.BuzzWindowTimeout);
     }
 
     session.finishBuzzWindow();
@@ -297,7 +304,7 @@ function finishBuzzWindow(sessionName: string) {
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, displayCorrectAnswer);
     playVoiceLine(sessionName, VoiceLineType.DisplayCorrectAnswer);
 
-    startTimeout(sessionName, SessionTimeout.RevealClueDecision, () => finishRevealClueDecision(sessionName, displayCorrectAnswer));
+    startTimeout(sessionName, SessionTimeout.ReadingClueDecision, () => finishRevealClueDecision(sessionName, displayCorrectAnswer));
 }
 
 function handleBuzz(socket: Socket, sessionName: string) {
@@ -361,13 +368,13 @@ async function finishResponseWindow(sessionName: string) {
                 emitStateUpdate(sessionName);
 
                 // there's only one response window for an all play/wager, so we can safely announce the correct answer to begin with
-                // before finding the decisions
+                // before finding any of the decisions
                 if (!session.getCurrentClue()?.isTossupClue()) {
                     const displayCorrectAnswer = true;
                     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, displayCorrectAnswer);
                     playVoiceLine(sessionName, VoiceLineType.DisplayCorrectAnswer);
 
-                    startTimeout(sessionName, SessionTimeout.RevealClueDecision, () => recursiveRevealClueDecision(sessionName, true));
+                    startTimeout(sessionName, SessionTimeout.ReadingClueDecision, () => recursiveRevealClueDecision(sessionName, true));
                 }
                 else {
                     recursiveRevealClueDecision(sessionName);
@@ -390,7 +397,7 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
         return;
     }
 
-    stopTimeout(sessionName, SessionTimeout.RevealClueDecision);
+    stopTimeout(sessionName, SessionTimeout.ReadingClueDecision);
     
     // turn off the client timer while we wait for a decision. it's an async process, so we can't guarantee how long it will take
     io.in(sessionName).emit(ServerSocket.StopTimeout);
@@ -446,13 +453,13 @@ async function recursiveRevealClueDecision(sessionName: string, displayCorrectAn
         playVoiceLine(sessionName, VoiceLineType.RevealClueDecision);
 
         if ((decision === TriviaClueDecision.Correct) && (session.getCurrentClue()?.bonus === TriviaClueBonus.Wager)) {
-            playSoundEffect(sessionName, SoundEffect.Applause);
+            playAudio(sessionName, AudioType.Applause);
         }
     }
 
     debugLog(DebugLogType.ClueDecision, `got clue decision: ${decision}. display correct answer?: ${displayCorrectAnswer}`);
 
-    startTimeout(sessionName, SessionTimeout.RevealClueDecision, () => {
+    startTimeout(sessionName, SessionTimeout.ReadingClueDecision, () => {
         recursiveRevealClueDecision(sessionName, displayCorrectAnswer);
     });
 }
@@ -463,7 +470,7 @@ function finishRevealClueDecision(sessionName: string, displayCorrectAnswer: boo
         return;
     }
 
-    stopTimeout(sessionName, SessionTimeout.RevealClueDecision);
+    stopTimeout(sessionName, SessionTimeout.ReadingClueDecision);
 
     // if we displayed the correct answer for any reason, we need to move on to a new clue
     if (displayCorrectAnswer) {
@@ -477,7 +484,7 @@ function finishRevealClueDecision(sessionName: string, displayCorrectAnswer: boo
 
             if (session.state === SessionState.GameOver) {
                 announcement = SessionAnnouncement.GameOver;
-                playSoundEffect(sessionName, SoundEffect.LongApplause);
+                playAudio(sessionName, AudioType.LongApplause);
             }
 
             showAnnouncement(sessionName, announcement, () => {
@@ -515,7 +522,7 @@ function finishRevealClueDecision(sessionName: string, displayCorrectAnswer: boo
         }
     }
     else {
-        throw new Error(formatDebugLog(`Failed to finish revealing clue decision. tossup?: ${session.getCurrentClue()?.isTossupClue()}, display correct answer?: ${displayCorrectAnswer}`));
+        throw new Error(formatDebugLog(`failed to finish revealing clue decision. tossup?: ${session.getCurrentClue()?.isTossupClue()}, display correct answer?: ${displayCorrectAnswer}`));
     }
 
     emitStateUpdate(sessionName);
@@ -534,6 +541,7 @@ function handleVoteToReverseDecision(socket: Socket, sessionName: string, respon
 const handlers: Record<PlayerSocket, Function> = {
     [PlayerSocket.Connect]: handleConnect,
     [PlayerSocket.LeaveSession]: handleLeaveSession,
+    [PlayerSocket.UpdateSignature]: handleUpdateSignature,
     [PlayerSocket.StartGame]: handleStartGame,
     [PlayerSocket.SelectClue]: handleSelectClue,
     [PlayerSocket.Buzz]: handleBuzz,
@@ -544,7 +552,8 @@ const handlers: Record<PlayerSocket, Function> = {
 
 export default function handlePlayerEvent(socket: Socket, event: PlayerSocket, ...args: any[]) {
     try {
-        // handle any events that could occur before this client has joined a session
+        // handle any events that could occur before this player has joined a session
+        // (these handlers won't take sessionName as their second param like all the other ones do)
         if (event === PlayerSocket.Connect) {
             handlers[event](socket, ...args);
             return;

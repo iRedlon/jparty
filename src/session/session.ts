@@ -1,13 +1,14 @@
 
-import { getClueDecision } from "../api-requests/clue-decision.js";
-import { generateTriviaGame } from "../api-requests/generate-trivia-game.js";
-
 import {
     AttemptReconnectResult, getEnumSize, getRandomChoice, getSortedSessionPlayerIDs, getVoiceDurationMs, Host, Player, PlayerResponseType, PlayerState,
     SessionAnnouncement, SessionHosts, SessionPlayers, SessionState, SessionTimeout, SocketID,
     TriviaClue, TriviaClueBonus, TriviaClueDecision, TriviaClueDecisionInfo,
     TriviaGame, TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
 } from "jparty-shared";
+
+import { getClueDecision } from "../api-requests/clue-decision.js";
+import { generateTriviaGame } from "../api-requests/generate-trivia-game.js";
+import { formatClueResponse } from "../misc/text-utils.js";
 
 // store timeouts in their own container so we can cancel a timeout early and still trigger its callback
 export class TimeoutInfo {
@@ -31,6 +32,7 @@ export class TimeoutInfo {
 type SessionTimeoutInfo = Record<number, TimeoutInfo>;
 
 export class Session {
+    // keep this in memory so we can clear out sessions that have been idle for too long
     lastUpdatedTimeMs: number;
 
     // this game can be spectated by any number of hosts simultaneously, but only the creator of the session has certain privileges
@@ -75,7 +77,7 @@ export class Session {
     resetGame() {
         this.lastUpdatedTimeMs = Date.now();
         this.state = SessionState.Lobby;
-        this.triviaGameSettingsPreset = TriviaGameSettingsPreset.Default;
+        this.triviaGameSettingsPreset = TriviaGameSettingsPreset.Normal;
         this.triviaGame = undefined;
         this.resetPlayers();
         this.timeoutInfo = {};
@@ -149,6 +151,11 @@ export class Session {
             return AttemptReconnectResult.AlreadyConnected;
         }
 
+        if (oldHostID === newHostID) {
+            this.players[newHostID].connected = true;
+            return AttemptReconnectResult.AlreadyConnected;
+        }
+
         this.hosts[newHostID] = disconnectedHost;
         delete this.hosts[oldHostID];
         this.hosts[newHostID].connected = true;
@@ -179,7 +186,7 @@ export class Session {
             return;
         }
 
-        gameStarter.state = PlayerState.WaitingToStartGame;
+        gameStarter.state = PlayerState.PromptStartGame;
     }
 
     connectPlayer(playerID: SocketID, clientID: string, playerName: string) {
@@ -187,10 +194,20 @@ export class Session {
 
         // this player missed the start of the buzz window but should still be allowed to buzz in if they are eligible to do so
         if ((this.state === SessionState.ClueTossup) && !this.previousResponderIDs.includes(playerID)) {
-            this.players[playerID].state = PlayerState.WaitingToBuzz;
+            this.players[playerID].state = PlayerState.PromptBuzz;
         }
 
         this.promptGameStarter();
+    }
+
+    updatePlayerSignature(playerID: SocketID, imageBase64: string, canvasPath: any[]) {
+        let player = this.players[playerID];
+        if (!player) {
+            return;
+        }
+
+        player.signatureImageBase64 = imageBase64;
+        player.signatureCanvasPath = canvasPath;
     }
 
     disconnectPlayer(playerID: SocketID) {
@@ -200,7 +217,7 @@ export class Session {
         }
 
         // the session is waiting for a clue selection from this player so we need to pass that responsibility off to another player
-        if (!this.currentAnnouncement && (this.state === SessionState.ClueSelection) && (playerID === this.clueSelectorID)) {
+        if (!this.currentAnnouncement && (this.state === SessionState.PromptClueSelection) && (playerID === this.clueSelectorID)) {
             this.clueSelectorID = "";
             this.promptClueSelection();
         }
@@ -229,6 +246,11 @@ export class Session {
             return AttemptReconnectResult.AlreadyConnected;
         }
 
+        if (oldPlayerID === newPlayerID) {
+            this.players[newPlayerID].connected = true;
+            return AttemptReconnectResult.AlreadyConnected;
+        }
+
         this.players[newPlayerID] = disconnectedPlayer;
         delete this.players[oldPlayerID];
         this.players[newPlayerID].connected = true;
@@ -254,7 +276,7 @@ export class Session {
         }
 
         // only delete a player if the session is in a stable state, as a precaution to avoid mutating data that's actively in-use
-        if ((this.state === SessionState.Lobby) || (this.state === SessionState.ClueSelection) || (this.state === SessionState.GameOver)) {
+        if ((this.state === SessionState.Lobby) || (this.state === SessionState.PromptClueSelection) || (this.state === SessionState.GameOver)) {
             delete this.players[playerID];
             return;
         }
@@ -378,8 +400,11 @@ export class Session {
                     durationMs = this.triviaGame.settings.responseDurationSec * 1000;
                 }
                 break;
-            case SessionTimeout.RevealClueDecision:
+            case SessionTimeout.ReadingClueDecision:
                 {
+                    // "reading clue decision" doesn't need to use the voice duration system like "announcement" and "reading clue"
+                    // the reveal decision duration should always be longer than the voice line will take to say
+                    // if this changes somehow... todo
                     durationMs = this.triviaGame.settings.revealDecisionDurationSec * 1000;
                 }
                 break;
@@ -478,7 +503,7 @@ export class Session {
                 }
             case TriviaClueBonus.AllPlay:
                 {
-                    // all plays are intended to be casual, don't penalize incorrect answers
+                    // "all plays" are intended to be casual, don't penalize incorrect answers
                     if (decision === TriviaClueDecision.Incorrect) {
                         return 0;
                     }
@@ -539,7 +564,7 @@ export class Session {
     // clue selection is a stable state, so we want to make sure any unexpected behavior during the game resolves back here
     // and that all relevant session data is reset back to a clean slate for the next clue
     promptClueSelection() {
-        this.state = SessionState.ClueSelection;
+        this.state = SessionState.PromptClueSelection;
         this.setPlayersIdle();
         this.clearPlayerResponses();
         this.spotlightResponderID = "";
@@ -581,7 +606,7 @@ export class Session {
         }
 
         if (this.clueSelectorID && this.players[this.clueSelectorID]) {
-            this.players[this.clueSelectorID].state = PlayerState.SelectingClue;
+            this.players[this.clueSelectorID].state = PlayerState.PromptClueSelection;
         }
 
         this.currentResponderIDs = [];
@@ -598,6 +623,7 @@ export class Session {
         }
 
         currentRound.setClueCompleted(categoryIndex, clueIndex);
+        this.setPlayersIdle();
     }
 
     readClueSelection() {
@@ -621,7 +647,7 @@ export class Session {
                 continue;
             }
 
-            this.players[playerID].state = PlayerState.WaitingToBuzz;
+            this.players[playerID].state = PlayerState.PromptBuzz;
         }
     }
 
@@ -667,12 +693,12 @@ export class Session {
             switch (responseType) {
                 case PlayerResponseType.Clue:
                     {
-                        responder.state = PlayerState.RespondingToClue;
+                        responder.state = PlayerState.PromptClueResponse;
                     }
                     break;
                 case PlayerResponseType.Wager:
                     {
-                        responder.state = PlayerState.Wagering;
+                        responder.state = PlayerState.PromptWager;
                         this.updateWagerLimits(responderID);
                     }
                     break;
@@ -687,7 +713,6 @@ export class Session {
             }
         }
 
-        // if this clue has a spotlight responder, we should have exactly one responder ID
         if (this.getCurrentClue()?.isTossupClue() && (responderIDs.length === 1)) {
             this.spotlightResponderID = responderIDs[0];
         }
@@ -703,12 +728,12 @@ export class Session {
         }
 
         switch (responder.state) {
-            case PlayerState.RespondingToClue:
+            case PlayerState.PromptClueResponse:
                 {
-                    responder.responses[PlayerResponseType.Clue] = response;
+                    responder.responses[PlayerResponseType.Clue] = formatClueResponse(response);
                 }
                 break;
-            case PlayerState.Wagering:
+            case PlayerState.PromptWager:
                 {
                     let wager = parseInt(response);
 
