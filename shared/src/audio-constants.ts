@@ -37,7 +37,7 @@ export enum VoiceLineType {
     ReadClueSelection,
     ReadClue,
     RevealClueDecision,
-    showCorrectAnswer
+    ShowCorrectAnswer
 }
 
 // "voice line variables" are used to inject live game data into voice lines without needing to construct voice line strings during runtime

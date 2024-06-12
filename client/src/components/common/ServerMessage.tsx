@@ -40,7 +40,7 @@ export default function ServerMessage() {
     }
 
     return (
-        <Alert status={serverMessage.isError ? "error" : "success"} position={"fixed"} bottom={0} justifyContent={"center"} zIndex={Layer.Fixed}>
+        <Alert status={serverMessage.isError ? "error" : "success"} position={"fixed"} bottom={0} justifyContent={"center"} zIndex={Layer.ServerMessageAlert}>
             <AlertIcon />
             <AlertDescription>{serverMessage.message}</AlertDescription>
             <CloseButton onClick={hideServerMessage} position={"relative"} alignSelf={"flex-start"} right={-1} />

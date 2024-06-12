@@ -105,8 +105,8 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
 
     return (
         <SwitchTransition>
-            <CSSTransition key={responderInfoState} nodeRef={responderInfoRef} timeout={1000} classNames={"responder-info"}
-                appear mountOnEnter unmountOnExit>
+            <CSSTransition key={responderInfoState} nodeRef={responderInfoRef} timeout={500} classNames={"responder-info"}
+                mountOnEnter unmountOnExit>
 
                 <Box ref={responderInfoRef}>
                     {responderInfoBox}

@@ -8,6 +8,7 @@ import { useDoubleTap } from "use-double-tap";
 import { LayoutContext } from "../common/Layout";
 import { formatDollarValue } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
+import { LocalStorageKey } from "../../misc/ui-constants";
 
 import "../../style/components/PlayerClueSelection.css";
 
@@ -17,12 +18,12 @@ export default function PlayerClueSelection() {
 
     const updateCategoryIndex = (categoryIndex: number) => {
         setCategoryIndex(categoryIndex);
-        localStorage.setItem("categoryIndex", `${categoryIndex}`);
+        localStorage.setItem(LocalStorageKey.CategoryIndex, `${categoryIndex}`);
     }
 
     useEffect(() => {
         // if possible, set the default category index to be whatever was the last category this player selected
-        const prevCategoryIndexString = localStorage.getItem("categoryIndex");
+        const prevCategoryIndexString = localStorage[LocalStorageKey.CategoryIndex]
         if (prevCategoryIndexString) {
             const prevCategoryIndex = parseInt(prevCategoryIndexString);
 

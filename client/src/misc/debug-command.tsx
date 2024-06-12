@@ -113,13 +113,7 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
             break;
         case DebugCommand.ShowAnnouncement:
             {
-                mockSocket.dispatchEvent(new CustomEvent(HostServerSocket.ShowAnnouncement, {
-                    detail: {
-                        params: [SessionAnnouncement.StartGame]
-                    }
-                }));
-
-                emitMockSocketEvent(HostServerSocket.ShowAnnouncement, SessionAnnouncement.StartGame);
+                emitMockSocketEvent(HostServerSocket.ShowAnnouncement, SessionAnnouncement.ClueBonusAllWager);
             }
             break;
         case DebugCommand.HideAnnouncement:

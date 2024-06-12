@@ -8,6 +8,7 @@ import { LayoutContext } from "../common/Layout";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
 import { getClientID } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
+import { LocalStorageKey } from "../../misc/ui-constants";
 
 export default function PlayerLobby() {
     const context = useContext(LayoutContext);
@@ -23,12 +24,17 @@ export default function PlayerLobby() {
             if (resetPlayerName) {
                 setPlayerName("");
             }
+
+            // connection was successful!
+            if (!resetSessionName && !resetPlayerName) {
+                localStorage.removeItem(LocalStorageKey.CategoryIndex);
+            }
         });
     }
 
     const switchToHost = () => {
         context.setIsPlayer(false);
-        localStorage.removeItem("isPlayer");
+        localStorage.removeItem(LocalStorageKey.IsPlayer);
         emitLeaveSession(true);
         socket.emit(HostSocket.Connect, getClientID());
     }

@@ -1,5 +1,6 @@
 
 import Particles, { initParticlesEngine } from "@tsparticles/react";
+import { loadTextShape } from "@tsparticles/shape-text";
 import { loadSlim } from "@tsparticles/slim";
 import { useEffect } from "react";
 import { isMobile } from "react-device-detect";
@@ -10,6 +11,7 @@ export default function Background() {
     useEffect(() => {
         initParticlesEngine(async (engine) => {
             await loadSlim(engine);
+            await loadTextShape(engine);
         });
     }, []);
 

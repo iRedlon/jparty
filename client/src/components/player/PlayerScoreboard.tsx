@@ -1,7 +1,7 @@
 
 import { Box, Heading, Stack, Text } from "@chakra-ui/react";
-import { getSortedSessionPlayerIDs, SessionPlayers, SocketID, TriviaClueDecision } from "jparty-shared";
-import { useContext, useEffect, useRef } from "react";
+import { getSortedSessionPlayerIDs, SocketID, TriviaClueDecision } from "jparty-shared";
+import { useContext } from "react";
 import { PiCrownSimpleFill } from "react-icons/pi";
 
 import ClueDecisionInfo from "./ClueDecisionInfo";
@@ -13,15 +13,8 @@ import "../../style/components/PlayerScoreboard.css";
 
 export default function PlayerScoreboard() {
     const context = useContext(LayoutContext);
-    const prevSessionPlayersRef = useRef<SessionPlayers>({});
-
-    useEffect(() => {
-        // store the previous state of sessionPlayers so we can compare it with the updated data and animate the position changes
-        prevSessionPlayersRef.current = context.sessionPlayers;
-    }, [context.sessionPlayers]);
 
     const sortedSessionPlayerIDs = getSortedSessionPlayerIDs(context.sessionPlayers);
-    const sortedPrevSessionPlayerIDs = getSortedSessionPlayerIDs(prevSessionPlayersRef.current);
     const numPlayers = sortedSessionPlayerIDs.length;
 
     const triviaCategory = context.triviaRound?.categories[context.categoryIndex];
@@ -48,35 +41,31 @@ export default function PlayerScoreboard() {
                 {sortedSessionPlayerIDs.map((playerID: SocketID, index: number) => {
                     const player = context.sessionPlayers[playerID];
 
-                    const prevIndex = sortedPrevSessionPlayerIDs.indexOf(playerID);
-                    let indexChange = 0;
-
-                    if (prevIndex >= 0) {
-                        indexChange = prevIndex - index;
-                    }
-
                     const height = 3.5;
                     const heightEm = `${height}em`;
+                    const heightChange = `${player.positionChange * height}em`;
 
-                    const heightChange = `${indexChange * height}em`;
+                    // as the player scoreboard boxes animate, players with a higher score are rendered above those with a lower score
                     const zIndex = Layer.Bottom + (numPlayers - index);
 
                     const isViewingPlayer = player.clientID === getClientID();
 
                     return (
-                        <Box key={`${player.clientID}-${indexChange}`}
+                        <Box key={`${player.clientID}-${player.positionChange}`}
                             className={"player-scoreboard-box"} style={{ "--height-change": heightChange } as React.CSSProperties}
                             height={heightEm} zIndex={zIndex}>
 
                             <Stack direction={"row"} justifyContent={"center"}>
-                                <Box className={"child-box"} height={heightEm} width={heightEm}>
+                                <Box className={"child-box"} height={heightEm} minHeight={heightEm} width={heightEm} minWidth={heightEm}>
                                     <img src={player.signatureImageBase64} />
                                 </Box>
 
-                                <Stack className={"child-box"} direction={"column"} gap={0} height={heightEm} width={"8em"} paddingLeft={"0.25em"} overflow={"hidden"}>
+                                <Stack className={"child-box"} direction={"column"} gap={0} height={heightEm} width={"10em"} paddingLeft={"0.25em"} overflow={"hidden"}>
                                     <Box textAlign={"left"} whiteSpace={"nowrap"}>
-                                        <Stack direction={"row"} gap={"0.2em"} alignItems={"center"}>
-                                            {index === 0 ? <PiCrownSimpleFill /> : <></>}
+                                        <Stack direction={"row"} gap={"0.2em"} fontSize={"0.8em"}>
+                                            <Box position={"relative"} top={1}>
+                                                {(index === 0 && player.score > 0) && <PiCrownSimpleFill />}
+                                            </Box>
                                             <b>{isViewingPlayer ? `you (${player.name})` : player.name}</b>
                                         </Stack>
                                     </Box>

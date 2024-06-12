@@ -7,7 +7,7 @@ import { Socket } from "socket.io";
 
 import {
     emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, handleDisconnect, joinSession,
-    playAudio, playVoiceLine, showAnnouncement, startTimeout, stopTimeout
+    playAudio, playVoiceLine, showAnnouncement, startPositionChangeAnimation, startTimeout, stopTimeout
 } from "./session-utils.js";
 import { io } from "../controller.js";
 import { DebugLogType, debugLog, formatDebugLog } from "../misc/log.js";
@@ -166,18 +166,18 @@ function displayTossupClue(sessionName: string) {
 export function attemptForceSelectFinalClue(sessionName: string) {
     let session = getSession(sessionName);
     if (!session) {
-        return;
+        return false;
     }
 
     // only force select a clue if it's the last one remaining in the current round
     const currentRound = session.getCurrentRound();
     if (!currentRound) {
-        return;
+        return false;
     }
 
     const finalCluePosition = currentRound.getFinalCluePosition();
     if (!finalCluePosition || !finalCluePosition.validate()) {
-        return;
+        return false;
     }
 
     // this is "fake" in the sense that we're invoking the handler without being prompted to do so by a genuine client socket message
@@ -201,6 +201,8 @@ export function attemptForceSelectFinalClue(sessionName: string) {
     else {
         showAnnouncement(sessionName, SessionAnnouncement.FinalClue, fakeHandleSelectClue);
     }
+
+    return true;
 }
 
 function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: number, clueIndex: number) {
@@ -302,7 +304,7 @@ function finishBuzzWindow(sessionName: string) {
     // we didn't actually get a response (because nobody buzzed in). we're just hooking into the decision reveal system so we can display the correct answer
     const showCorrectAnswer = true;
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
-    playVoiceLine(sessionName, VoiceLineType.showCorrectAnswer);
+    playVoiceLine(sessionName, VoiceLineType.ShowCorrectAnswer);
 
     startTimeout(sessionName, SessionTimeout.ReadingClueDecision, () => finishRevealClueDecision(sessionName, showCorrectAnswer));
 }
@@ -359,6 +361,9 @@ async function finishResponseWindow(sessionName: string) {
 
     stopTimeout(sessionName, SessionTimeout.ResponseWindow);
 
+    // it's possible the response window ended early (because all of the players finished submitting responses, for example)
+    io.in(sessionName).emit(ServerSocket.StopTimeout);
+
     session.resetPlayerSubmissions();
 
     switch (session.state) {
@@ -372,7 +377,7 @@ async function finishResponseWindow(sessionName: string) {
                 if (session.getCurrentClue()?.isAllPlayClue()) {
                     const showCorrectAnswer = true;
                     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
-                    playVoiceLine(sessionName, VoiceLineType.showCorrectAnswer);
+                    playVoiceLine(sessionName, VoiceLineType.ShowCorrectAnswer);
 
                     startTimeout(sessionName, SessionTimeout.ReadingClueDecision, () => recursiveRevealClueDecision(sessionName, true));
                 }
@@ -443,11 +448,12 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
 
     session.displayingCorrectAnswer = showCorrectAnswer;
 
-    emitStateUpdate(sessionName);
+    startPositionChangeAnimation(sessionName);
+
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
 
     if (!session.getCurrentClue()?.isAllPlayClue() && noEligibleRespondersRemaining && decision === TriviaClueDecision.Incorrect) {
-        playVoiceLine(sessionName, VoiceLineType.showCorrectAnswer);
+        playVoiceLine(sessionName, VoiceLineType.ShowCorrectAnswer);
     }
     else {
         playVoiceLine(sessionName, VoiceLineType.RevealClueDecision);
@@ -475,7 +481,6 @@ function finishRevealClueDecision(sessionName: string, showCorrectAnswer: boolea
     // if we displayed the correct answer for any reason, we need to move on to a new clue
     if (showCorrectAnswer) {
         session.promptClueSelection();
-        playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
 
         if (session.getCurrentRound()?.completed) {
             session.advanceRound();
@@ -488,12 +493,19 @@ function finishRevealClueDecision(sessionName: string, showCorrectAnswer: boolea
             }
 
             showAnnouncement(sessionName, announcement, () => {
-                attemptForceSelectFinalClue(sessionName);
+                const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
+                if (!didForceSelectFinalClue) {
+                    playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
+                }
+
                 emitStateUpdate(sessionName);
                 emitTriviaRoundUpdate(sessionName);
             });
 
             return;
+        }
+        else {
+            playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
         }
 
         attemptForceSelectFinalClue(sessionName);
@@ -534,7 +546,11 @@ function handleVoteToReverseDecision(socket: Socket, sessionName: string, respon
         return;
     }
 
-    session.voteToReverseDecision(socket.id, responderID);
+    const didReverseDecision = session.voteToReverseDecision(socket.id, responderID);
+    if (didReverseDecision) {
+        startPositionChangeAnimation(sessionName);
+    }
+
     emitStateUpdate(sessionName);
 }
 

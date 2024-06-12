@@ -9,14 +9,15 @@ import { useContext, useState } from "react";
 import { LayoutContext } from "./Layout";
 import { getVolume, updateVolume } from "../../misc/audio";
 import { socket } from "../../misc/socket";
+import { LocalStorageKey } from "../../misc/ui-constants";
 
 // volume needs to be clamped between 0 and 1 when it's actually used, but as a UI value: it needs to be on the scale of 0 to 100
 const VOLUME_STATE_MULTIPLIER = 100;
 
 export function emitLeaveSession(isPlayer: boolean) {
-    if (localStorage.sessionName) {
+    if (localStorage[LocalStorageKey.SessionName]) {
         socket.emit(isPlayer ? PlayerSocket.LeaveSession : HostSocket.LeaveSession);
-        localStorage.removeItem("sessionName");
+        localStorage.removeItem(LocalStorageKey.SessionName);
     }
 
     location.reload();

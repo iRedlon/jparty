@@ -321,18 +321,48 @@ export class Session {
         }
     }
 
+    getPlayerPosition(playerID: SocketID) {
+        const sortedPlayerIDs = getSortedSessionPlayerIDs(this.players);
+        return sortedPlayerIDs.indexOf(playerID);
+    }
+
     updatePlayerScore(playerID: SocketID, value: number, decision?: TriviaClueDecision, modifier: number = 1) {
         let player = this.players[playerID];
         if (!player) {
             return;
         }
 
+        const prevSortedPlayerIDs = getSortedSessionPlayerIDs(this.players);
+
         const decisionModifier = (decision === TriviaClueDecision.Incorrect) ? -1 : 1;
         player.score += (value * modifier * decisionModifier);
+
+        this.updatePlayerPositionChanges(prevSortedPlayerIDs);
 
         // if this player happens to be wagering right now, their current wager limits and wager response should be udpated with their updated score
         this.updateWagerLimits(playerID);
         this.updateResponse(playerID, player.responses[PlayerResponseType.Wager] + "");
+    }
+
+    updatePlayerPositionChanges(prevSortedPlayerIDs: string[]) {
+        const newSortedPlayerIDs = getSortedSessionPlayerIDs(this.players);
+
+        for (const playerID of newSortedPlayerIDs) {
+            let player = this.players[playerID];
+            if (!player) {
+                continue;
+            }
+
+            const prevPosition = prevSortedPlayerIDs.indexOf(playerID);
+            const newPosition = newSortedPlayerIDs.indexOf(playerID);
+
+            if (prevPosition >= 0) {
+                player.positionChange = prevPosition - newPosition;
+            }
+            else {
+                player.positionChange = 0;
+            }
+        }
     }
 
     updateWagerLimits(responderID: SocketID) {
@@ -663,6 +693,7 @@ export class Session {
     finishClueResponseWindow() {
         this.state = SessionState.WaitingForClueDecision;
         this.setPlayersIdle();
+        this.spotlightResponderID = "";
     }
 
     // player response is a generic system. it can prompt any number of players for any of the different response types (i.e. clue, wager)
@@ -896,11 +927,11 @@ export class Session {
 
         const newDecision = (responder.clueDecisionInfo.decision === TriviaClueDecision.Correct) ? TriviaClueDecision.Incorrect : TriviaClueDecision.Correct;
 
-        responder.clueDecisionInfo = new TriviaClueDecisionInfo(responder.clueDecisionInfo.categoryID, 
-                                                                responder.clueDecisionInfo.categoryName, 
-                                                                responder.clueDecisionInfo.clue, 
-                                                                responder.clueDecisionInfo.response, 
-                                                                newDecision, responder.clueDecisionInfo.clueValue, true);
+        responder.clueDecisionInfo = new TriviaClueDecisionInfo(responder.clueDecisionInfo.categoryID,
+            responder.clueDecisionInfo.categoryName,
+            responder.clueDecisionInfo.clue,
+            responder.clueDecisionInfo.response,
+            newDecision, responder.clueDecisionInfo.clueValue, true);
 
         let clueValue = responder.clueDecisionInfo.clueValue;
 

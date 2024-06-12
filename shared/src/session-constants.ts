@@ -70,6 +70,7 @@ export class Player {
     connected: boolean;
     state: PlayerState;
     score: number;
+    positionChange: number;
     minWager: number;
     maxWager: number;
     responses: PlayerResponses;
@@ -82,6 +83,8 @@ export class Player {
     constructor(clientID: string, name: string) {
         this.clientID = clientID;
         this.name = name;
+        this.signatureImageBase64 = "";
+        this.signatureCanvasPath = [];
         this.reset();
     }
 
@@ -93,11 +96,10 @@ export class Player {
     }
 
     reset() {
-        this.signatureImageBase64 = "";
-        this.signatureCanvasPath = [];
         this.connected = true;
         this.setIdle();
         this.score = 0;
+        this.positionChange = 0;
         this.minWager = 0;
         this.maxWager = 0;
         this.clearResponses();

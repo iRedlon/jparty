@@ -66,6 +66,16 @@ export default function HostClue({ triviaCategory, triviaClue, showCorrectAnswer
         }
     }
 
+    if (triviaClue.isAllPlayClue()) {
+        switch (context.sessionState) {
+            case SessionState.ClueResponse:
+            case SessionState.WagerResponse:
+                {
+                    showSpotlightResponder = true;
+                }
+        }
+    }
+
     // only show the correct answer if either: 1) nobody responded or 2) someone did respond and we're also showing their decision
     showCorrectAnswer = showCorrectAnswer && (!spotlightResponder || showClueDecision);
 
@@ -76,7 +86,7 @@ export default function HostClue({ triviaCategory, triviaClue, showCorrectAnswer
             <Box margin={"0.25em"} />
 
             <Box height={"50vh"} width={"50vw"} marginLeft={"auto"} marginRight={"auto"}>
-                <CSSTransition nodeRef={questionBoxRef} in={showQuestion} timeout={1000} classNames={"question-box-anim"}
+                <CSSTransition nodeRef={questionBoxRef} in={showQuestion} timeout={1000} classNames={"question-box"}
                     appear mountOnEnter unmountOnExit>
 
                     <Box ref={questionBoxRef} id={"question-box"} className={"box"}>
@@ -84,9 +94,7 @@ export default function HostClue({ triviaCategory, triviaClue, showCorrectAnswer
                             {triviaClue.question}
                         </Text>
 
-                        <CSSTransition nodeRef={correctAnswerRef} in={showCorrectAnswer} timeout={500} classNames={"correct-answer-anim"}
-                            appear mountOnEnter unmountOnExit>
-
+                        <CSSTransition nodeRef={correctAnswerRef} in={showCorrectAnswer} timeout={500} classNames={"correct-answer"} appear mountOnEnter>
                             <Box ref={correctAnswerRef} id={"correct-answer"}>
                                 <Heading size={"lg"} fontFamily={"clue"}>
                                     <i>"{triviaClue.answer}"</i>
@@ -100,7 +108,7 @@ export default function HostClue({ triviaCategory, triviaClue, showCorrectAnswer
             <Box margin={"0.25em"} />
 
             <Box height={"7em"}>
-                <CSSTransition nodeRef={responderInfoRef} in={showSpotlightResponder} timeout={1000} classNames={"responder-info-anim"}
+                <CSSTransition nodeRef={responderInfoRef} in={showSpotlightResponder} timeout={500} classNames={"responder-info-component"}
                     appear mountOnEnter unmountOnExit>
 
                     <Box ref={responderInfoRef}>

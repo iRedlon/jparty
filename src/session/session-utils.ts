@@ -204,6 +204,25 @@ function attemptReconnectInternal(socket: Socket, sessionName: string, clientID:
     return AttemptReconnectResult.InvalidClientID;
 }
 
+export function startPositionChangeAnimation(sessionName: string) {
+    // for each player, a CSS variable based on that player's positionChange property is set to define their animation distance
+    // after the animation is complete, we need to reset that positionChange property so the animation doesn't kick off everytime the scoreboard renders
+
+    emitStateUpdate(sessionName);
+
+    // in CSS this animation takes 1 second. we give it a generous amount of padding to account for network latency/rendering time/etc.
+    const POSITION_CHANGE_ANIMATION_DURATION_MS = 2000;
+    setTimeout(() => {
+        let session = getSession(sessionName);
+        if (!session) {
+            return;
+        }
+
+        session.updatePlayerPositionChanges([]);
+        emitStateUpdate(sessionName);
+    }, POSITION_CHANGE_ANIMATION_DURATION_MS);
+}
+
 export function startTimeout(sessionName: string, timeout: SessionTimeout, callback: Function) {
     let session = getSession(sessionName);
     if (!session) {
@@ -358,7 +377,7 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                 }
             }
             break;
-        case VoiceLineType.showCorrectAnswer:
+        case VoiceLineType.ShowCorrectAnswer:
             {
                 voiceLine = getRandomChoice(DISPLAY_CORRECT_ANSWER_VOICE_LINES);
             }

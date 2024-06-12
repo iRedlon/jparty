@@ -78,6 +78,7 @@ export default function HostLayout() {
         // switch to game music once the game starts
         if (context.sessionState > SessionState.Lobby) {
             playAudio(AudioType.GameMusic);
+            setIsMuted(false);
         }
 
         if (queuedToHideAnnouncement) {
@@ -185,7 +186,7 @@ export default function HostLayout() {
     const [HostComponent, componentState] = getHostComponent();
 
     return (
-        <Box onClick={() => toggleMute(false)}>
+        <Box onClick={() => toggleMute(false)} overflow={"hidden"}>
             <Box id={"mute-icon-box"}>
                 {isMuted && (<GoMute size={"4em"} color={"white"} />)}
             </Box>

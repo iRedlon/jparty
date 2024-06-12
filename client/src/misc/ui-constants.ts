@@ -1,6 +1,14 @@
 
 import { FeedbackType, SessionAnnouncement, TriviaClueBonus, TriviaRoundType } from "jparty-shared";
 
+// all of these are stored in the window's localStorage object for this browser session
+export enum LocalStorageKey {
+    ClientID = "clientID",
+    IsPlayer = "isPlayer",
+    SessionName = "sessionName",
+    CategoryIndex = "categoryIndex", // this was the last category index selected by this player
+}
+
 export const BACKGROUND_COLOR = "#0d47a1";
 export const BACKGROUND_ACCENT_COLOR = "#00008b";
 
@@ -9,7 +17,8 @@ export enum Layer {
     Bottom = "9",
     Middle = "99",
     Top = "999",
-    Fixed = "9999"
+    Fixed = "9999",
+    ServerMessageAlert = "99999"
 }
 
 export const TRIVIA_ROUND_TYPE_DISPLAY_NAMES: Record<TriviaRoundType, string> = {

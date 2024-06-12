@@ -33,15 +33,15 @@
 
 /* question box anims */
 
-.question-box-anim-appear,
-.question-box-anim-enter {
+.question-box-appear,
+.question-box-enter {
     animation-name: slide-from-right;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.question-box-anim-exit,
+.question-box-exit,
 .session-state-exit #question-box {
     animation-name: slide-from-right;
     animation-duration: 1s;
@@ -50,33 +50,27 @@
     animation-fill-mode: both;
 }
 
-.correct-answer-anim-appear,
-.correct-answer-anim-enter {
+.correct-answer-appear,
+.correct-answer-enter {
     animation-name: fade-in;
     animation-duration: 0.5s;
-    animation-timing-function: ease-in-out;
-}
-
-.correct-answer-anim-exit {
-    animation-name: fade-in;
-    animation-duration: 0.5s;
-    animation-direction: reverse;
-    animation-timing-function: ease-in-out;
-}
-
-/* responder info anims */
-
-.responder-info-anim-appear,
-.responder-info-anim-enter {
-    animation-name: slide-from-bottom;
-    animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.responder-info-anim-exit {
+/* responder info component anims */
+
+.responder-info-component-appear,
+.responder-info-component-enter {
     animation-name: slide-from-bottom;
-    animation-duration: 1s;
+    animation-duration: 0.5s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.responder-info-component-exit {
+    animation-name: slide-from-bottom;
+    animation-duration: 0.5s;
     animation-timing-function: ease-in-out;
     animation-direction: reverse;
     animation-fill-mode: both;

@@ -1,7 +1,7 @@
 
 import {
     AttemptReconnectResult, ClientSocket, cloneSessionPlayers, HostSocket,
-    ReservedEvent, ServerSocket, SessionPlayers, SessionState, SocketID, TriviaRound, VoiceType
+    ReservedEvent, ServerSocket, SessionPlayers, SessionState, SocketID, TriviaRound
 } from "jparty-shared";
 import { createContext, useEffect, useState } from "react";
 import { isMobile } from "react-device-detect";
@@ -11,6 +11,7 @@ import PlayerLayout from "../player/PlayerLayout";
 import { getClientID } from "../../misc/client-utils";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
+import { LocalStorageKey } from "../../misc/ui-constants";
 
 // shared state accessible by any client
 interface LayoutContextData {
@@ -32,7 +33,7 @@ export const LayoutContext = createContext<LayoutContextData>({} as any);
 export default function Layout() {
     const [debugMode, setDebugMode] = useState(process.env.NODE_ENV === "development");
     const [isSpectator, setIsSpectator] = useState(false);
-    const [isPlayer, setIsPlayer] = useState(isMobile || localStorage.isPlayer);
+    const [isPlayer, setIsPlayer] = useState(isMobile || localStorage[LocalStorageKey.IsPlayer]);
     const [sessionName, setSessionName] = useState("");
     const [sessionState, setSessionState] = useState(SessionState.Lobby);
     const [sessionPlayers, setSessionPlayers] = useState<SessionPlayers>({});
@@ -101,16 +102,16 @@ export default function Layout() {
 
     const handleConnect = () => {
         if (isPlayer) {
-            localStorage.setItem("isPlayer", "true");
+            localStorage.setItem(LocalStorageKey.IsPlayer, "true");
         }
 
-        if (localStorage.sessionName) {
-            socket.emit(ClientSocket.AttemptReconnect, localStorage.sessionName, getClientID(), (result: AttemptReconnectResult) => {
+        if (localStorage[LocalStorageKey.SessionName]) {
+            socket.emit(ClientSocket.AttemptReconnect, localStorage[LocalStorageKey.SessionName], getClientID(), (result: AttemptReconnectResult) => {
                 switch (result) {
                     case AttemptReconnectResult.StaleSession:
                     case AttemptReconnectResult.InvalidClientID:
                         {
-                            localStorage.removeItem("sessionName");
+                            localStorage.removeItem(LocalStorageKey.SessionName);
                             location.reload();
                         }
                 }
@@ -139,7 +140,7 @@ export default function Layout() {
 
     const handleUpdateSessionName = (sessionName: string) => {
         setSessionName(sessionName);
-        localStorage.setItem("sessionName", sessionName);
+        localStorage.setItem(LocalStorageKey.SessionName, sessionName);
     }
 
     const handleUpdateSessionState = (sessionState: SessionState) => {

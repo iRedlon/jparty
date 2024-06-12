@@ -269,7 +269,7 @@ export const PARTY_ROUND_SETTINGS = [PARTY_SINGLE_ROUND_SETTINGS, PARTY_DOUBLE_R
 export const PARTY_GAME_SETTINGS = new TriviaGameSettings(2000, TriviaGameDifficulty.Easy, 5, 12, 4, PARTY_ROUND_SETTINGS);
 
 // test game settings (used as a scratchpad for testing, only available in debug mode)
-export const TEST_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 1, 1, 200,
+export const TEST_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 1, 2, 200,
     { [TriviaClueBonus.AllPlay]: 1 });
 export const TEST_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 2, 1, 400,
     { [TriviaClueBonus.Wager]: 2 });

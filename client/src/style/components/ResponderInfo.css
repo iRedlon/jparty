@@ -38,17 +38,16 @@
 
 /* responder info anims */
 
-.responder-info-appear,
 .responder-info-enter {
     animation-name: slide-from-bottom;
-    animation-duration: 1s;
+    animation-duration: 0.5s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
 .responder-info-exit {
     animation-name: slide-from-bottom;
-    animation-duration: 1s;
+    animation-duration: 0.5s;
     animation-timing-function: ease-in-out;
     animation-direction: reverse;
     animation-fill-mode: both;

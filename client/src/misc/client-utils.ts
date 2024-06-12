@@ -1,3 +1,4 @@
+import { LocalStorageKey } from "./ui-constants";
 
 export function enableFullscreen() {
     const element = document.documentElement;
@@ -14,9 +15,9 @@ export function formatDollarValue(value: number) {
 }
 
 export function getClientID() {
-    if (!localStorage.clientID) {
-        localStorage.setItem("clientID", Math.random().toString());
+    if (!localStorage[LocalStorageKey.ClientID]) {
+        localStorage.setItem(LocalStorageKey.ClientID, Math.random().toString());
     }
 
-    return localStorage.clientID;
+    return localStorage[LocalStorageKey.ClientID];
 }

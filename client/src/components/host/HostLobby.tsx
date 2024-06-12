@@ -7,6 +7,7 @@ import { LayoutContext } from "../common/Layout";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
 import { getClientID } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
+import { LocalStorageKey } from "../../misc/ui-constants";
 
 import "../../style/components/HostLobby.css";
 
@@ -58,7 +59,7 @@ export default function HostLobby() {
 
     const switchToPlayer = () => {
         context.setIsPlayer(true);
-        localStorage.setItem("isPlayer", "true");
+        localStorage.setItem(LocalStorageKey.IsPlayer, "true");
         emitLeaveSession(false);
     }
 
