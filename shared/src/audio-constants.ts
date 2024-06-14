@@ -11,6 +11,7 @@ export function getVoiceDurationMs(text: string) {
 }
 
 export enum VolumeType {
+    Master = "master_volume",
     Music = "music_volume",
     Voice = "voice_volume",
     SoundEffects = "sound_effects_volume"
@@ -49,19 +50,21 @@ export enum VoiceLineVariable {
     ClueAnswer = "{clueAnswer}",
     ClueSelectorName = "{clueSelectorName}",
     SpotlightResponderName = "{spotlightResponderName}",
-    LeaderName = "{leaderName}"
+    LeaderName = "{leaderName}",
+    LeaderScore = "{leaderScore}"
 }
 
 export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, string[]> = {
     [SessionAnnouncement.StartGame]: [
         `Welcome to j-party! Start us off ${VoiceLineVariable.ClueSelectorName}.`,
         `Welcome to j-party! Get us started ${VoiceLineVariable.ClueSelectorName}.`,
-        `The game is starting! ${VoiceLineVariable.ClueSelectorName} will start the round off.`
+        `The game is starting! ${VoiceLineVariable.ClueSelectorName} will start the round off.`,
+        `Let's get started! Select a clue ${VoiceLineVariable.ClueSelectorName}.`
     ],
     [SessionAnnouncement.ClueBonusWager]: [
-        `That's a bonus! ${VoiceLineVariable.ClueSelectorName} gets to wager!`, 
-        `${VoiceLineVariable.ClueSelectorName} found a wager bonus!`,
-        `Get ready to make a wager ${VoiceLineVariable.ClueSelectorName}.`
+        `That's a bonus! ${VoiceLineVariable.ClueSelectorName} gets to wager on: "${VoiceLineVariable.CategoryName}"!`, 
+        `${VoiceLineVariable.ClueSelectorName} found a wager bonus in: "${VoiceLineVariable.CategoryName}"!`,
+        `Get ready to make a wager on: "${VoiceLineVariable.CategoryName}". Good luck ${VoiceLineVariable.ClueSelectorName}.`
     ],
     [SessionAnnouncement.ClueBonusAllWager]: [
         `Everyone gets to wager. The category is: "${VoiceLineVariable.CategoryName}."`, 
@@ -69,30 +72,32 @@ export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, strin
         `This is an all wager. The category is: ${VoiceLineVariable.CategoryName}.`
     ],
     [SessionAnnouncement.ClueBonusAllPlay]: [
-        "That's a bonus! Everyone gets to respond.", 
-        "You found an all play! Everyone gets to respond to this clue.",
-        "This is a bonus clue... all play! Everyone gets to try this one."
+        `This is a bonus! Everyone gets to respond in the category: "${VoiceLineVariable.CategoryName}.`,
+        `You found an all play for: "${VoiceLineVariable.CategoryName}"! Everyone can respond.`,
+        `That's an all play! Everyone get ready to respond in: "${VoiceLineVariable.CategoryName}"`
     ],
     [SessionAnnouncement.FinalClue]: [
         "This is the final clue for this round!",
         "This round is almost over. One more clue to go!",
-        "Here comes the final clue in the round."
+        "Here comes the final clue in the round.",
+        "One clue to go."
     ],
     [SessionAnnouncement.StartRound]: [
-        "Here comes the next round!", 
-        "Time for the next round!", 
-        `Let's start round ${VoiceLineVariable.RoundNumber}`,
-        `Round ${VoiceLineVariable.RoundNumber} is coming up`
+        `${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}. Good luck in the next round. Start us off ${VoiceLineVariable.ClueSelectorName}`, 
+        // `Good round everyone. ${VoiceLineVariable.LeaderName} has the lead. Let's move on to round ${VoiceLineVariable.RoundNumber}.`, 
+        // `Round ${VoiceLineVariable.RoundNumber} is coming up. Let's find out if anyone can take the lead from ${VoiceLineVariable.LeaderName}`,
+        // `Well played everyone. ${VoiceLineVariable.RoundNumber} is next. Good luck. Get us started ${VoiceLineVariable.ClueSelectorName}`
     ],
     [SessionAnnouncement.StartFinalRound]: [
-        "This is the final round!",
-        "One more round to go!",
-        "Here comes the last round for this game."
+        // `This is the final round! ${VoiceLineVariable.LeaderName} is the one to beat.`,
+        // `Here comes the final round! This is your last chance to overtake ${VoiceLineVariable.LeaderName}.`,
+        `This is the last round! ${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}.`
     ],
     [SessionAnnouncement.GameOver]: [
         `Congratulations ${VoiceLineVariable.LeaderName}! You're a j-party champion. Thanks for playing!`,
         `Well played ${VoiceLineVariable.LeaderName}! You won! Thanks for playing!`,
-        `${VoiceLineVariable.LeaderName} won the game! Great work! Thanks for playing!`
+        `${VoiceLineVariable.LeaderName} won the game! Great work! Thanks for playing!`,
+        `Your j-party champion is ${VoiceLineVariable.LeaderName}. You rock! Thanks for playing!`
     ]
 };
 
@@ -120,17 +125,20 @@ export const TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES: Record<TriviaClueDecision,
         `You got it ${VoiceLineVariable.SpotlightResponderName}.`,
         "That's the answer.",
         "That was it.",
+        "That's right",
+        "Yep."
     ],
     [TriviaClueDecision.Incorrect]: [
-        "Incorrect!", 
+        "Incorrect!",
         "Sorry, no.", 
         "That isn't it.",
-        "No, I'm sorry."
+        "No, I'm sorry.",
+        "No, that isn't it."
     ],
     [TriviaClueDecision.NeedsMoreDetail]: [
         `Needs more detail. Try again ${VoiceLineVariable.SpotlightResponderName}.`, 
         "Could you be more specific?",
-        "Could you add some detail?"
+        "Could you add some detail?",
     ]
 };
 
@@ -139,7 +147,8 @@ export const ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES: Record<TriviaClueDecisio
         `${VoiceLineVariable.SpotlightResponderName} got it.`, 
         `Well done ${VoiceLineVariable.SpotlightResponderName}.`,
         `Nice one ${VoiceLineVariable.SpotlightResponderName}`,
-        `That's right ${VoiceLineVariable.SpotlightResponderName}.`
+        `That's right ${VoiceLineVariable.SpotlightResponderName}.`,
+        `${VoiceLineVariable.SpotlightResponderName} knew it.`
     ],
     [TriviaClueDecision.Incorrect]: [
         `Sorry ${VoiceLineVariable.SpotlightResponderName}, that wasn't it.`, 
@@ -154,6 +163,5 @@ export const DISPLAY_CORRECT_ANSWER_VOICE_LINES = [
     `It was ${VoiceLineVariable.ClueAnswer}.`,
     `The answer was ${VoiceLineVariable.ClueAnswer}.`,
     `The answer there was ${VoiceLineVariable.ClueAnswer}.`,
-    `Answer there was ${VoiceLineVariable.ClueAnswer}.`,
     `${VoiceLineVariable.ClueAnswer} was the answer.`
 ];

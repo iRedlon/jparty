@@ -4,7 +4,7 @@ import { PlayerResponseType, TriviaCategory, TriviaClue } from "jparty-shared";
 import { useContext } from "react";
 
 import CategoryBox from "./CategoryBox";
-import SpotlightResponder from "./ResponderInfo";
+import ResponderInfo from "./ResponderInfo";
 import { LayoutContext } from "../common/Layout";
 
 import "../../style/components/HostWager.css";
@@ -26,8 +26,8 @@ export default function HostWager({ triviaCategory, triviaClue, numSubmittedResp
             <CategoryBox triviaCategory={triviaCategory} triviaClue={triviaClue} />
             <Box margin={"1em"} />
 
-            <SpotlightResponder triviaClue={triviaClue} responder={spotlightResponder} responseType={PlayerResponseType.Wager}
-                numSubmittedResponders={numSubmittedResponders} numResponders={numResponders} />
+            <ResponderInfo triviaClue={triviaClue} responder={spotlightResponder} responseType={PlayerResponseType.Wager}
+                    numSubmittedResponders={numSubmittedResponders} numResponders={numResponders} />
         </>
     );
 }

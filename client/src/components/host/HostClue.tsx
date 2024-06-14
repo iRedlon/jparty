@@ -41,43 +41,19 @@ interface HostClueProps {
 export default function HostClue({ triviaCategory, triviaClue, showCorrectAnswer, numSubmittedResponders, numResponders }: HostClueProps) {
     const questionBoxRef = useRef(null);
     const correctAnswerRef = useRef(null);
-    const responderInfoRef = useRef(null);
 
     const context = useContext(LayoutContext);
 
     const showQuestion = context.sessionState !== SessionState.ReadingClueSelection;
-    let showSpotlightResponder = false;
     let showClueDecision = false;
 
     const spotlightResponder = context.spotlightResponderID ? context.sessionPlayers[context.spotlightResponderID] : undefined;
-    if (spotlightResponder) {
-        switch (context.sessionState) {
-            case SessionState.ClueResponse:
-            case SessionState.WagerResponse:
-            case SessionState.WaitingForClueDecision:
-            case SessionState.ReadingClueDecision:
-                {
-                    showSpotlightResponder = true;
-                }
-        }
-
-        if (spotlightResponder.clueDecisionInfo && context.sessionState === SessionState.ReadingClueDecision) {
-            showClueDecision = context.debugMode || (spotlightResponder.clueDecisionInfo.clue.id === triviaClue.id);
-        }
-    }
-
-    if (triviaClue.isAllPlayClue()) {
-        switch (context.sessionState) {
-            case SessionState.ClueResponse:
-            case SessionState.WagerResponse:
-                {
-                    showSpotlightResponder = true;
-                }
-        }
+    if (spotlightResponder && spotlightResponder.clueDecisionInfo && context.sessionState === SessionState.ReadingClueDecision) {
+        showClueDecision = context.debugMode || (spotlightResponder.clueDecisionInfo.clue.id === triviaClue.id);
     }
 
     // only show the correct answer if either: 1) nobody responded or 2) someone did respond and we're also showing their decision
-    showCorrectAnswer = showCorrectAnswer && (!spotlightResponder || showClueDecision);
+    showCorrectAnswer = showCorrectAnswer && (triviaClue.isAllPlayClue() || showClueDecision || !spotlightResponder);
 
     return (
         <Stack direction={"column"}>
@@ -108,14 +84,8 @@ export default function HostClue({ triviaCategory, triviaClue, showCorrectAnswer
             <Box margin={"0.25em"} />
 
             <Box height={"7em"}>
-                <CSSTransition nodeRef={responderInfoRef} in={showSpotlightResponder} timeout={500} classNames={"responder-info-component"}
-                    appear mountOnEnter unmountOnExit>
-
-                    <Box ref={responderInfoRef}>
-                        <ResponderInfo triviaClue={triviaClue} responder={spotlightResponder} responseType={PlayerResponseType.Clue} showClueDecision={showClueDecision}
-                            numSubmittedResponders={numSubmittedResponders} numResponders={numResponders} />
-                    </Box>
-                </CSSTransition>
+                <ResponderInfo triviaClue={triviaClue} responder={spotlightResponder} responseType={PlayerResponseType.Clue} showClueDecision={showClueDecision}
+                    numSubmittedResponders={numSubmittedResponders} numResponders={numResponders} />
             </Box>
         </Stack>
     );

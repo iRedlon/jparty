@@ -1,5 +1,6 @@
 
 import {
+    AudioType,
     getRandomNum, HostServerSocket, PLACEHOLDER_TRIVIA_ROUND, Player, PlayerResponseType, PlayerState, ServerSocket,
     SessionAnnouncement, SessionState, SessionTimeout, TriviaCategory, TriviaClue,
     TriviaClueDecision, TriviaClueDecisionInfo, TriviaRound, VoiceType
@@ -89,7 +90,7 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
                 if (args[0] < 0 || args[1] < 0) {
                     return;
                 }
-                
+
                 emitMockSocketEvent(ServerSocket.SelectClue, ...args);
 
                 const triviaRound = TriviaRound.clone(PLACEHOLDER_TRIVIA_ROUND);
@@ -113,12 +114,20 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
             break;
         case DebugCommand.ShowAnnouncement:
             {
-                emitMockSocketEvent(HostServerSocket.ShowAnnouncement, SessionAnnouncement.ClueBonusAllWager);
+                emitMockSocketEvent(HostServerSocket.ShowAnnouncement, SessionAnnouncement.StartFinalRound);
+                setTimeout(() => {
+                    handleDebugCommand(DebugCommand.HideAnnouncement);
+                    
+                    setTimeout(() => {
+                        emitMockSocketEvent(HostServerSocket.ShowAnnouncement, SessionAnnouncement.ClueBonusAllWager);
+                    }, 200);
+                }, 4000);
             }
             break;
         case DebugCommand.HideAnnouncement:
             {
                 emitMockSocketEvent(HostServerSocket.HideAnnouncement, true);
+                emitMockSocketEvent(HostServerSocket.PlayAudio, AudioType.LongApplause)
             }
             break;
     }

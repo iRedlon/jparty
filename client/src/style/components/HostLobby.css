@@ -1,4 +1,5 @@
 .side-box {
+    min-height: 10em;
     max-height: 40em;
     width: 20em;
     padding: 2em;

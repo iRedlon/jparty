@@ -38,6 +38,13 @@
 
 /* responder info anims */
 
+.responder-info-appear {
+    animation-name: slide-from-bottom;
+    animation-duration: 0.5s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
 .responder-info-enter {
     animation-name: slide-from-bottom;
     animation-duration: 0.5s;
@@ -48,6 +55,21 @@
 .responder-info-exit {
     animation-name: slide-from-bottom;
     animation-duration: 0.5s;
+    animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}
+
+.session-state-enter #responder-info-box {
+    animation-name: slide-from-bottom;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+}
+
+.session-state-exit #responder-info-box {
+    animation-name: slide-from-bottom;
+    animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-direction: reverse;
     animation-fill-mode: both;

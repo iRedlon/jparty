@@ -211,9 +211,11 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
         return;
     }
 
+    session.setPlayersIdle();
+    emitStateUpdate(sessionName);
+
     session.selectClue(categoryIndex, clueIndex);
     io.in(sessionName).emit(ServerSocket.SelectClue, categoryIndex, clueIndex);
-    emitStateUpdate(sessionName);
 
     const handleSelectClueInternal = () => {
         let session = getSession(sessionName);

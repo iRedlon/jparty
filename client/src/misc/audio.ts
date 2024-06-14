@@ -28,27 +28,26 @@ export function getVolume(volumeType: VolumeType) {
     return volume;
 }
 
+export function getModVolume(volumeType: VolumeType) {
+    const volume = getVolume(volumeType);
+    console.log(volume);
+    return volume * getVolume(VolumeType.Master);
+}
+
 export function updateVolume(volumeType: VolumeType, volume: number) {
     localStorage.setItem(volumeType, `${volume}`);
 
-    switch (volumeType) {
-        case VolumeType.Music:
-            {
-                lobbyMusicAudio.volume = volume;
-                gameMusicAudio.volume = volume;
-            }
-            break;
-        case VolumeType.SoundEffects:
-            {
-                buzzWindowTimeoutAudio.volume = volume;
-                applauseAudio.volume = volume;
-                longApplauseAudio.volume = volume;
-            }
-            break;
-    }
+    // update the volume for any audios that may be in progress
+    lobbyMusicAudio.volume = getModVolume(VolumeType.Music);
+    gameMusicAudio.volume = getModVolume(VolumeType.Music);
+    
+    buzzWindowTimeoutAudio.volume = getModVolume(VolumeType.SoundEffects);
+    applauseAudio.volume = getModVolume(VolumeType.SoundEffects);
+    longApplauseAudio.volume = getModVolume(VolumeType.SoundEffects);
 }
 
 // make sure all of our audios default to this client's current volume settings
+updateVolume(VolumeType.Master, getVolume(VolumeType.Master));
 updateVolume(VolumeType.Music, getVolume(VolumeType.Music));
 updateVolume(VolumeType.SoundEffects, getVolume(VolumeType.SoundEffects));
 
@@ -133,7 +132,7 @@ export function playOpenAIVoice(audioBase64: string) {
     const audioUrl = URL.createObjectURL(audioBlob); // URL for the blob so it can be used as a source
     const audio = new Audio(audioUrl);
 
-    audio.volume = getVolume(VolumeType.Voice);
+    audio.volume = getModVolume(VolumeType.Voice);
     audio.play().catch(e => console.error(`audio playback failed: ${e.message}`));
 
     audio.onloadedmetadata = () => {
@@ -149,7 +148,7 @@ export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string
 
     const utterance = new SpeechSynthesisUtterance(voiceLine);
 
-    utterance.volume = getVolume(VolumeType.Voice);
+    utterance.volume = getModVolume(VolumeType.Voice);
     utterance.voice = voice;
     utterance.rate = 1.2;
     utterance.onend = () => {

@@ -29,12 +29,18 @@ interface MenuPanel_SettingsProps {
 
 export default function MenuPanel_Settings({ voiceType }: MenuPanel_SettingsProps) {
     const context = useContext(LayoutContext);
+    const [masterVolume, setMasterVolume] = useState(getVolume(VolumeType.Master) * VOLUME_STATE_MULTIPLIER);
     const [musicVolume, setMusicVolume] = useState(getVolume(VolumeType.Music) * VOLUME_STATE_MULTIPLIER);
     const [voiceVolume, setVoiceVolume] = useState(getVolume(VolumeType.Voice) * VOLUME_STATE_MULTIPLIER);
     const [soundEffectsVolume, setSoundEffectsVolume] = useState(getVolume(VolumeType.SoundEffects) * VOLUME_STATE_MULTIPLIER);
 
     const updateVolumeState = (volumeType: VolumeType, volume: number) => {
         switch (volumeType) {
+            case VolumeType.Master:
+                {
+                    setMasterVolume(volume);
+                }
+                break;
             case VolumeType.Music:
                 {
                     setMusicVolume(volume);
@@ -85,6 +91,16 @@ export default function MenuPanel_Settings({ voiceType }: MenuPanel_SettingsProp
                 !context.isPlayer && (
                     <Box width={"50%"} marginLeft={"auto"} marginRight={"auto"}>
                         <Heading size={"md"}>Volume</Heading>
+
+                        <Box margin={"1em"}>
+                            <Heading size={"sm"}>Master</Heading>
+                            <Slider value={masterVolume} onChange={volume => updateVolumeState(VolumeType.Master, volume)}>
+                                <SliderTrack>
+                                    <SliderFilledTrack />
+                                </SliderTrack>
+                                <SliderThumb outline={"gray solid 1px"} />
+                            </Slider>
+                        </Box>
 
                         <Box margin={"1em"}>
                             <Heading size={"sm"}>Music</Heading>

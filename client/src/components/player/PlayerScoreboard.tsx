@@ -63,7 +63,7 @@ export default function PlayerScoreboard() {
                                 <Stack className={"child-box"} direction={"column"} gap={0} height={heightEm} width={"10em"} paddingLeft={"0.25em"} overflow={"hidden"}>
                                     <Box textAlign={"left"} whiteSpace={"nowrap"}>
                                         <Stack direction={"row"} gap={"0.2em"} fontSize={"0.8em"}>
-                                            <Box position={"relative"} top={1}>
+                                            <Box position={"relative"} top={"0.35em"}>
                                                 {(index === 0 && player.score > 0) && <PiCrownSimpleFill />}
                                             </Box>
                                             <b>{isViewingPlayer ? `you (${player.name})` : player.name}</b>

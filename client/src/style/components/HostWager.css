@@ -15,21 +15,3 @@
     animation-direction: reverse;
     animation-fill-mode: both;
 }
-
-/* responder info anims */
-
-.session-state-appear #responder-info-box, 
-.session-state-enter #responder-info-box {
-    animation-name: slide-from-bottom;
-    animation-duration: 1s;
-    animation-timing-function: ease-in-out;
-    animation-fill-mode: both;
-}
-
-.session-state-exit #responder-info-box {
-    animation-name: slide-from-bottom;
-    animation-duration: 1s;
-    animation-timing-function: ease-in-out;
-    animation-direction: reverse;
-    animation-fill-mode: both;
-}

@@ -415,6 +415,7 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
     const leader = session.getCurrentLeader();
     if (leader) {
         voiceLine = voiceLine.replace(VoiceLineVariable.LeaderName, leader.name);
+        voiceLine = voiceLine.replace(VoiceLineVariable.LeaderScore, `${leader.score} dollars`);
     }
 
     voiceLine = formatSpokenVoiceLine(voiceLine, type);

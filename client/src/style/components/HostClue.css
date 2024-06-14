@@ -57,21 +57,3 @@
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
-
-/* responder info component anims */
-
-.responder-info-component-appear,
-.responder-info-component-enter {
-    animation-name: slide-from-bottom;
-    animation-duration: 0.5s;
-    animation-timing-function: ease-in-out;
-    animation-fill-mode: both;
-}
-
-.responder-info-component-exit {
-    animation-name: slide-from-bottom;
-    animation-duration: 0.5s;
-    animation-timing-function: ease-in-out;
-    animation-direction: reverse;
-    animation-fill-mode: both;
-}

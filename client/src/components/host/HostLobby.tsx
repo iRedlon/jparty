@@ -5,7 +5,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 
 import { LayoutContext } from "../common/Layout";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
-import { getClientID } from "../../misc/client-utils";
+import { formatDollarValue, getClientID } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
 import { LocalStorageKey } from "../../misc/ui-constants";
 
@@ -18,11 +18,48 @@ function JoinedPlayerBox(player: Player) {
                 <img src={player.signatureImageBase64} />
             </Box>
 
-            <Box className={"child-box"} height={"4em"} flexGrow={1} overflow={"hidden"} display={"flex"} justifyContent={"left"} alignItems={"center"} paddingLeft={"0.5em"}>
-                <Text fontSize={"1.5em"} whiteSpace={"nowrap"}><b>{player.name}</b></Text>
+            <Box className={"child-box"} height={"4em"} width={"8em"} overflow={"hidden"} display={"flex"} justifyContent={"center"} alignItems={"center"} padding={"0.5em"}>
+                <Text fontSize={"1.5em"} lineHeight={"1em"}><b>{player.name}</b></Text>
             </Box>
         </Stack>
     );
+}
+
+function LeaderboardPlayerBox(player: Player, index: number) {
+    return (
+        <Box key={player.clientID} className={"child-box"} height={"4em"} paddingLeft={"0.5em"} marginTop={"1em"} width={"80%"} marginLeft={"auto"} marginRight={"auto"}>
+            <Stack direction={"column"} paddingRight={"1em"} overflow={"hidden"}>
+                <Box textAlign={"left"} whiteSpace={"nowrap"}>
+                    <b>{index + 1}. {player.name}</b>
+                </Box>
+
+                <Box textAlign={"left"} whiteSpace={"nowrap"}>
+                    <Text fontSize={"2em"} position={"relative"} bottom={"0.4em"}>
+                        <i>{formatDollarValue(player.score)}</i>
+                    </Text>
+                </Box>
+            </Stack>
+        </Box>
+    );
+}
+
+function PlaceholderLeaderboardPlayerBoxes() {
+    let player1 = new Player("1", "aristotle");
+    player1.score = 131127;
+
+    let player2 = new Player("2", "plato");
+    player2.score = 130022;
+
+    let player3 = new Player("3", "socrates");
+    player3.score = 118816;
+
+    return (
+        <>
+            {LeaderboardPlayerBox(player1, 0)}
+            {LeaderboardPlayerBox(player2, 1)}
+            {LeaderboardPlayerBox(player3, 2)}
+        </>
+    )
 }
 
 export default function HostLobby() {
@@ -149,12 +186,10 @@ export default function HostLobby() {
             </Stack>
 
             <Box id={"leaderboard-box"} className={"box side-box"}>
-                <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>leaderboard (placeholder)</Heading>
-                <UnorderedList justifyContent={"center"} listStyleType={"none"} margin={0}>
-                    <ListItem>Leader #1</ListItem>
-                    <ListItem>Leader #2</ListItem>
-                    <ListItem>Leader #3</ListItem>
-                </UnorderedList>
+                <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>leaderboard<br />(coming soon)</Heading>
+                <Text fontSize={"0.75em"}>Games must be normal mode. Player must not have earned more than $2000 from decision reversals</Text>
+
+                {PlaceholderLeaderboardPlayerBoxes()}
             </Box>
         </Stack>
     );

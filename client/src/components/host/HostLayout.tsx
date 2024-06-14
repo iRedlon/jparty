@@ -138,7 +138,7 @@ export default function HostLayout() {
     // returns both the JSX component and a state representing the specific component that was returned
     const getHostComponent = () => {
         if (announcement !== undefined) {
-            return [<Announcement announcement={announcement} />, HostComponentState.Announcement];
+            return [<Announcement announcement={announcement} />, SessionAnnouncement[announcement]];
         }
 
         if (context.sessionState === SessionState.Lobby) {

@@ -23,11 +23,16 @@ export default function PlayerClueSelection() {
 
     useEffect(() => {
         // if possible, set the default category index to be whatever was the last category this player selected
-        const prevCategoryIndexString = localStorage[LocalStorageKey.CategoryIndex]
+        const prevCategoryIndexString = localStorage[LocalStorageKey.CategoryIndex];
         if (prevCategoryIndexString) {
             const prevCategoryIndex = parseInt(prevCategoryIndexString);
 
-            if (!isNaN(prevCategoryIndex) && prevCategoryIndex >= 0 && !context.triviaRound?.categories[prevCategoryIndex].completed) {
+            const numCategories = context.triviaRound ? context.triviaRound.settings.numCategories : 0;
+
+            if (isNaN(prevCategoryIndex) || prevCategoryIndex < 0 || prevCategoryIndex > (numCategories - 1) || context.triviaRound?.categories[prevCategoryIndex].completed) {
+                localStorage.removeItem(LocalStorageKey.CategoryIndex);
+            }
+            else {
                 setCategoryIndex(prevCategoryIndex);
                 return;
             }

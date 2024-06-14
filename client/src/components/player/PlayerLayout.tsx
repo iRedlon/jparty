@@ -42,7 +42,6 @@ export default function PlayerLayout() {
 
     useEffect(() => {
         setForceIdle(false);
-        setIsEditingSignature(false);
     }, [context.sessionState]);
 
     const getPlayer = () => {
@@ -89,8 +88,8 @@ export default function PlayerLayout() {
 
         return (
             <Button colorScheme={"gray"}
-                onClick={() => { setForceIdle(!forceIdle); setIsEditingSignature(false); }}>
-                {forceIdle ? returnText : "Check scoreboard"}
+                onClick={() => { setForceIdle(false); setIsEditingSignature(false); }}>
+                {(forceIdle || isEditingSignature) ? returnText : "Check scoreboard"}
             </Button>
         );
     }

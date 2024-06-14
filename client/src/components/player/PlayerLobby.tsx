@@ -24,11 +24,6 @@ export default function PlayerLobby() {
             if (resetPlayerName) {
                 setPlayerName("");
             }
-
-            // connection was successful!
-            if (!resetSessionName && !resetPlayerName) {
-                localStorage.removeItem(LocalStorageKey.CategoryIndex);
-            }
         });
     }
 

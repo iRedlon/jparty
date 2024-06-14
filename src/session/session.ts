@@ -653,7 +653,6 @@ export class Session {
         }
 
         currentRound.setClueCompleted(categoryIndex, clueIndex);
-        this.setPlayersIdle();
     }
 
     readClueSelection() {
@@ -693,7 +692,10 @@ export class Session {
     finishClueResponseWindow() {
         this.state = SessionState.WaitingForClueDecision;
         this.setPlayersIdle();
-        this.spotlightResponderID = "";
+        
+        if (this.getCurrentClue()?.isAllPlayClue()) {
+            this.spotlightResponderID = "";
+        }
     }
 
     // player response is a generic system. it can prompt any number of players for any of the different response types (i.e. clue, wager)

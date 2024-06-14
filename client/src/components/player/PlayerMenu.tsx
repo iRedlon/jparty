@@ -44,7 +44,7 @@ export default function PlayerMenu() {
 
     return (
         <>
-            <Button onClick={onOpen} position={"fixed"} bottom={"1em"} right={"1em"} colorScheme={"red"} zIndex={zIndex}>Menu</Button>
+            <Button onClick={onOpen} position={"fixed"} bottom={"1em"} right={"1em"} zIndex={zIndex}>Menu</Button>
 
             <Modal motionPreset={"none"} isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay />
