@@ -1,5 +1,6 @@
 
-import { Box, Button, Divider, Heading, Input, ListItem, Stack, Text, Tooltip, UnorderedList } from "@chakra-ui/react";
+import { ExternalLinkIcon } from "@chakra-ui/icons";
+import { Box, Button, Divider, Heading, Input, Link, ListItem, Stack, Text, Tooltip, UnorderedList } from "@chakra-ui/react";
 import { getSortedSessionPlayerIDs, HostServerSocket, HostSocket, Player, SocketID, TriviaGameSettingsPreset } from "jparty-shared";
 import { useContext, useEffect, useRef, useState } from "react";
 
@@ -7,7 +8,7 @@ import { LayoutContext } from "../common/Layout";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
 import { formatDollarValue, getClientID } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
-import { LocalStorageKey } from "../../misc/ui-constants";
+import { LocalStorageKey, PATCH_NOTES_LINK } from "../../misc/ui-constants";
 
 import "../../style/components/HostLobby.css";
 
@@ -114,6 +115,9 @@ export default function HostLobby() {
             <Stack direction={"column"}>
                 <Box id={"logo-box"} className={"box"} padding={"2em"}>
                     <Heading fontFamily={"logo"} fontSize={"4em"}>jparty.io</Heading>
+                    <Link href={PATCH_NOTES_LINK} isExternal>
+                        <i>patch notes <ExternalLinkIcon mx={"2px"} /></i>
+                    </Link>
 
                     <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
 

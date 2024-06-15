@@ -21,6 +21,10 @@ export enum Layer {
     ServerMessageAlert = "99999"
 }
 
+export const PATCH_NOTES_LINK = "https://github.com/iRedlon/jparty/blob/main/documentation/patch-notes.md";
+export const KNOWN_ISSUES_LINK = "https://github.com/iRedlon/jparty/blob/main/documentation/todo.md";
+export const ROADMAP_LINK = "https://github.com/iRedlon/jparty/blob/main/documentation/roadmap.md";
+
 export const TRIVIA_ROUND_TYPE_DISPLAY_NAMES: Record<TriviaRoundType, string> = {
     [TriviaRoundType.Standard]: "Standard"
 }

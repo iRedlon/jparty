@@ -90,7 +90,7 @@ export function joinSession(socket: Socket, sessionName: string) {
         socket.emit(HostServerSocket.ShowAnnouncement, session.currentAnnouncement, session.currentVoiceLine);
     }
     else {
-        socket.emit(HostServerSocket.HideAnnouncement);
+        socket.emit(HostServerSocket.HideAnnouncement, true);
     }
 
     socket.emit(HostServerSocket.UpdateVoiceType, session.voiceType);
@@ -332,7 +332,7 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                 }
 
                 const finalCluePosition = session.getCurrentRound()?.getFinalCluePosition();
-                if (!finalCluePosition || !finalCluePosition.validate()) {
+                if (finalCluePosition) {
                     debugLog(DebugLogType.Voice, "early out. trying to prompt clue selection on the final clue");
                     return;
                 }

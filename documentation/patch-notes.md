@@ -1,6 +1,6 @@
 
 # Patch Notes
-### _Major changes from jeoparty.io to jparty.io_
+### _Version 1.0, a total remake of the former jeoparty.io_
 
 ## Major Server Upgrades
 - Improved server stability. Crashes are mostly eliminated, and those that do happen are handled without losing game progress
@@ -8,7 +8,7 @@
 - Computers can now "spectate" an existing session, meaning you can play with friends remotely without screen sharing
 - Computers can now join a session as a player instead of host
 
-## AI Clue Decisions
+## Natural Language Clue Decisions
 - ChatGPT evaluates clue decisions making it much more accurate with consistent allowances for spelling and phrasing
 - The result of a clue decision may be "needs more detail" giving you a second chance to clarify your answer
 - Players may vote to reverse a prior clue decision, which can be used to overrule a false positive/negative
@@ -28,12 +28,11 @@ Using the aforementioned game settings; there is a new preset game mode intended
 - Half as many clues for a shorter game
 - More bonuses i.e. more clues that are wager and "all play" (meaning anyone in the game can respond without penalty)
 
-This mode and other custom settings are completely optional
-
-## Small But Important
+## Everything Else
+- Overhauled UI with new animations and formatting
+- New options for host narrator voice: the "modern" AI voice and the "classic" screen reader voice. Both options are available as masculine or feminine
+- Signatures are visible more often throughout the game and can be edited any time
+- New behavior for tossup clues. When multiple players buzz in at once, the player who wins becomes less likely to win the next one
 - New "volume" menu tab to change/mute the volume of music/host voice/sound FX seperately
-- After completing a game, you can return to the lobby with the same players. You may of course start over with a fresh slate if you choose
 - New "feedback" menu tab to report bugs, report bad trivia data, and make development suggestions
-
-## Fun Facts
-- jparty's clue database has about 170000 clues across 20000 categories
+- After completing a game, you have the option of returning to the lobby with the same players

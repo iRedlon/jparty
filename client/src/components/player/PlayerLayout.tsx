@@ -86,9 +86,19 @@ export default function PlayerLayout() {
                 break;
         }
 
+        const handleClick = () => {
+            if (isEditingSignature) {
+                setIsEditingSignature(false);
+                setForceIdle(false);
+            }
+            else {
+                setForceIdle(!forceIdle);
+            }
+        }
+
         return (
             <Button colorScheme={"gray"}
-                onClick={() => { setForceIdle(false); setIsEditingSignature(false); }}>
+                onClick={handleClick}>
                 {(forceIdle || isEditingSignature) ? returnText : "Check scoreboard"}
             </Button>
         );

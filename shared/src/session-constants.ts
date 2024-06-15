@@ -81,6 +81,7 @@ export class Player {
     queuedForDeletion: boolean;
 
     constructor(clientID: string, name: string) {
+        this.connected = true;
         this.clientID = clientID;
         this.name = name;
         this.signatureImageBase64 = "";
@@ -96,7 +97,6 @@ export class Player {
     }
 
     reset() {
-        this.connected = true;
         this.setIdle();
         this.score = 0;
         this.positionChange = 0;

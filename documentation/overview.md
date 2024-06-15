@@ -96,7 +96,7 @@ In production, they're set manually within the server environment provided by ou
   - Enables debug logging which includes some extra info like the position of clue bonuses, outgoing API requests, etc.
   - Forced clue decisions by responding with the desired response. A response may be "correct", "incorrect", or "detail"
 
-## [Host Voice](../client/src/misc/sound-fx.ts)
+## [Host Voice](../client/src/misc/audio.ts)
 - Voice lines are spoken aloud by the host computer throughout the game. Most importantly, this voice reads out the clues but also filler lines like "correct" or "that's a bonus, you get to wager, etc."
 - There are two TTS systems in use in jparty: the first is API-requested OpenAI TTS with a very realistic sounding voice. This service costs money per request and is enabled/disabled with an environment variable
 - The second is the built-in browser screen reader. This TTS is actually pretty good in terms of pronunciation, but is still very robotic. We support it because it's free and not API requested so if the API needs to be disabled or is otherwise not working for any reason: we can easily fall back on the screen reader

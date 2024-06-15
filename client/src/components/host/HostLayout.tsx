@@ -75,11 +75,12 @@ export default function HostLayout() {
     }, []);
 
     useEffect(() => {
+        playAudio(AudioType.LobbyMusic);
+
         // switch to game music once the game starts
-        if (context.sessionState > SessionState.Lobby) {
-            playAudio(AudioType.GameMusic);
-            setIsMuted(false);
-        }
+        // if (context.sessionState > SessionState.Lobby) {
+        //     playAudio(AudioType.GameMusic);
+        // }
 
         if (queuedToHideAnnouncement) {
             setAnnouncement(undefined);
@@ -126,12 +127,13 @@ export default function HostLayout() {
         setIsMuted(isMuted);
 
         if (!isMuted) {
-            if (context.sessionState > SessionState.Lobby) {
-                playAudio(AudioType.GameMusic);
-            }
-            else {
-                playAudio(AudioType.LobbyMusic);
-            }
+            playAudio(AudioType.LobbyMusic);
+            // if (context.sessionState > SessionState.Lobby) {
+            //     playAudio(AudioType.GameMusic);
+            // }
+            // else {
+            //     playAudio(AudioType.LobbyMusic);
+            // }
         }
     }
 

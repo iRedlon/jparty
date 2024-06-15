@@ -495,11 +495,7 @@ function finishRevealClueDecision(sessionName: string, showCorrectAnswer: boolea
             }
 
             showAnnouncement(sessionName, announcement, () => {
-                const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
-                if (!didForceSelectFinalClue) {
-                    playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
-                }
-
+                playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
                 emitStateUpdate(sessionName);
                 emitTriviaRoundUpdate(sessionName);
             });

@@ -31,12 +31,11 @@ export default function MenuPanel_Debug({ customDebugElement }: MenuPanel_DebugP
     const context = useContext(LayoutContext);
 
     if (!context.debugMode) {
-        return <></>;
+        return null;
     }
 
     return (
-        <>
-            <TabPanel>
+        <TabPanel>
                 <AbsoluteCenter axis={"horizontal"}>
                     <Stack direction={"column"}>
                         <Box>
@@ -56,6 +55,5 @@ export default function MenuPanel_Debug({ customDebugElement }: MenuPanel_DebugP
                     </Stack>
                 </AbsoluteCenter>
             </TabPanel>
-        </>
     );
 }

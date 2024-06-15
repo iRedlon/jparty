@@ -1,11 +1,12 @@
 
-import { AbsoluteCenter, Box, Button, Heading, Select, TabPanel, Textarea } from "@chakra-ui/react";
+import { ExternalLinkIcon } from "@chakra-ui/icons";
+import { AbsoluteCenter, Box, Button, Heading, Link, Select, TabPanel, Textarea } from "@chakra-ui/react";
 import { ClientSocket, Feedback, FeedbackType, getEnumKeys, TriviaCategory } from "jparty-shared";
 import { useContext, useState } from "react";
 
 import { LayoutContext } from "./Layout";
 import { socket } from "../../misc/socket";
-import { FEEDBACK_TYPE_DISPLAY_NAMES } from "../../misc/ui-constants";
+import { FEEDBACK_TYPE_DISPLAY_NAMES, KNOWN_ISSUES_LINK, ROADMAP_LINK } from "../../misc/ui-constants";
 
 export default function MenuPanel_Feedback() {
     const context = useContext(LayoutContext);
@@ -32,13 +33,17 @@ export default function MenuPanel_Feedback() {
     return (
         <TabPanel>
             <AbsoluteCenter axis={"horizontal"} width={"100%"}>
-                {/* <Heading size={"md"}>Known issues</Heading>
-                
-                <UnorderedList listStylePosition={"inside"} margin={"0 auto"} marginBottom={"1em"}>
-                    <ListItem></ListItem>
-                </UnorderedList> */}
+                <Heading size={"md"} marginBottom={"0.5em"}>Submit feedback</Heading>
 
-                <Heading size={"md"}>Submit feedback</Heading>
+                <Link href={KNOWN_ISSUES_LINK} isExternal>
+                    Known issues <ExternalLinkIcon mx={"2px"} />
+                </Link>
+
+                <br />
+
+                <Link href={ROADMAP_LINK} isExternal>
+                    Roadmap <ExternalLinkIcon mx={"2px"} />
+                </Link>
 
                 <Box marginTop={"1em"} marginBottom={"1em"}>
                     <Select
@@ -57,7 +62,7 @@ export default function MenuPanel_Feedback() {
                         value={feedbackCategoryIndex}
                         onChange={e => setFeedbackCategoryIndex(parseInt(e.target.value))}
                         marginTop={"1em"} placeholder={"(optional) specify a category"}>
-                            
+
                         {context.triviaRound?.categories.map((category: TriviaCategory, index: number) => {
                             return <option key={index} value={index}>{category.name}</option>;
                         })}
