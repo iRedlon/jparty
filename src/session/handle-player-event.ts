@@ -495,6 +495,7 @@ function finishRevealClueDecision(sessionName: string, showCorrectAnswer: boolea
             }
 
             showAnnouncement(sessionName, announcement, () => {
+                attemptForceSelectFinalClue(sessionName);
                 playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
                 emitStateUpdate(sessionName);
                 emitTriviaRoundUpdate(sessionName);

@@ -72,7 +72,7 @@ export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, strin
         `This is an all wager. The category is: ${VoiceLineVariable.CategoryName}.`
     ],
     [SessionAnnouncement.ClueBonusAllPlay]: [
-        `This is a bonus! Everyone gets to respond in the category: "${VoiceLineVariable.CategoryName}.`,
+        `This is a bonus! Everyone gets to respond in the category: "${VoiceLineVariable.CategoryName}"`,
         `You found an all play for: "${VoiceLineVariable.CategoryName}"! Everyone can respond.`,
         `That's an all play! Everyone get ready to respond in: "${VoiceLineVariable.CategoryName}"`
     ],
@@ -84,13 +84,13 @@ export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, strin
     ],
     [SessionAnnouncement.StartRound]: [
         `${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}. Good luck in the next round. Start us off ${VoiceLineVariable.ClueSelectorName}`, 
-        // `Good round everyone. ${VoiceLineVariable.LeaderName} has the lead. Let's move on to round ${VoiceLineVariable.RoundNumber}.`, 
-        // `Round ${VoiceLineVariable.RoundNumber} is coming up. Let's find out if anyone can take the lead from ${VoiceLineVariable.LeaderName}`,
-        // `Well played everyone. ${VoiceLineVariable.RoundNumber} is next. Good luck. Get us started ${VoiceLineVariable.ClueSelectorName}`
+        `Good round everyone. ${VoiceLineVariable.LeaderName} has the lead. Let's move on to round ${VoiceLineVariable.RoundNumber}.`, 
+        `Round ${VoiceLineVariable.RoundNumber} is coming up. Let's find out if anyone can take the lead from ${VoiceLineVariable.LeaderName}`,
+        `Well played everyone. ${VoiceLineVariable.RoundNumber} is next. Good luck. Get us started ${VoiceLineVariable.ClueSelectorName}`
     ],
     [SessionAnnouncement.StartFinalRound]: [
-        // `This is the final round! ${VoiceLineVariable.LeaderName} is the one to beat.`,
-        // `Here comes the final round! This is your last chance to overtake ${VoiceLineVariable.LeaderName}.`,
+        `This is the final round! ${VoiceLineVariable.LeaderName} is the one to beat.`,
+        `Here comes the final round! This is your last chance to overtake ${VoiceLineVariable.LeaderName}.`,
         `This is the last round! ${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}.`
     ],
     [SessionAnnouncement.GameOver]: [

@@ -136,6 +136,9 @@ export function joinSessionAsPlayer(socket: Socket, sessionName: string) {
         emitStateUpdate(session.name);
     }
 
+    // check if this player needs to become the game starter
+    session.promptGameStarter();
+
     debugLog(DebugLogType.ClientConnection, `player socket ID (${socket.id}) joined session: ${session.name}`);
 }
 
@@ -286,7 +289,10 @@ export function showAnnouncement(sessionName: string, announcement: SessionAnnou
         }
 
         stopTimeout(sessionName, SessionTimeout.Announcement);
-        io.in(sessionName).emit(HostServerSocket.HideAnnouncement);
+
+        const forceHideAnnouncement = announcement === SessionAnnouncement.GameOver;
+        io.in(sessionName).emit(HostServerSocket.HideAnnouncement, forceHideAnnouncement);
+
         session.setCurrentAnnouncement(undefined);
 
         callback();

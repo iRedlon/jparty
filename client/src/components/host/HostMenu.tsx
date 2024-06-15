@@ -8,6 +8,7 @@ import { useContext, useEffect, useState } from "react";
 
 import GameSettings from "./GameSettings";
 import { LayoutContext } from "../common/Layout";
+import MenuPanel_Credits from "../common/MenuPanel_Credits";
 import MenuPanel_Debug from "../common/MenuPanel_Debug";
 import MenuPanel_Feedback from "../common/MenuPanel_Feedback";
 import MenuPanel_Settings from "../common/MenuPanel_Settings";
@@ -35,6 +36,7 @@ export default function HostMenu() {
         <Tab key={"settings-tab"}>Settings</Tab>,
         <Tab key={"game-settings-tab"}>Custom Game</Tab>,
         <Tab key={"feedback-tab"}>Feedback</Tab>,
+        <Tab key={"credits-tab"}>Credits</Tab>,
         context.debugMode && <Tab key={"debug-tab"}>Debug</Tab>
     ];
 
@@ -42,6 +44,7 @@ export default function HostMenu() {
         <MenuPanel_Settings key={"settings-tab-panel"} voiceType={voiceType} />,
         <TabPanel key={"game-settings-tab-panel"}><GameSettings onCloseHostMenu={onClose} /></TabPanel>,
         <MenuPanel_Feedback key={"feedback-tab-panel"} />,
+        <MenuPanel_Credits key={"credits-tab-panel"} />,
         context.debugMode && <MenuPanel_Debug key={"debug-tab-panel"} />
     ];
 

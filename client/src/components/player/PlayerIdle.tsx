@@ -1,9 +1,10 @@
 
 import { Box, Button, Heading } from "@chakra-ui/react";
-import { PlayerSocket } from "jparty-shared";
-import { useState } from "react";
+import { PlayerSocket, SessionState } from "jparty-shared";
+import { useContext, useEffect, useState } from "react";
 
 import PlayerScoreboard from "./PlayerScoreboard";
+import { LayoutContext } from "../common/Layout";
 import { socket } from "../../misc/socket";
 
 interface PlayerIdleProps {
@@ -12,7 +13,15 @@ interface PlayerIdleProps {
 }
 
 export default function PlayerIdle({ setIsEditingSignature, promptStartGame }: PlayerIdleProps) {
+    const context = useContext(LayoutContext);
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        // turn off the loading animation on state change in case the callback in emitStartGame doesn't work for some reason
+        if (isLoading && context.sessionState > SessionState.Lobby) {
+            setIsLoading(false);
+        }
+    }, [context.sessionState]);
 
     const emitStartGame = () => {
         if (!confirm("Are you sure? (Make sure everyone has joined and that your host computer is unmuted)")) {
