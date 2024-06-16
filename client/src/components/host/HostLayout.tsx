@@ -151,7 +151,7 @@ export default function HostLayout() {
             throw new Error(`HostLayout: missing trivia round`);
         }
 
-        if (context.sessionState === SessionState.PromptClueSelection) {
+        if ((context.sessionState === SessionState.ReadingCategoryNames) || (context.sessionState === SessionState.PromptClueSelection)) {
             return [<HostBoard triviaRound={context.triviaRound} />, HostComponentState.Board];
         }
 

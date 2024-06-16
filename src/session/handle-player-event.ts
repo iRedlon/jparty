@@ -66,7 +66,7 @@ function handleUpdateSignature(socket: Socket, sessionName: string, imageBase64:
 
 async function handleStartGame(socket: Socket, sessionName: string, callback: PlayerSocketCallback[PlayerSocket.StartGame]) {
     let session = getSession(sessionName);
-    if (!session) {
+    if (!session || (session.state !== SessionState.Lobby)) {
         return;
     }
 
@@ -89,19 +89,47 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
         emitTriviaRoundUpdate(sessionName);
     }
 
-    session.setPlayersIdle();
+    session.readCategoryNames();
     emitStateUpdate(sessionName);
 
-    session.promptClueSelection();
+    const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
+    if (!didForceSelectFinalClue) {
+        recursiveReadCategoryName(sessionName);
+    }
+}
 
-    showAnnouncement(sessionName, SessionAnnouncement.StartGame, () => {
+function recursiveReadCategoryName(sessionName: string) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    const currentRound = session.getCurrentRound();
+    if (!currentRound) {
+        return;
+    }
+
+    // we're done reading category names
+    if (session.readingCategoryIndex >= currentRound.settings.numCategories) {
+        session.promptClueSelection();
+        playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
+
+        io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateReadingCategoryIndex, -1);
+        emitStateUpdate(sessionName);
+        return;
+    }
+
+    playVoiceLine(sessionName, VoiceLineType.ReadCategoryName);
+    startTimeout(sessionName, SessionTimeout.ReadingCategoryName, () => {
         let session = getSession(sessionName);
         if (!session) {
             return;
         }
 
-        attemptForceSelectFinalClue(sessionName);
-        emitStateUpdate(sessionName);
+        io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateReadingCategoryIndex, session.readingCategoryIndex);
+        session.readingCategoryIndex++;
+
+        recursiveReadCategoryName(sessionName);
     });
 }
 
@@ -313,7 +341,7 @@ function finishBuzzWindow(sessionName: string) {
 
 function handleBuzz(socket: Socket, sessionName: string) {
     let session = getSession(sessionName);
-    if (!session) {
+    if (!session || (session.state !== SessionState.ClueTossup)) {
         return;
     }
 
@@ -327,6 +355,10 @@ function handleUpdateResponse(socket: Socket, sessionName: string, response: str
         return;
     }
 
+    if ((session.state !== SessionState.ClueResponse) && (session.state !== SessionState.WagerResponse)) {
+        return;
+    }
+
     response = response.toLowerCase();
 
     session.updateResponse(socket.id, response);
@@ -336,6 +368,10 @@ function handleUpdateResponse(socket: Socket, sessionName: string, response: str
 function handleSubmitResponse(socket: Socket, sessionName: string) {
     let session = getSession(sessionName);
     if (!session) {
+        return;
+    }
+
+    if ((session.state !== SessionState.ClueResponse) && (session.state !== SessionState.WagerResponse)) {
         return;
     }
 
@@ -482,32 +518,20 @@ function finishRevealClueDecision(sessionName: string, showCorrectAnswer: boolea
 
     // if we displayed the correct answer for any reason, we need to move on to a new clue
     if (showCorrectAnswer) {
-        session.promptClueSelection();
-
         if (session.getCurrentRound()?.completed) {
-            session.advanceRound();
-
-            let announcement = session.isFinalRound() ? SessionAnnouncement.StartFinalRound : SessionAnnouncement.StartRound;
-
-            if (session.state === SessionState.GameOver) {
-                announcement = SessionAnnouncement.GameOver;
-                playAudio(sessionName, AudioType.LongApplause);
-            }
-
-            showAnnouncement(sessionName, announcement, () => {
-                attemptForceSelectFinalClue(sessionName);
-                playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
-                emitStateUpdate(sessionName);
-                emitTriviaRoundUpdate(sessionName);
-            });
-
+            finishRound(sessionName);
             return;
         }
         else {
-            playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
-        }
+            session.setPlayersIdle();
+            emitStateUpdate(sessionName);
 
-        attemptForceSelectFinalClue(sessionName);
+            session.promptClueSelection();
+            const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
+            if (!didForceSelectFinalClue && session.hasNewClueSelector()) {
+                playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
+            }
+        }
     }
     else if (!session.getCurrentClue()?.isAllPlayClue()) {
         const spotlightResponder = session.players[session.spotlightResponderID];
@@ -537,6 +561,45 @@ function finishRevealClueDecision(sessionName: string, showCorrectAnswer: boolea
     }
 
     emitStateUpdate(sessionName);
+}
+
+function finishRound(sessionName: string) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    session.advanceRound();
+
+    let announcement = session.isFinalRound() ? SessionAnnouncement.StartFinalRound : SessionAnnouncement.StartRound;
+
+    if (session.state === SessionState.GameOver) {
+        announcement = SessionAnnouncement.GameOver;
+        playAudio(sessionName, AudioType.LongApplause);
+    }
+
+    showAnnouncement(sessionName, announcement, () => {
+        let session = getSession(sessionName);
+        if (!session) {
+            return;
+        }
+
+        emitTriviaRoundUpdate(sessionName);
+
+        if (session.state === SessionState.GameOver) {
+            emitStateUpdate(sessionName);
+            return;
+        }
+
+        const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
+        if (didForceSelectFinalClue) {
+            return;
+        }
+
+        session.readCategoryNames();
+        emitStateUpdate(sessionName);
+        recursiveReadCategoryName(sessionName);
+    });
 }
 
 function handleVoteToReverseDecision(socket: Socket, sessionName: string, responderID: SocketID) {

@@ -14,6 +14,7 @@ import MenuPanel_Feedback from "../common/MenuPanel_Feedback";
 import MenuPanel_Settings from "../common/MenuPanel_Settings";
 import { socket } from "../../misc/socket";
 import { Layer } from "../../misc/ui-constants";
+import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
 
 export default function HostMenu() {
     const context = useContext(LayoutContext);

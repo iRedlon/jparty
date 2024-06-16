@@ -1,8 +1,10 @@
 
 import { Box, Button, Heading, Stack } from "@chakra-ui/react";
 import { HostSocket, ServerSocket, SessionState } from "jparty-shared";
+import { useContext } from "react";
 
 import HostScoreboard from "./HostScoreboard";
+import { LayoutContext } from "../common/Layout";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
 import { emitMockSocketEvent } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
@@ -10,6 +12,8 @@ import { socket } from "../../misc/socket";
 import "../../style/components/HostGameOver.css";
 
 export default function HostGameOver() {
+    const context = useContext(LayoutContext);
+
     const emitPlayAgain = () => {
         socket.emit(HostSocket.PlayAgain);
 
@@ -18,18 +22,16 @@ export default function HostGameOver() {
     }
 
     return (
-        <>
-            <Box id={"game-over-box"} className={"box"} padding={"1em"}>
-                <Heading size={"lg"} fontFamily={"logo"}>GAME OVER!</Heading>
-                <Heading size={"sm"} fontFamily={"logo"} marginBottom={"1em"}>thanks for playing</Heading>
+        <Box id={"game-over-box"} className={"box"} padding={"1em"}>
+            <Heading size={"lg"} fontFamily={"logo"}>GAME OVER!</Heading>
+            <Heading size={"sm"} fontFamily={"logo"} marginBottom={"1em"}>thanks for playing</Heading>
 
-                <HostScoreboard />
+            <HostScoreboard />
 
-                <Stack direction={"row"} marginTop={"1em"} justifyContent={"center"}>
-                <Button onClick={emitPlayAgain} colorScheme={"blue"} margin={"0.1em"}>play again</Button>
+            <Stack direction={"row"} marginTop={"1em"} justifyContent={"center"}>
+                <Button isDisabled={context.isSpectator} onClick={emitPlayAgain} colorScheme={"blue"} margin={"0.1em"}>play again</Button>
                 <Button onClick={() => emitLeaveSession(false)} colorScheme={"blue"} margin={"0.1em"}>leave session</Button>
-                </Stack>
-            </Box>
-        </>
+            </Stack>
+        </Box>
     );
 }

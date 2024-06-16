@@ -15,15 +15,17 @@
 
 /* even board panel anims */
 
-.session-state-appear .board-panel-wrapper.even, 
-.session-state-enter .board-panel-wrapper.even {
+.session-state-appear .board-panel-wrapper.even,
+.session-state-appear-done .board-panel-wrapper.even,
+.session-state-enter .board-panel-wrapper.even,
+.session-state-enter-done .board-panel-wrapper.even {
     animation-name: slide-from-top;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.session-state-exit .board-panel-wrapper.even {
+.session-state-exit-active .board-panel-wrapper.even {
     animation-name: slide-from-top;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
@@ -33,15 +35,17 @@
 
 /* odd board panel anims */
 
-.session-state-appear .board-panel-wrapper.odd, 
-.session-state-enter .board-panel-wrapper.odd {
+.session-state-appear .board-panel-wrapper.odd,
+.session-state-appear-done .board-panel-wrapper.odd, 
+.session-state-enter .board-panel-wrapper.odd,
+.session-state-enter-done .board-panel-wrapper.odd {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
 
-.session-state-exit .board-panel-wrapper.odd {
+.session-state-exit-active .board-panel-wrapper.odd {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;

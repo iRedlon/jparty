@@ -15,7 +15,8 @@ export enum DebugCommand {
     SelectClue,
     StartTimeout,
     ShowAnnouncement,
-    HideAnnouncement
+    HideAnnouncement,
+    UpdateReadingCategoryIndex
 }
 
 function getPlaceholderSessionPlayers(triviaCategory?: TriviaCategory, triviaClue?: TriviaClue) {
@@ -130,5 +131,9 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
                 emitMockSocketEvent(HostServerSocket.PlayAudio, AudioType.LongApplause)
             }
             break;
+        case DebugCommand.UpdateReadingCategoryIndex:
+            {
+                emitMockSocketEvent(HostServerSocket.UpdateReadingCategoryIndex, args[0] || 0);
+            }
     }
 }

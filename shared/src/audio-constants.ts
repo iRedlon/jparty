@@ -33,6 +33,7 @@ export enum VoiceType {
 }
 
 export enum VoiceLineType {
+    ReadCategoryName,
     Announcement,
     PromptClueSelection,
     ReadClueSelection,
@@ -45,6 +46,7 @@ export enum VoiceLineType {
 // voice line randomization and variable data injection happens on the server in session-utils::playVoiceLine
 export enum VoiceLineVariable {
     RoundNumber = "{roundNumber}",
+    ReadingCategoryName = "{readingCategoryName}",
     CategoryName = "{categoryName}",
     ClueValue = "{clueValue}",
     ClueAnswer = "{clueAnswer}",
@@ -53,6 +55,33 @@ export enum VoiceLineVariable {
     LeaderName = "{leaderName}",
     LeaderScore = "{leaderScore}"
 }
+
+export const WELCOME_VOICE_LINES = [
+    "Welcome to j-party! The game is starting.",
+    "It's time to play j-party! Let's get started.",
+    "Welcome to j-party! Let's get right into it."
+];
+
+export const READ_FIRST_CATEGORY_NAME_VOICE_LINES = [
+    `The categories are: "${VoiceLineVariable.ReadingCategoryName}"`,
+    `Our first category will be: "${VoiceLineVariable.ReadingCategoryName}"`,
+    `In this round, we'll have: "${VoiceLineVariable.ReadingCategoryName}"`
+];
+
+// having three duplicates of the same line is my hacky way to implement voice line probability lol
+export const READ_MIDDLE_CATEGORY_NAME_VOICE_LINES = [
+    `"${VoiceLineVariable.ReadingCategoryName}"`,
+    `"${VoiceLineVariable.ReadingCategoryName}"`,
+    `"${VoiceLineVariable.ReadingCategoryName}"`,
+    `next it'll be: "${VoiceLineVariable.ReadingCategoryName}"`,
+    `then: "${VoiceLineVariable.ReadingCategoryName}"`
+];
+
+export const READ_LAST_CATEGORY_NAME_VOICE_LINES = [
+    `and finally: "${VoiceLineVariable.ReadingCategoryName}"`,
+    `and lastly: "${VoiceLineVariable.ReadingCategoryName}"`,
+    `and the last will be: "${VoiceLineVariable.ReadingCategoryName}"`
+];
 
 export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, string[]> = {
     [SessionAnnouncement.StartGame]: [

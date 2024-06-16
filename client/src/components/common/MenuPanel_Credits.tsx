@@ -20,6 +20,9 @@ export default function MenuPanel_Credits() {
                     <Heading size={"sm"}>Additional Programming</Heading>
                     <Text>Theodore Redlon</Text>
 
+                    <Heading size={"sm"}>Trivia Clues</Heading>
+                    <Text>J! Archive</Text>
+
                     <Heading size={"sm"}>Voice</Heading>
                     <Text>OpenAI Text to Speech</Text>
 

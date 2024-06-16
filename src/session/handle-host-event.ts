@@ -23,7 +23,11 @@ function handleConnect(socket: Socket, clientID: string) {
 
 function handleUpdateGameSettingsPreset(socket: Socket, sessionName: string, gameSettingsPreset: TriviaGameSettingsPreset) {
     let session = getSession(sessionName);
-    if (!session) {
+    if (!session || (session.state !== SessionState.Lobby)) {
+        return;
+    }
+
+    if (socket.id !== session.creatorSocketID) {
         return;
     }
 
@@ -61,6 +65,10 @@ function handleUpdateVoiceDuration(socket: Socket, sessionName: string, duration
     }
 
     switch (session.state) {
+        case SessionState.ReadingCategoryNames:
+            {
+                session.restartTimeout(SessionTimeout.ReadingCategoryName, durationSec * 1000);
+            }
         case SessionState.ReadingClueSelection:
             {
                 session.restartTimeout(SessionTimeout.ReadingClueSelection, durationSec * 1000);
@@ -113,7 +121,11 @@ function handleLeaveSession(socket: Socket, sessionName: string) {
 
 async function handleGenerateCustomGame(socket: Socket, sessionName: string, gameSettings: TriviaGameSettings, callback: HostSocketCallback[HostSocket.GenerateCustomGame]) {
     let session = getSession(sessionName);
-    if (!session) {
+    if (!session || (session.state !== SessionState.Lobby)) {
+        return;
+    }
+
+    if (socket.id !== session.creatorSocketID) {
         return;
     }
 
@@ -134,7 +146,7 @@ async function handleGenerateCustomGame(socket: Socket, sessionName: string, gam
 
 function handlePlayAgain(socket: Socket, sessionName: string) {
     let session = getSession(sessionName);
-    if (!session) {
+    if (!session || (session.state !== SessionState.GameOver)) {
         return;
     }
 

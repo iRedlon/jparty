@@ -47,6 +47,7 @@ export class Session {
     timeoutInfo: SessionTimeoutInfo;
 
     // store transient data that needs to be restored for clients in the event that they disconnect and reconnect
+    readingCategoryIndex: number;
     currentAnnouncement: SessionAnnouncement | undefined;
     displayingCorrectAnswer: boolean;
     voiceType: VoiceType;
@@ -81,6 +82,7 @@ export class Session {
         this.triviaGame = undefined;
         this.resetPlayers();
         this.timeoutInfo = {};
+        this.readingCategoryIndex = 0;
         this.currentAnnouncement = undefined;
         this.displayingCorrectAnswer = false;
         this.currentVoiceLine = "";
@@ -407,6 +409,7 @@ export class Session {
         }
 
         switch (timeout) {
+            case SessionTimeout.ReadingCategoryName:
             case SessionTimeout.Announcement:
                 {
                     durationMs = getVoiceDurationMs(this.currentVoiceLine);
@@ -428,13 +431,15 @@ export class Session {
             case SessionTimeout.ResponseWindow:
                 {
                     durationMs = this.triviaGame.settings.responseDurationSec * 1000;
+
+                    // double the response duration for "all wager" clues. this applies to both the wager and clue response periods
+                    if (this.getCurrentClue()?.bonus === TriviaClueBonus.AllWager) {
+                        durationMs *= 2;
+                    }
                 }
                 break;
             case SessionTimeout.ReadingClueDecision:
                 {
-                    // "reading clue decision" doesn't need to use the voice duration system like "announcement" and "reading clue"
-                    // the reveal decision duration should always be longer than the voice line will take to say
-                    // if this changes somehow... todo
                     durationMs = this.triviaGame.settings.revealDecisionDurationSec * 1000;
                 }
                 break;
@@ -497,6 +502,13 @@ export class Session {
     getCurrentRound() {
         if (this.triviaGame) {
             return this.triviaGame.rounds[this.roundIndex];
+        }
+    }
+
+    getReadingCategory() {
+        const currentRound = this.getCurrentRound();
+        if (currentRound && this.readingCategoryIndex >= 0 && this.readingCategoryIndex < currentRound.settings.numCategories) {
+            return currentRound.categories[this.readingCategoryIndex];
         }
     }
 
@@ -591,6 +603,20 @@ export class Session {
         this.state = SessionState.Lobby;
     }
 
+    readCategoryNames() {
+        this.state = SessionState.ReadingCategoryNames;
+        this.setPlayersIdle();
+    }
+
+    hasNewClueSelector() {
+        const clueSelector = this.players[this.clueSelectorID];
+        if (!clueSelector) {
+            return false;
+        }
+
+        return this.previousClueSelectorClientID !== clueSelector.clientID;
+    }
+
     // clue selection is a stable state, so we want to make sure any unexpected behavior during the game resolves back here
     // and that all relevant session data is reset back to a clean slate for the next clue
     promptClueSelection() {
@@ -598,6 +624,7 @@ export class Session {
         this.setPlayersIdle();
         this.clearPlayerResponses();
         this.spotlightResponderID = "";
+        this.readingCategoryIndex = 0;
         this.displayingCorrectAnswer = false;
 
         for (const playerID in this.players) {
@@ -882,7 +909,8 @@ export class Session {
         const clueDecisionInfo = new TriviaClueDecisionInfo(currentCategory.id, currentCategory.name, currentClue, clueResponse, decision, clueValue);
 
         responder.clueDecisionInfo = clueDecisionInfo;
-        responder.updateClueDecision();
+        this.getCurrentClue()?.updateClueDecision(responder);
+
         responder.decided = true;
 
         if (clueDecisionInfo.decision !== TriviaClueDecision.NeedsMoreDetail) {
@@ -950,7 +978,7 @@ export class Session {
                 break;
         }
 
-        responder.updateClueDecision();
+        this.getCurrentClue()?.updateClueDecision(responder);
         this.updatePlayerScore(responderID, clueValue, newDecision, clueValueModifier);
 
         return true;

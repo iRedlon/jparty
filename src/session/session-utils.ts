@@ -2,9 +2,11 @@
 import {
     ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES, AttemptReconnectResult, AudioType, CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES,
     ClientSocket, ClientSocketCallback, DISPLAY_CORRECT_ANSWER_VOICE_LINES,
-    getEnumSize, getRandomChoice, HostServerSocket, PROMPT_CLUE_SELECTION_VOICE_LINES, READ_CLUE_SELECTION_VOICE_LINE,
+    getEnumSize, getRandomChoice, HostServerSocket, PROMPT_CLUE_SELECTION_VOICE_LINES, READ_CLUE_SELECTION_VOICE_LINE, 
+    READ_FIRST_CATEGORY_NAME_VOICE_LINES, READ_LAST_CATEGORY_NAME_VOICE_LINES, READ_MIDDLE_CATEGORY_NAME_VOICE_LINES,
     ServerSocket, ServerSocketMessage, SessionAnnouncement, SESSION_ANNOUNCEMENT_VOICE_LINES, SessionState, SessionTimeout,
-    TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable
+    TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable,
+    WELCOME_VOICE_LINES,
 } from "jparty-shared";
 import { Socket } from "socket.io";
 
@@ -109,6 +111,8 @@ export function joinSessionAsHost(socket: Socket, sessionName: string) {
     if (socket.id !== session.creatorSocketID) {
         socket.emit(ServerSocket.BeginSpectate);
     }
+
+    socket.emit(HostServerSocket.UpdateReadingCategoryIndex, session.readingCategoryIndex);
 
     if (session.spotlightResponderID) {
         socket.emit(HostServerSocket.RevealClueDecision, session.displayingCorrectAnswer);
@@ -319,6 +323,29 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
     let voiceLine: string = "";
 
     switch (type) {
+        case VoiceLineType.ReadCategoryName:
+            {
+                const currentRound = session.getCurrentRound();
+                if (!currentRound) {
+                    break;
+                }
+
+                if (session.readingCategoryIndex === 0) {
+                    voiceLine = getRandomChoice(READ_FIRST_CATEGORY_NAME_VOICE_LINES);
+
+                    if (session.roundIndex === 0) {
+                        // if we're reading the first category for the first round, tack on an extra line welcoming players to the game
+                        voiceLine = getRandomChoice(WELCOME_VOICE_LINES) + voiceLine;
+                    }
+                }
+                else if (session.readingCategoryIndex === (currentRound.settings.numCategories - 1)) {
+                    voiceLine = getRandomChoice(READ_LAST_CATEGORY_NAME_VOICE_LINES);
+                }
+                else {
+                    voiceLine = getRandomChoice(READ_MIDDLE_CATEGORY_NAME_VOICE_LINES);
+                }
+            }
+            break;
         case VoiceLineType.Announcement:
             {
                 if (session.currentAnnouncement === undefined) {
@@ -344,13 +371,12 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                 }
 
                 const currentCategory = session.getCurrentCategory();
-
-                if (session.previousClueSelectorClientID !== clueSelector.clientID) {
-                    voiceLine = getRandomChoice(PROMPT_CLUE_SELECTION_VOICE_LINES);
-                }
-                else if (currentCategory && clueSelector.getCorrectCluesInCategory(currentCategory.id) === currentCategory.clues.length) {
+                if (currentCategory && currentCategory.didPlayerClear(clueSelector.clientID)) {
                     playAudio(sessionName, AudioType.Applause);
                     voiceLine = getRandomChoice(CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES);
+                }
+                else {
+                    voiceLine = getRandomChoice(PROMPT_CLUE_SELECTION_VOICE_LINES);
                 }
             }
             break;
@@ -396,6 +422,11 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
     }
 
     voiceLine = voiceLine.replace(VoiceLineVariable.RoundNumber, `${session.roundIndex + 1}`);
+
+    const readingCategoryName = session.getReadingCategory()?.name;
+    if (readingCategoryName) {
+        voiceLine = voiceLine.replace(VoiceLineVariable.ReadingCategoryName, readingCategoryName);
+    }
 
     const categoryName = session.getCurrentCategory()?.name;
     if (categoryName) {

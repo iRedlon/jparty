@@ -153,7 +153,9 @@ export default function HostLobby() {
 
                     <Stack direction={"column"}>
                         <Tooltip label={"standard rules. counts for public leaderboard"} placement={"top"}>
-                            <Button onClick={() => handleUpdateGameSettingsPreset(TriviaGameSettingsPreset.Normal)}
+                            <Button
+                                isDisabled={context.isSpectator}
+                                onClick={() => handleUpdateGameSettingsPreset(TriviaGameSettingsPreset.Normal)}
                                 colorScheme={"blue"} variant={gameSettingsPreset === TriviaGameSettingsPreset.Normal ? "solid" : "outline"}
                                 marginLeft={"auto"} marginRight={"auto"}>
                                 normal mode
@@ -161,7 +163,9 @@ export default function HostLobby() {
                         </Tooltip>
 
                         <Tooltip label={"shorter, easier game. more clue bonuses"} placement={"top"}>
-                            <Button onClick={() => handleUpdateGameSettingsPreset(TriviaGameSettingsPreset.Party)}
+                            <Button
+                                isDisabled={context.isSpectator}
+                                onClick={() => handleUpdateGameSettingsPreset(TriviaGameSettingsPreset.Party)}
                                 colorScheme={"blue"} variant={gameSettingsPreset === TriviaGameSettingsPreset.Party ? "solid" : "outline"}
                                 marginLeft={"auto"} marginRight={"auto"}>
                                 party mode
@@ -170,7 +174,7 @@ export default function HostLobby() {
 
                         <Tooltip label={"use the menu to make a custom game"} placement={"top"}>
                             <Button
-                                isDisabled={gameSettingsPreset !== TriviaGameSettingsPreset.Custom}
+                                isDisabled={context.isSpectator || (gameSettingsPreset !== TriviaGameSettingsPreset.Custom)}
                                 colorScheme={"blue"} variant={gameSettingsPreset === TriviaGameSettingsPreset.Custom ? "solid" : "outline"}
                                 marginLeft={"auto"} marginRight={"auto"}>
                                 custom mode

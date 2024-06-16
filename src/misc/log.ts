@@ -27,7 +27,7 @@ const DEBUG_LOG_LEVEL_TYPES = NORMAL_LOG_LEVEL_TYPES.concat([
     DebugLogType.GameGeneration,
     // DebugLogType.ClueDecision,
     // DebugLogType.Email,
-    // DebugLogType.Voice
+    DebugLogType.Voice
 ]);
 
 const VERBOSE_LOG_LEVEL_TYPES = DEBUG_LOG_LEVEL_TYPES.concat([

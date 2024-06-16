@@ -1,4 +1,5 @@
 
+import { Player } from "./session-constants";
 import { TriviaClueBonus, TriviaClueDecision, TriviaClueDifficulty } from "./trivia-game-constants";
 import { TriviaCategorySettings, TriviaGameSettings, TriviaRoundSettings } from "./trivia-game-settings";
 
@@ -139,6 +140,23 @@ export class TriviaCategory {
 
         this.completed = (completedClues === this.clues.length);
     }
+
+    // returns true if this player responded correctly to every clue in this category
+    didPlayerClear(clientID: string) {
+        if (!this.completed) {
+            return false;
+        }
+
+        for (let clueIndex = 0; clueIndex < this.clues.length; clueIndex++) {
+            const clue = this.clues[clueIndex];
+
+            if (!clue.correctClientIDs || !clue.correctClientIDs.includes(clientID)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 
 // DO NOT TOUCH: mongo schema
@@ -160,6 +178,7 @@ export class TriviaClue {
     year: number;
     bonus: TriviaClueBonus;
     completed?: boolean;
+    correctClientIDs?: string[];
 
     constructor(schema?: TriviaClueSchema, clueValueStep?: number, clueIndex?: number) {
         // default constructor
@@ -214,6 +233,19 @@ export class TriviaClue {
         }
 
         return false;
+    }
+
+    updateClueDecision(responder: Player) {
+        if (!this.correctClientIDs) {
+            this.correctClientIDs = [];
+        }
+
+        if (responder.clueDecisionInfo?.decision === TriviaClueDecision.Correct) {
+            this.correctClientIDs.push(responder.clientID);
+        }
+        else {
+            this.correctClientIDs = this.correctClientIDs.filter(correctClientID => correctClientID !== responder.clientID);
+        }
     }
 }
 

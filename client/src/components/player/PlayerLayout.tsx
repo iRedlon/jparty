@@ -16,7 +16,7 @@ import { LayoutContext } from "../common/Layout";
 import ServerMessageAlert from "../common/ServerMessage";
 import Timer from "../common/Timer";
 import { socket } from "../../misc/socket";
-import { Layer } from "../../misc/ui-constants";
+import { Layer, LocalStorageKey } from "../../misc/ui-constants";
 
 // each state represents the component currently being displayed
 // importantly: multiple session states may render the same component
@@ -42,6 +42,10 @@ export default function PlayerLayout() {
 
     useEffect(() => {
         setForceIdle(false);
+
+        if (context.sessionState === SessionState.ReadingCategoryNames) {
+            localStorage.removeItem(LocalStorageKey.CategoryIndex);
+        }
     }, [context.sessionState]);
 
     const getPlayer = () => {

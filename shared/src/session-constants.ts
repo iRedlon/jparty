@@ -1,9 +1,9 @@
 
 import { TriviaClueDecisionInfo } from "./trivia-game";
-import { TriviaClueDecision } from "./trivia-game-constants";
 
 export enum SessionState {
     Lobby,
+    ReadingCategoryNames,
     PromptClueSelection,
     ReadingClueSelection,
     ReadingClue,
@@ -16,6 +16,7 @@ export enum SessionState {
 }
 
 export enum SessionTimeout {
+    ReadingCategoryName,
     Announcement,
     ReadingClueSelection,
     ReadingClue,
@@ -77,7 +78,6 @@ export class Player {
     submitted: boolean;
     decided: boolean;
     clueDecisionInfo: TriviaClueDecisionInfo | undefined;
-    correctCluesPerCategory: Record<number, number[]>;
     queuedForDeletion: boolean;
 
     constructor(clientID: string, name: string) {
@@ -106,7 +106,6 @@ export class Player {
         this.submitted = false;
         this.decided = false;
         this.clearClueDecision();
-        this.correctCluesPerCategory = {};
         this.queuedForDeletion = false;
     }
 
@@ -130,35 +129,8 @@ export class Player {
         this.resetSubmission();
     }
 
-    updateClueDecision() {
-        if (!this.clueDecisionInfo) {
-            return;
-        }
-
-        if (!this.correctCluesPerCategory[this.clueDecisionInfo.categoryID]) {
-            this.correctCluesPerCategory[this.clueDecisionInfo.categoryID] = [];
-        }
-
-        const decision = this.clueDecisionInfo?.decision;
-
-        if (decision === TriviaClueDecision.Correct) {
-            this.correctCluesPerCategory[this.clueDecisionInfo.categoryID].push(this.clueDecisionInfo.clue.id);
-        }
-        else {
-            this.correctCluesPerCategory[this.clueDecisionInfo.categoryID].filter(clueID => clueID !== this.clueDecisionInfo?.clue.id);
-        }
-    }
-
     clearClueDecision() {
         this.clueDecisionInfo = undefined;
-    }
-
-    getCorrectCluesInCategory(categoryID: number) {
-        if (!this.correctCluesPerCategory[categoryID]) {
-            return 0;
-        }
-
-        return this.correctCluesPerCategory[categoryID].length;
     }
 }
 
