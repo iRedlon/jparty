@@ -11,7 +11,7 @@ export default function MenuPanel_Credits() {
                 <Stack direction={"column"}>
                     <Heading size={"md"}>Credits</Heading>
                     <Link href={SOURCE_CODE_LINK} isExternal>
-                        Source code <ExternalLinkIcon mx={"2px"} />
+                        <u>Source code</u><ExternalLinkIcon mx={"2px"} />
                     </Link>
 
                     <Heading size={"sm"}>Programming and UI</Heading>

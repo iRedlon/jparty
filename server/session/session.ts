@@ -221,6 +221,7 @@ export class Session {
         // the session is waiting for a clue selection from this player so we need to pass that responsibility off to another player
         if (!this.currentAnnouncement && (this.state === SessionState.PromptClueSelection) && (playerID === this.clueSelectorID)) {
             this.clueSelectorID = "";
+            this.resetClueSelection();
             this.promptClueSelection();
         }
 
@@ -573,6 +574,8 @@ export class Session {
             return;
         }
 
+        this.setPlayersIdle();
+
         if (this.isFinalRound()) {
             this.endGame();
         }
@@ -583,6 +586,7 @@ export class Session {
 
     forcePromptClueSelection() {
         this.stopAllTimeouts();
+        this.resetClueSelection();
         this.promptClueSelection();
     }
 
@@ -619,8 +623,7 @@ export class Session {
 
     // clue selection is a stable state, so we want to make sure any unexpected behavior during the game resolves back here
     // and that all relevant session data is reset back to a clean slate for the next clue
-    promptClueSelection() {
-        this.state = SessionState.PromptClueSelection;
+    resetClueSelection() {
         this.setPlayersIdle();
         this.clearPlayerResponses();
         this.spotlightResponderID = "";
@@ -632,6 +635,13 @@ export class Session {
                 this.deletePlayer(playerID);
             }
         }
+
+        this.currentResponderIDs = [];
+        this.previousResponderIDs = [];
+    }
+
+    promptClueSelection() {
+        this.state = SessionState.PromptClueSelection;
 
         const connectedPlayerIDs = this.getConnectedPlayerIDs();
         const previousCorrectResponderIDs = connectedPlayerIDs.filter((playerID: SocketID) => {
@@ -665,9 +675,6 @@ export class Session {
         if (this.clueSelectorID && this.players[this.clueSelectorID]) {
             this.players[this.clueSelectorID].state = PlayerState.PromptClueSelection;
         }
-
-        this.currentResponderIDs = [];
-        this.previousResponderIDs = [];
     }
 
     selectClue(categoryIndex: number, clueIndex: number) {
@@ -719,7 +726,7 @@ export class Session {
     finishClueResponseWindow() {
         this.state = SessionState.WaitingForClueDecision;
         this.setPlayersIdle();
-        
+
         if (this.getCurrentClue()?.isAllPlayClue()) {
             this.spotlightResponderID = "";
         }
@@ -974,6 +981,7 @@ export class Session {
                 {
                     clueValue = this.getClueValue(responder.clueDecisionInfo.clue, responderID, newDecision);
                     clueValueModifier = 1;
+                    responder.clueDecisionInfo.clueValue = clueValue;
                 }
                 break;
         }

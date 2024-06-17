@@ -112,10 +112,10 @@ export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, strin
         "One clue to go."
     ],
     [SessionAnnouncement.StartRound]: [
-        `${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}. Good luck in the next round. Start us off ${VoiceLineVariable.ClueSelectorName}`, 
+        `${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}. Good luck in the next round!`, 
         `Good round everyone. ${VoiceLineVariable.LeaderName} has the lead. Let's move on to round ${VoiceLineVariable.RoundNumber}.`, 
-        `Round ${VoiceLineVariable.RoundNumber} is coming up. Let's find out if anyone can take the lead from ${VoiceLineVariable.LeaderName}`,
-        `Well played everyone. ${VoiceLineVariable.RoundNumber} is next. Good luck. Get us started ${VoiceLineVariable.ClueSelectorName}`
+        `Round ${VoiceLineVariable.RoundNumber} is coming up. Let's find out if anyone can take the lead from ${VoiceLineVariable.LeaderName}.`,
+        `Well played everyone. Round ${VoiceLineVariable.RoundNumber} is next. Good luck!`
     ],
     [SessionAnnouncement.StartFinalRound]: [
         `This is the final round! ${VoiceLineVariable.LeaderName} is the one to beat.`,

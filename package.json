@@ -9,8 +9,8 @@
         "build": "tsc",
         "heroku-postbuild": "npm run build && cd client && npm run build",
         "build-all": "npm run heroku-postbuild",
-        "debug": "cross-env DEBUG_MODE=true npx tsx ./build/src/controller.js",
-        "prod": "npx tsx ./build/src/controller.js"
+        "debug": "cross-env DEBUG_MODE=true npx tsx ./build/server/controller.js",
+        "prod": "npx tsx ./build/server/controller.js"
     },
     "dependencies": {
         "@types/express": "^4.17.21",

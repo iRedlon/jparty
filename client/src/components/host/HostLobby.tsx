@@ -116,7 +116,7 @@ export default function HostLobby() {
                 <Box id={"logo-box"} className={"box"} padding={"2em"}>
                     <Heading fontFamily={"logo"} fontSize={"4em"}>jparty.io</Heading>
                     <Link href={PATCH_NOTES_LINK} isExternal>
-                        <i>patch notes <ExternalLinkIcon mx={"2px"} /></i>
+                        <i><u>patch notes</u></i> <ExternalLinkIcon mx={"2px"} />
                     </Link>
 
                     <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />

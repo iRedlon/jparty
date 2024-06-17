@@ -1,11 +1,12 @@
 
 import { Box, Button, Heading, Stack } from "@chakra-ui/react";
-import { HostSocket, ServerSocket, SessionState } from "jparty-shared";
+import { AudioType, HostSocket, ServerSocket, SessionState } from "jparty-shared";
 import { useContext } from "react";
 
 import HostScoreboard from "./HostScoreboard";
 import { LayoutContext } from "../common/Layout";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
+import { stopAudio } from "../../misc/audio";
 import { emitMockSocketEvent } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
 
@@ -16,6 +17,7 @@ export default function HostGameOver() {
 
     const emitPlayAgain = () => {
         socket.emit(HostSocket.PlayAgain);
+        stopAudio(AudioType.LongApplause);
 
         // force this client back to the lobby (using the mock socket for this purpose is a little scuffed I admit)
         emitMockSocketEvent(ServerSocket.UpdateSessionState, SessionState.Lobby);

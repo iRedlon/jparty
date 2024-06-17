@@ -5,11 +5,12 @@ import { socket } from "./socket";
 import BuzzWindowTimeoutMP3 from "../assets/buzz-window-timeout.mp3";
 import ApplauseMP3 from "../assets/applause.mp3";
 import GameMusicMP3 from "../assets/game-music.mp3";
-import LobbyMusicMP3 from "../assets/lobby-music.mp3";
+// import LobbyMusicMP3 from "../assets/lobby-music.mp3";
 import LongApplauseMP3 from "../assets/long-applause.mp3";
 
 // music
-const lobbyMusicAudio = new Audio(LobbyMusicMP3);
+// todo: if we want to play a different song on the lobby than during the game... re-implement the "lobby music" audio type
+// const lobbyMusicAudio = new Audio(LobbyMusicMP3);
 const gameMusicAudio = new Audio(GameMusicMP3);
 
 // sound FX
@@ -38,7 +39,7 @@ export function updateVolume(volumeType: VolumeType, volume: number) {
     localStorage.setItem(volumeType, `${volume}`);
 
     // update the volume for any audios that may be in progress
-    lobbyMusicAudio.volume = getModVolume(VolumeType.Music);
+    // lobbyMusicAudio.volume = getModVolume(VolumeType.Music);
     gameMusicAudio.volume = getModVolume(VolumeType.Music);
     
     buzzWindowTimeoutAudio.volume = getModVolume(VolumeType.SoundEffects);
@@ -53,20 +54,20 @@ updateVolume(VolumeType.SoundEffects, getVolume(VolumeType.SoundEffects));
 
 export function playAudio(audioType: AudioType) {
     switch (audioType) {
-        case AudioType.LobbyMusic:
-            {
-                if (lobbyMusicAudio.paused || !lobbyMusicAudio.currentTime) {
-                    gameMusicAudio.pause();
+        // case AudioType.LobbyMusic:
+        //     {
+        //         if (lobbyMusicAudio.paused || !lobbyMusicAudio.currentTime) {
+        //             gameMusicAudio.pause();
 
-                    lobbyMusicAudio.loop = true;
-                    lobbyMusicAudio.play();
-                }
-            }
-            break;
+        //             lobbyMusicAudio.loop = true;
+        //             lobbyMusicAudio.play();
+        //         }
+        //     }
+        //     break;
         case AudioType.GameMusic:
             {
                 if (gameMusicAudio.paused || !gameMusicAudio.currentTime) {
-                    lobbyMusicAudio.pause();
+                    // lobbyMusicAudio.pause();
 
                     gameMusicAudio.loop = true;
                     gameMusicAudio.play();
@@ -89,6 +90,22 @@ export function playAudio(audioType: AudioType) {
             {
                 longApplauseAudio.currentTime = 0;
                 longApplauseAudio.play();
+            }
+            break;
+    }
+}
+
+// audio "stop" is done by pausing the audio. it'll always be restarted the next time it plays anyway
+export function stopAudio(audioType: AudioType) {
+    switch (audioType) {
+        case AudioType.Applause:
+            {
+                applauseAudio.pause();
+            }
+            break;
+        case AudioType.LongApplause:
+            {
+                longApplauseAudio.pause();
             }
             break;
     }

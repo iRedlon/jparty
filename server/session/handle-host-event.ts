@@ -32,6 +32,8 @@ function handleUpdateGameSettingsPreset(socket: Socket, sessionName: string, gam
     }
 
     session.triviaGameSettingsPreset = gameSettingsPreset;
+
+    io.to(Object.keys(session.hosts)).except(socket.id).emit(HostServerSocket.UpdateGameSettingsPreset, gameSettingsPreset);
 }
 
 function handleUpdateVoiceType(socket: Socket, sessionName: string, voiceType: VoiceType) {
@@ -138,7 +140,7 @@ async function handleGenerateCustomGame(socket: Socket, sessionName: string, gam
         return;
     }
 
-    socket.emit(HostServerSocket.UpdateGameSettingsPreset, TriviaGameSettingsPreset.Custom);
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateGameSettingsPreset, TriviaGameSettingsPreset.Custom);
     socket.emit(ServerSocket.Message, new ServerSocketMessage("Custom settings were saved successfully"));
     emitTriviaRoundUpdate(sessionName);
     callback(true);

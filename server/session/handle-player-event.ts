@@ -5,9 +5,10 @@ import {
 } from "jparty-shared";
 import { Socket } from "socket.io";
 
+import { playAudio, playVoiceLine } from "./audio.js";
 import {
     emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, handleDisconnect, joinSession,
-    playAudio, playVoiceLine, showAnnouncement, startPositionChangeAnimation, startTimeout, stopTimeout
+    showAnnouncement, startPositionChangeAnimation, startTimeout, stopTimeout
 } from "./session-utils.js";
 import { io } from "../controller.js";
 import { DebugLogType, debugLog, formatDebugLog } from "../misc/log.js";
@@ -111,6 +112,7 @@ function recursiveReadCategoryName(sessionName: string) {
 
     // we're done reading category names
     if (session.readingCategoryIndex >= currentRound.settings.numCategories) {
+        session.resetClueSelection();
         session.promptClueSelection();
         playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
 
@@ -214,6 +216,9 @@ export function attemptForceSelectFinalClue(sessionName: string) {
         if (!session) {
             return;
         }
+
+        // because this isn't a "real" clue selection, we may not have reset clue selection yet
+        session.resetClueSelection();
 
         const fakeSocket = { id: session.clueSelectorID } as Socket;
         handleSelectClue(fakeSocket, sessionName, finalCluePosition.categoryIndex, finalCluePosition.clueIndex);
@@ -523,12 +528,12 @@ function finishRevealClueDecision(sessionName: string, showCorrectAnswer: boolea
             return;
         }
         else {
-            session.setPlayersIdle();
+            session.resetClueSelection();
             emitStateUpdate(sessionName);
 
-            session.promptClueSelection();
             const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
             if (!didForceSelectFinalClue && session.hasNewClueSelector()) {
+                session.promptClueSelection();
                 playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
             }
         }
@@ -570,6 +575,7 @@ function finishRound(sessionName: string) {
     }
 
     session.advanceRound();
+    emitStateUpdate(sessionName);
 
     let announcement = session.isFinalRound() ? SessionAnnouncement.StartFinalRound : SessionAnnouncement.StartRound;
 
@@ -583,11 +589,10 @@ function finishRound(sessionName: string) {
         if (!session) {
             return;
         }
-
+        
         emitTriviaRoundUpdate(sessionName);
 
         if (session.state === SessionState.GameOver) {
-            emitStateUpdate(sessionName);
             return;
         }
 

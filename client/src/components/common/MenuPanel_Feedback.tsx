@@ -36,13 +36,13 @@ export default function MenuPanel_Feedback() {
                 <Heading size={"md"} marginBottom={"0.5em"}>Submit feedback</Heading>
 
                 <Link href={KNOWN_ISSUES_LINK} isExternal>
-                    Known issues <ExternalLinkIcon mx={"2px"} />
+                    <u>Known issues</u><ExternalLinkIcon mx={"2px"} />
                 </Link>
 
                 <br />
 
                 <Link href={ROADMAP_LINK} isExternal>
-                    Roadmap <ExternalLinkIcon mx={"2px"} />
+                    <u>Roadmap</u><ExternalLinkIcon mx={"2px"} />
                 </Link>
 
                 <Box marginTop={"1em"} marginBottom={"1em"}>

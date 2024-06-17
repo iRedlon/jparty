@@ -43,7 +43,7 @@ In production, they're set manually within the server environment provided by ou
 - Namecheap (Domain Name, SSL, Prod Email)
 - Heroku (Web Hosting)
 
-## [Sessions](../src/session/session.ts)
+## [Sessions](../server/session/session.ts)
 - A "session" is an object that stores all of the relevant data for a particular game session. This includes client info for hosts and players, its current trivia game, and most importantly: its state
 - Session state is ultimately how the client knows what to display. The behavior of most server code can be boiled down to: respond to a client event by updating session state, then send the results of that state changes back to the client
 - All of the sessions that are active on the server are stored within an object called "sessions"
@@ -64,18 +64,18 @@ In production, they're set manually within the server environment provided by ou
 - All server <-> client networking flows through socket.io. As a style rule: all socket events must be stored as an enum value, where the enum is labelled by its sender
 - Within a session, hosts and players are associated with their socket ID, which is ultimately how we send messages to specific clients. IMPORTANT: socket IDs are transient, they're likely to change often and unpredictably. This codebase is actively concerned with handling that possibility
 - Clients store a unique "client ID" so they can be remembered if they attempt to reconnect after disconnecting. This will always stay the same for a particular client, even as their socket ID changes
-- Client events are handled seperately depending on if they were emitted by a [host](../src/session/handle-host-event.ts) or [player](../src/session/handle-player-event.ts). As a style rule: event handlers are responsible for communicating back with clients, while the session object is only responsible for reading and writing its own state
-- Any event handlers or session utilities that are shared between host and player clients are stored in [session-utils](../src/session/session-utils.ts)
+- Client events are handled seperately depending on if they were emitted by a [host](../server/session/handle-host-event.ts) or [player](../server/session/handle-player-event.ts). As a style rule: event handlers are responsible for communicating back with clients, while the session object is only responsible for reading and writing its own state
+- Any event handlers or session utilities that are shared between host and player clients are stored in [session-utils](../server/session/session-utils.ts)
 
-## [Logging](../src/misc/log.ts)
+## [Logging](../server/misc/log.ts)
 - All server logging flows through a single custom function: "debugLog". This is so that each log can be labelled by the system its a part of (i.e. connection, clue decision, game generation) and can be chosen to be logged or not depending on the current log level (which is ultimately set by an environment variable)
 
-## [Trivia Database](../src/api-requests/generate-trivia-game.ts)
+## [Trivia Database](../server/api-requests/generate-trivia-game.ts)
 - jparty has its own database for trivia clues. It's organized as follows: category type -> categories -> clue difficulty -> clues
 - For example: within the "Science" category type, we have an array of categories including one called "Solar System". Within "Solar System" we have an array of clues including one of difficulty=1 (easiest) which is "The Earth orbits around this star"
 - The trivia game generation process consists of randomly selecting categories from mongo using queries based on the given settings for the requesting session
 
-## [Clue Decisions](../src/api-requests/clue-decision.ts)
+## [Clue Decisions](../server/api-requests/clue-decision.ts)
 - It's ChatGPT. In other words, it's an OpenAI assistant whose job is to evaluate player clue responses
 - Its reply must be: "correct", "incorrect", or "needs more detail"
 - Its exact instructions are:
