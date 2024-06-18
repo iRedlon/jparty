@@ -106,6 +106,7 @@ export function joinSessionAsHost(socket: Socket, sessionName: string) {
         socket.emit(ServerSocket.BeginSpectate);
     }
 
+    socket.emit(HostServerSocket.UpdateGameSettingsPreset, session.triviaGameSettingsPreset);
     socket.emit(HostServerSocket.UpdateReadingCategoryIndex, session.readingCategoryIndex);
 
     if (session.spotlightResponderID) {

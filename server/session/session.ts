@@ -10,6 +10,8 @@ import { getClueDecision } from "../api-requests/clue-decision.js";
 import { generateTriviaGame } from "../api-requests/generate-trivia-game.js";
 import { formatClueResponse } from "../misc/text-utils.js";
 
+import { debugLog, DebugLogType } from "../misc/log.js";
+
 // store timeouts in their own container so we can cancel a timeout early and still trigger its callback
 export class TimeoutInfo {
     timeout: NodeJS.Timeout;
@@ -49,6 +51,7 @@ export class Session {
     // store transient data that needs to be restored for clients in the event that they disconnect and reconnect
     readingCategoryIndex: number;
     currentAnnouncement: SessionAnnouncement | undefined;
+    buzzPlayerIDs: SocketID[];
     displayingCorrectAnswer: boolean;
     voiceType: VoiceType;
     currentVoiceLine: string;
@@ -84,6 +87,7 @@ export class Session {
         this.timeoutInfo = {};
         this.readingCategoryIndex = 0;
         this.currentAnnouncement = undefined;
+        this.buzzPlayerIDs = [];
         this.displayingCorrectAnswer = false;
         this.currentVoiceLine = "";
 
@@ -263,6 +267,8 @@ export class Session {
     }
 
     updatePlayerSocketID(oldPlayerID: SocketID, newPlayerID: SocketID) {
+        this.buzzPlayerIDs = this.buzzPlayerIDs.map(playerID => (playerID === oldPlayerID) ? newPlayerID : playerID);
+
         this.gameStarterID = (this.gameStarterID === oldPlayerID) ? newPlayerID : this.gameStarterID;
         this.clueSelectorID = (this.clueSelectorID === oldPlayerID) ? newPlayerID : this.clueSelectorID;
         this.spotlightResponderID = (this.spotlightResponderID === oldPlayerID) ? newPlayerID : this.spotlightResponderID;
@@ -402,6 +408,8 @@ export class Session {
     // we should never need to fall back on this but just in case...
     static DEFAULT_TIMEOUT_DURATION_MS = 3000;
 
+    static TOSSUP_WINDOW_DURATION_MS = 1000;
+
     getTimeoutDurationMs(timeout: SessionTimeout) {
         let durationMs = 0;
 
@@ -427,6 +435,18 @@ export class Session {
             case SessionTimeout.BuzzWindow:
                 {
                     durationMs = this.triviaGame.settings.buzzWindowDurationSec * 1000;
+                }
+                break;
+            case SessionTimeout.TossupWindow:
+                {
+                    durationMs = Session.TOSSUP_WINDOW_DURATION_MS;
+
+                    // an easier clue is more likely to be a tossup. to make the effect of the tossup delay less noticable, we use the full delay duration
+                    // for easier clues, while using shorter and shorter delays as the clues become more difficult
+                    const currentClue = this.getCurrentClue();
+                    if (currentClue) {
+                        durationMs /= currentClue.difficulty;
+                    }
                 }
                 break;
             case SessionTimeout.ResponseWindow:
@@ -701,6 +721,7 @@ export class Session {
 
     displayTossupClue() {
         this.state = SessionState.ClueTossup;
+        this.buzzPlayerIDs = [];
         this.spotlightResponderID = "";
 
         for (const playerID in this.players) {
@@ -712,6 +733,36 @@ export class Session {
 
             this.players[playerID].state = PlayerState.PromptBuzz;
         }
+    }
+
+    buzz(playerID: SocketID) {
+        const player = this.players[playerID];
+        if (!player) {
+            return;
+        }
+
+        if (!this.buzzPlayerIDs.includes(playerID)) {
+            // debugLog(DebugLogType.Buzz, `${player.name} buzzed in!`);
+            this.buzzPlayerIDs.push(playerID);
+        }
+
+        player.setIdle();
+    }
+
+    getFinalBuzzPlayerID() {
+        if (!this.buzzPlayerIDs.length) {
+            return;
+        }
+
+        const playerID = getRandomChoice(this.buzzPlayerIDs);
+        const player = this.players[playerID];
+        if (!player || !player.connected) {
+            return;
+        }
+
+        // debugLog(DebugLogType.Buzz, `${player.name} was chosen to respond!`);
+
+        return playerID;
     }
 
     // ==========================

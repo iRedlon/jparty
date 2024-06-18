@@ -275,5 +275,5 @@ export const TEST_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundTyp
     { [TriviaClueBonus.Wager]: 0 });
 export const TEST_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 1, 1, 0,
     { [TriviaClueBonus.AllWager]: 1 });
-export const TEST_ROUND_SETTINGS = [TEST_SINGLE_ROUND_SETTINGS, TEST_DOUBLE_ROUND_SETTINGS, TEST_FINAL_ROUND_SETTINGS];
+export const TEST_ROUND_SETTINGS = [TEST_DOUBLE_ROUND_SETTINGS, TEST_DOUBLE_ROUND_SETTINGS, TEST_FINAL_ROUND_SETTINGS];
 export const TEST_GAME_SETTINGS = new TriviaGameSettings(2000, TriviaGameDifficulty.Easy, 5, 12, 4, TEST_ROUND_SETTINGS);

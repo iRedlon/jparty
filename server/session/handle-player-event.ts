@@ -329,6 +329,13 @@ function finishBuzzWindow(sessionName: string) {
 
     stopTimeout(sessionName, SessionTimeout.BuzzWindow);
 
+    // if the tossup window is active, it means that someone buzzed in. the buzz window didn't really end, so bail out
+    if (session.timeoutInfo[SessionTimeout.TossupWindow]) {
+        // restarting a timeout back to 0 is meant to immediatly trigger its callback
+        session.restartTimeout(SessionTimeout.TossupWindow, 0);
+        return;
+    }
+
     if (!session.getCurrentClue()?.isAllPlayClue()) {
         playAudio(sessionName, AudioType.BuzzWindowTimeout);
     }
@@ -350,8 +357,26 @@ function handleBuzz(socket: Socket, sessionName: string) {
         return;
     }
 
-    stopTimeout(sessionName, SessionTimeout.BuzzWindow);
-    promptResponse(sessionName, PlayerResponseType.Clue, socket.id);
+    // this must be the first buzz attempt!
+    if (!session.buzzPlayerIDs.length) {
+        startTimeout(sessionName, SessionTimeout.TossupWindow, () => {
+            stopTimeout(sessionName, SessionTimeout.TossupWindow);
+
+            let session = getSession(sessionName);
+            if (!session || (session.state !== SessionState.ClueTossup)) {
+                return;
+            }
+
+            const responderID = session.getFinalBuzzPlayerID();
+            if (responderID) {
+                stopTimeout(sessionName, SessionTimeout.BuzzWindow);
+                promptResponse(sessionName, PlayerResponseType.Clue, responderID);
+            }
+        });
+    }
+
+    session.buzz(socket.id);
+    emitStateUpdate(sessionName);
 }
 
 function handleUpdateResponse(socket: Socket, sessionName: string, response: string) {
@@ -532,9 +557,12 @@ function finishRevealClueDecision(sessionName: string, showCorrectAnswer: boolea
             emitStateUpdate(sessionName);
 
             const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
-            if (!didForceSelectFinalClue && session.hasNewClueSelector()) {
+            if (!didForceSelectFinalClue) {
                 session.promptClueSelection();
-                playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
+
+                if (session.hasNewClueSelector()) {
+                    playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
+                }
             }
         }
     }
@@ -589,7 +617,7 @@ function finishRound(sessionName: string) {
         if (!session) {
             return;
         }
-        
+
         emitTriviaRoundUpdate(sessionName);
 
         if (session.state === SessionState.GameOver) {

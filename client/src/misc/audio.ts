@@ -31,7 +31,6 @@ export function getVolume(volumeType: VolumeType) {
 
 export function getModVolume(volumeType: VolumeType) {
     const volume = getVolume(volumeType);
-    console.log(volume);
     return volume * getVolume(VolumeType.Master);
 }
 

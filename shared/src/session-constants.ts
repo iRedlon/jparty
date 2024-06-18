@@ -21,6 +21,7 @@ export enum SessionTimeout {
     ReadingClueSelection,
     ReadingClue,
     BuzzWindow,
+    TossupWindow,
     ResponseWindow,
     ReadingClueDecision
 }
