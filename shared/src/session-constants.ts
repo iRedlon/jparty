@@ -72,6 +72,7 @@ export class Player {
     connected: boolean;
     state: PlayerState;
     score: number;
+    tossupWeight: number;
     positionChange: number;
     minWager: number;
     maxWager: number;
@@ -100,6 +101,7 @@ export class Player {
     reset() {
         this.setIdle();
         this.score = 0;
+        this.tossupWeight = 1;
         this.positionChange = 0;
         this.minWager = 0;
         this.maxWager = 0;

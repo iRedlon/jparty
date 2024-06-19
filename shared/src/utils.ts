@@ -11,20 +11,25 @@ export function getRandomChoice<Type>(a: Type[]) {
     return a[Math.floor(Math.random() * a.length)];
 }
 
-// i.e. distribution = { 0: 0.25, 1: 0.25, 2: 0.25, 3: 0.25 }
-export function getWeightedRandomNum(distribution: Record<number, number>) {
+export function getWeightedRandomNum(distribution: Object) {
+    return parseInt(getWeightedRandomKey(distribution));
+}
+
+export function getWeightedRandomKey(distribution: Object) {
+    const totalWeight = Object.values(distribution).reduce((a: any, b: any) => a + b, 0);
+
     let sum = 0;
     const r = Math.random();
 
-    for (const [value, probability] of Object.entries(distribution)) {
-        sum += probability;
+    for (const [key, weight] of Object.entries(distribution)) {
+        sum += (weight / totalWeight);
 
         if (r <= sum) {
-            return parseInt(value);
+            return key;
         }
     }
 
-    return 0;
+    throw new Error("getWeightedRandomKey: no valid output");
 }
 
 export function getEnumKeys(e: Object) {

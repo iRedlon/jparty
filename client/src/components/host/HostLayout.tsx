@@ -23,6 +23,7 @@ import { Layer } from "../../misc/ui-constants";
 import "../../style/components/HostLayout.css";
 
 enum HostComponentState {
+    None,
     Announcement,
     Lobby,
     Board,
@@ -133,7 +134,7 @@ export default function HostLayout() {
         }
 
         if (context.sessionState === SessionState.Lobby) {
-            return [<HostLobby />, HostComponentState.Lobby];
+            return context.sessionName ? [<HostLobby />, HostComponentState.Lobby] : [<></>, HostComponentState.None];
         }
 
         if (!context.triviaRound) {
@@ -171,9 +172,9 @@ export default function HostLayout() {
             return [<HostGameOver />, HostComponentState.GameOver];
         }
 
-        return [<HostLobby />, HostComponentState.Lobby];
+        return [<></>, HostComponentState.None];
     }
-
+    
     const [HostComponent, componentState] = getHostComponent();
 
     return (

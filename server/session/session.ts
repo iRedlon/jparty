@@ -1,6 +1,6 @@
 
 import {
-    AttemptReconnectResult, getEnumSize, getRandomChoice, getSortedSessionPlayerIDs, getVoiceDurationMs, Host, Player, PlayerResponseType, PlayerState,
+    AttemptReconnectResult, getEnumSize, getRandomChoice, getSortedSessionPlayerIDs, getVoiceDurationMs, getWeightedRandomKey, Host, Player, PlayerResponseType, PlayerState,
     SessionAnnouncement, SessionHosts, SessionPlayers, SessionState, SessionTimeout, SocketID,
     TriviaClue, TriviaClueBonus, TriviaClueDecision, TriviaClueDecisionInfo,
     TriviaGame, TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
@@ -408,7 +408,7 @@ export class Session {
     // we should never need to fall back on this but just in case...
     static DEFAULT_TIMEOUT_DURATION_MS = 3000;
 
-    static TOSSUP_WINDOW_DURATION_MS = 1000;
+    static TOSSUP_WINDOW_DURATION_MS = 750;
 
     getTimeoutDurationMs(timeout: SessionTimeout) {
         let durationMs = 0;
@@ -742,7 +742,7 @@ export class Session {
         }
 
         if (!this.buzzPlayerIDs.includes(playerID)) {
-            // debugLog(DebugLogType.Buzz, `${player.name} buzzed in!`);
+            debugLog(DebugLogType.Buzz, `${player.name} buzzed in!`);
             this.buzzPlayerIDs.push(playerID);
         }
 
@@ -754,15 +754,40 @@ export class Session {
             return;
         }
 
-        const playerID = getRandomChoice(this.buzzPlayerIDs);
-        const player = this.players[playerID];
-        if (!player || !player.connected) {
-            return;
+        let buzzPlayerTossupWeights: any = {};
+        for (const buzzPlayerID of this.buzzPlayerIDs) {
+            const buzzPlayer = this.players[buzzPlayerID];
+            if (!buzzPlayer || !buzzPlayer.connected) {
+                continue;
+            }
+
+            buzzPlayerTossupWeights[buzzPlayerID] = buzzPlayer.tossupWeight;
         }
 
-        // debugLog(DebugLogType.Buzz, `${player.name} was chosen to respond!`);
+        const finalBuzzPlayerID = getWeightedRandomKey(buzzPlayerTossupWeights);
+        const finalBuzzPlayer = this.players[finalBuzzPlayerID];
 
-        return playerID;
+        debugLog(DebugLogType.Buzz, `${finalBuzzPlayer.name} was chosen to respond!`);
+
+        // this wasn't a tossup if only one player attempted to buzz in
+        if (this.buzzPlayerIDs.length > 1) {
+            for (const buzzPlayerID of this.buzzPlayerIDs) {
+                const buzzPlayer = this.players[buzzPlayerID];
+                if (!buzzPlayer) {
+                    continue;
+                }
+
+                // the chosen player will be half as likely to win the next tossup they're part of
+                // all of the non-chosen players are twice as likely to win the next tossup they're each a part of
+
+                const weightModifier = (buzzPlayerID === finalBuzzPlayerID) ? 0.5 : 2;
+                buzzPlayer.tossupWeight *= weightModifier;
+
+                debugLog(DebugLogType.Buzz, `${buzzPlayer.name} now has a tossup weight of: ${buzzPlayer.tossupWeight}`);
+            }
+        }
+
+        return finalBuzzPlayerID;
     }
 
     // ==========================

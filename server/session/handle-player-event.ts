@@ -115,8 +115,6 @@ function recursiveReadCategoryName(sessionName: string) {
         session.resetClueSelection();
         session.promptClueSelection();
         playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
-
-        io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateReadingCategoryIndex, -1);
         emitStateUpdate(sessionName);
         return;
     }
@@ -603,6 +601,7 @@ function finishRound(sessionName: string) {
     }
 
     session.advanceRound();
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateReadingCategoryIndex, -1);
     emitStateUpdate(sessionName);
 
     let announcement = session.isFinalRound() ? SessionAnnouncement.StartFinalRound : SessionAnnouncement.StartRound;

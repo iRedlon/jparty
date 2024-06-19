@@ -6,7 +6,7 @@ Linked files/folders lead to relevant code locations for each concept
 ## File Structure
 - The node project at the root of the jparty directory is the "server project" (jparty-server); written in typescript express
 - The client directory contains the "client project" (jparty-client); written in typescript react
-- The shared directory contains the "shared project" (jparty-shared); written in plain typescript; contains enums/classes/types/etc. that are shared by both the server and client projects. Both projects utilize the shared project in the form of a local npm dependency
+- The shared directory contains the "shared project" (jparty-shared); written in node typescript; contains enums/classes/types/etc. that are shared by both the server and client projects. Both projects utilize the shared project in the form of a local npm dependency
 
 ## Environment Variables
 jparty server and client both rely on environment variables, most notably the credentials for connecting to 3rd-party services.
@@ -46,7 +46,7 @@ In production, they're set manually within the server environment provided by ou
 ## [Sessions](../server/session/session.ts)
 - A "session" is an object that stores all of the relevant data for a particular game session. This includes client info for hosts and players, its current trivia game, and most importantly: its state
 - Session state is ultimately how the client knows what to display. The behavior of most server code can be boiled down to: respond to a client event by updating session state, then send the results of that state changes back to the client
-- All of the sessions that are active on the server are stored within an object called "sessions"
+- All of the sessions that are active on the server are stored within an object called "sessions" mapping the session name to the corresponding session object
 
 ## Clients
 - A "client" refers to any device running the client app whether as a host or player
@@ -59,6 +59,11 @@ In production, they're set manually within the server environment provided by ou
 - Clients don't store the entire session object as state, but they do all store quite a bit of session data as state
 - The highest level component in the react app is [Layout](../client/src/components/common/Layout.tsx) which is responsible for listening to all socket events from the server, and updating its state accordingly. This state is passed down to all components (for both hosts and players) in the form of LayoutContext
 - [Host](../client/src/components/host/HostLayout.tsx) and [player](../client/src/components/player/PlayerLayout.tsx) each has their own layout where they store their own custom state that the other doesn't need to be knowledgable of
+
+## Client Animations
+- Client animations are mostly built with an external tool. That is CSSTransitions of React Transition Group
+- We use this tool to trigger specific CSS animations when certain client state changes. The best example of this are the SwitchTransitions set up for HostLayout and PlayerLayout. These are keyed on session state, and thus performs a specific animation as we leave one state, and a specific animation as we enter another state
+- For more on the React code side, reference the [React Transition Group documentation](https://reactcommunity.org/react-transition-group). In jparty-client, these animations are specified in .css files. They'll always be named for the .tsx file they accompany. An example are [these animations](../client/src/style/components/HostLobby.css) for host lobby boxes which are defined to slide in when entering the lobby state, and slide out when leaving the lobby state
 
 ## Socket Networking
 - All server <-> client networking flows through socket.io. As a style rule: all socket events must be stored as an enum value, where the enum is labelled by its sender
@@ -75,6 +80,14 @@ In production, they're set manually within the server environment provided by ou
 - For example: within the "Science" category type, we have an array of categories including one called "Solar System". Within "Solar System" we have an array of clues including one of difficulty=1 (easiest) which is "The Earth orbits around this star"
 - The trivia game generation process consists of randomly selecting categories from mongo using queries based on the given settings for the requesting session
 
+## Buzz Tossup
+- A new feature in jparty is a catchup mechanic intended to handle "buzz tossups" in a more even way
+- A "buzz tossup" is a situation where multiple people buzz in for a clue at around the same moment. In a real trivia competition, it's just a matter of speed but there's no guarantee in network speed between different player devices. Thus we shouldn't give the buzz to the first player that the server hears from
+- The solution is to add a small delay (less than a second) when the initial player buzzes in, creating a window where other players may still buzz in. Once this window closes, the buzz is granted to a player based on a weighted random selection
+- This weight representing win likelihood is the crux of the catchup mechanic. All players start with an equal weight of 1. Winning a buzz tossup halves a player's weight, while lossing a buzz tossup doubles their weight. Thus everyone should win around the same number of buzz tossups
+- This delay is somewhat annoying in that it's not as responsive as other user inputs in the game. I think it's a neccessary evil though, so to lessen the blow: the delay timer for each clue is divided by its clue dificulty. That is to say that a very easy clue will use the full 750ms, while a very difficult one will only have a 150ms delay
+- This is because easier clues are more likely to result in a buzz tossup where multiple players know the answer
+
 ## [Clue Decisions](../server/api-requests/clue-decision.ts)
 - It's ChatGPT. In other words, it's an OpenAI assistant whose job is to evaluate player clue responses
 - Its reply must be: "correct", "incorrect", or "needs more detail"
@@ -87,7 +100,7 @@ In production, they're set manually within the server environment provided by ou
 - Test #5: `trivia question: "This is the capital of Finland". correct answer: "helsinki". response: "hellsinky"` should be `correct`
 
 ## Debug Mode
-- An offline client (not connected to a web socket) will automatically run in debug mode. In order to run both the server and client in debug mode, the DEBUG_MODE environment variable must be set on the server (it will be set when using the "npm run debug" script on server)
+- An offline client (not connected to a web socket) will always start up in debug mode. In order to run both the server and client in debug mode, the DEBUG_MODE environment variable must be set on the server (it will be set when using the "npm run debug" script on server)
 - Debug mode enables a few tools and shortcuts for ease of testing, including these on client:
   - Debug panel in settings menu allowing you to use debug commands
   - Click clues on HostBoard to select them
@@ -101,4 +114,4 @@ In production, they're set manually within the server environment provided by ou
 - There are two TTS systems in use in jparty: the first is API-requested OpenAI TTS with a very realistic sounding voice. This service costs money per request and is enabled/disabled with an environment variable
 - The second is the built-in browser screen reader. This TTS is actually pretty good in terms of pronunciation, but is still very robotic. We support it because it's free and not API requested so if the API needs to be disabled or is otherwise not working for any reason: we can easily fall back on the screen reader
 - Many timers in the game rely on the TTS system (i.e. when reading out the clue, we need to trigger the next state change once it's done being read aloud) but for various reasons, it's difficult to tell exactly how long a voice line will take to say out loud
-- To solve this, we start the timer with an educated estimate that's intentionally generous. Then, once we have more info about exactly how long it will take to be spoken, we update the timer by cancelling it and restarting it with our new duration. These timers are always hidden from players so the mid-timer update isn't jarring or confusing
+- To solve this, we start the timer with an educated estimate that's intentionally generous. Then, once we have more info about exactly how long it will take to be spoken, we update the timer by cancelling it and restarting it with our new duration. These timers are always hidden from players so the mid-timer duration update isn't jarring or confusing
