@@ -206,7 +206,7 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
             </Stack>
 
             <Box id={"leaderboard-box"} className={"box side-box"}>
-                <Tooltip label={"games must be normal mode. Player must not have earned more than $2000 from decision reversals"} placement={"top"}>
+                <Tooltip label={"Games must be normal mode. Player must not have earned more than $2000 from decision reversals"} placement={"top"}>
                     <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>leaderboard</Heading>
                 </Tooltip>
 
