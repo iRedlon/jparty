@@ -1,4 +1,5 @@
 
+import { MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD } from "./leaderboard-constants";
 import { TriviaClueDecisionInfo } from "./trivia-game";
 
 export enum SessionState {
@@ -72,6 +73,7 @@ export class Player {
     connected: boolean;
     state: PlayerState;
     score: number;
+    earnedReversalScore: number;
     tossupWeight: number;
     positionChange: number;
     minWager: number;
@@ -101,6 +103,7 @@ export class Player {
     reset() {
         this.setIdle();
         this.score = 0;
+        this.earnedReversalScore = 0;
         this.tossupWeight = 1;
         this.positionChange = 0;
         this.minWager = 0;
@@ -134,6 +137,10 @@ export class Player {
 
     clearClueDecision() {
         this.clueDecisionInfo = undefined;
+    }
+
+    qualifiesForLeaderboard() {
+        return (this.score > 0) && (this.earnedReversalScore <= MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD);
     }
 }
 

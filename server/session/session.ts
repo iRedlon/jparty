@@ -1,6 +1,6 @@
 
 import {
-    AttemptReconnectResult, getEnumSize, getRandomChoice, getSortedSessionPlayerIDs, getVoiceDurationMs, getWeightedRandomKey, Host, Player, PlayerResponseType, PlayerState,
+    AttemptReconnectResult, getEnumSize, getRandomChoice, getSortedSessionPlayerIDs, getVoiceDurationMs, getWeightedRandomKey, Host, MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD, Player, PlayerResponseType, PlayerState,
     SessionAnnouncement, SessionHosts, SessionPlayers, SessionState, SessionTimeout, SocketID,
     TriviaClue, TriviaClueBonus, TriviaClueDecision, TriviaClueDecisionInfo,
     TriviaGame, TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
@@ -330,6 +330,12 @@ export class Session {
         }
     }
 
+    clearPlayerClueDecisions() {
+        for (const playerID in this.players) {
+            this.players[playerID].clearClueDecision();
+        }
+    }
+
     getPlayerPosition(playerID: SocketID) {
         const sortedPlayerIDs = getSortedSessionPlayerIDs(this.players);
         return sortedPlayerIDs.indexOf(playerID);
@@ -343,8 +349,20 @@ export class Session {
 
         const prevSortedPlayerIDs = getSortedSessionPlayerIDs(this.players);
 
-        const decisionModifier = (decision === TriviaClueDecision.Incorrect) ? -1 : 1;
+        const isCorrect = decision === TriviaClueDecision.Correct;
+        const decisionModifier = isCorrect ? 1 : -1;
         player.score += (value * modifier * decisionModifier);
+
+        if (this.triviaGameSettingsPreset === TriviaGameSettingsPreset.Normal) {
+            if (isCorrect && player.clueDecisionInfo?.isReversal) {
+                player.earnedReversalScore += value;
+            }
+        }
+        else {
+            // kind of a hack: this session will not count for the leaderboard. communicate this to the client for each player by setting their
+            // earned reversal score to an amount that would disqualify them individually
+            player.earnedReversalScore = MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD + 1;
+        }
 
         this.updatePlayerPositionChanges(prevSortedPlayerIDs);
 
@@ -617,6 +635,15 @@ export class Session {
         }
     }
 
+    getLowestScorePlayerID() {
+        const sortedPlayerIDs = getSortedSessionPlayerIDs(this.players);
+        if (sortedPlayerIDs.length > 0) {
+            return sortedPlayerIDs[sortedPlayerIDs.length - 1];
+        }
+
+        return "";
+    }
+
     endGame() {
         this.state = SessionState.GameOver;
         this.setPlayersIdle();
@@ -660,7 +687,7 @@ export class Session {
         this.previousResponderIDs = [];
     }
 
-    promptClueSelection() {
+    promptClueSelection(promptLowestScorePlayer: boolean = false) {
         this.state = SessionState.PromptClueSelection;
 
         const connectedPlayerIDs = this.getConnectedPlayerIDs();
@@ -679,19 +706,25 @@ export class Session {
 
         this.previousClueSelectorClientID = this.players[this.clueSelectorID] ? `${this.players[this.clueSelectorID].clientID}` : "";
 
-        // first: give clue selector privileges to a connected player who responded correctly to the previous clue
+        // a new round is starting, we need to set the clue selector to be the player with the lowest value
+        if (promptLowestScorePlayer) {
+            this.clueSelectorID = this.getLowestScorePlayerID();
+        }
+        // otherwise: give clue selector privileges to a connected player who responded correctly to the previous clue
         // in most cases, there will be exactly one previous correct responder but if there are multiple, choose one of them randomly
-        if (previousCorrectResponderIDs.length > 0) {
+        else if (previousCorrectResponderIDs.length > 0) {
             this.clueSelectorID = getRandomChoice(previousCorrectResponderIDs);
         }
 
-        // second: default to our previous clue selector, but make sure they're still connected to this session
+        // default to our previous clue selector, but make sure they're still connected to this session
         if (!this.clueSelectorID || !this.players[this.clueSelectorID] || !this.players[this.clueSelectorID].connected) {
+            // we have no valid clue selectors. just pick a new one at random
             if (connectedPlayerIDs.length > 0) {
                 this.clueSelectorID = getRandomChoice(connectedPlayerIDs);
             }
         }
 
+        // after all this, make sure we actually have a clue selector. if we don't: that probably means there are no connected players right now
         if (this.clueSelectorID && this.players[this.clueSelectorID]) {
             this.players[this.clueSelectorID].state = PlayerState.PromptClueSelection;
         }

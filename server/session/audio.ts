@@ -80,11 +80,12 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                 }
 
                 const currentCategory = session.getCurrentCategory();
+
                 if (currentCategory && currentCategory.didPlayerClear(clueSelector.clientID)) {
                     playAudio(sessionName, AudioType.Applause);
                     voiceLine = getRandomChoice(CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES);
                 }
-                else {
+                else if (session.hasNewClueSelector()) {
                     voiceLine = getRandomChoice(PROMPT_CLUE_SELECTION_VOICE_LINES);
                 }
             }

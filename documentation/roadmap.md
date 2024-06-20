@@ -2,9 +2,6 @@
 ### _Long term plan for future updates_
 
 ## "Definitely Happening"
-- Public leaderboards (daily/monthly/all time)
-    - Condition: Games must be normal mode. Players must not have earned more than $2000 from decision reversals
-    - Maybe other conditions to detect cheating... somehow? Or at least make a good guess
 - Answer streaks for giving consecutive correct responses
 - End-of-game badges rewarding things like accuracy in a certain category type, or wager bravery. Just for fun in normal mode, worth money in party mode
 - User accounts to save historical game stats

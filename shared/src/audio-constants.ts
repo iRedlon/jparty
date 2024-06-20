@@ -141,9 +141,9 @@ export const PROMPT_CLUE_SELECTION_VOICE_LINES = [
 export const READ_CLUE_SELECTION_VOICE_LINE = `${VoiceLineVariable.CategoryName} for ${VoiceLineVariable.ClueValue}`;
 
 export const CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES = [
-    `${VoiceLineVariable.ClueSelectorName} cleared that whole category, nice work!`,
-    `${VoiceLineVariable.ClueSelectorName} got every clue in that category.`,
-    `${VoiceLineVariable.CategoryName} was swept by ${VoiceLineVariable.ClueSelectorName}. Well done!`
+    `Nice work ${VoiceLineVariable.ClueSelectorName}, you cleared that whole category. Where to next?`,
+    `You got every clue in that category ${VoiceLineVariable.ClueSelectorName}. The board is still yours.`,
+    `${VoiceLineVariable.CategoryName} was just swept by ${VoiceLineVariable.ClueSelectorName}. Well done! It's your choice.`
 ];
 
 export const TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES: Record<TriviaClueDecision, string[]> = {
@@ -162,12 +162,14 @@ export const TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES: Record<TriviaClueDecision,
         "Sorry, no.", 
         "That isn't it.",
         "No, I'm sorry.",
-        "No, that isn't it."
+        "No, that isn't it.",
+        "I'm afraid not."
     ],
     [TriviaClueDecision.NeedsMoreDetail]: [
         `Needs more detail. Try again ${VoiceLineVariable.SpotlightResponderName}.`, 
         "Could you be more specific?",
         "Could you add some detail?",
+        `Could you please clarify ${VoiceLineVariable.SpotlightResponderName}?`,
     ]
 };
 

@@ -47,13 +47,13 @@ export default function HostBoard({ triviaRound }: HostBoardProps) {
         setReadingCategoryIndex(readingCategoryIndex);
     }
 
-    const onImFeelingLucky = () => {
-        if (!context.debugMode) {
-            return;
-        }
+    // const onImFeelingLucky = () => {
+    //     if (!context.debugMode) {
+    //         return;
+    //     }
 
-        handleDebugCommand(DebugCommand.UpdateReadingCategoryIndex, readingCategoryIndex + 1);
-    }
+    //     handleDebugCommand(DebugCommand.UpdateReadingCategoryIndex, readingCategoryIndex + 1);
+    // }
 
     const readingCategoryNames = context.sessionState === SessionState.ReadingCategoryNames;
     const numCategories = triviaRound.settings.numCategories;
@@ -78,7 +78,7 @@ export default function HostBoard({ triviaRound }: HostBoardProps) {
                 height={boardPanelHeight} width={boardPanelWidth}>
 
                 <Box onClick={() => handleDebugCommand(DebugCommand.SelectClue, categoryIndex, panelIndex - 1)} className={"board-panel box"}>
-                    <Heading fontFamily={"board"} fontSize={getBoardPanelFontSize(panelIndex > 0, content)} fontWeight={0}>{content}</Heading>
+                    <Heading fontFamily={"board"}lineHeight={1} fontSize={getBoardPanelFontSize(panelIndex > 0, content)} fontWeight={0}>{content}</Heading>
                 </Box>
             </Box>
         )

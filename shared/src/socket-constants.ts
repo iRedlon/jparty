@@ -54,6 +54,7 @@ export type HostSocketCallback = {
 }
 
 export enum HostServerSocket {
+    UpdateLeaderboardPlayers = "host_server_update_leaderboard_players",
     UpdateGameSettingsPreset = "host_server_update_game_settings_preset",
     UpdateReadingCategoryIndex = "host_server_update_reading_category_index",
     UpdateVoiceType = "host_server_update_voice_type",

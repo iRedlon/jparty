@@ -8,14 +8,14 @@ import { Socket } from "socket.io";
 import { playAudio, playVoiceLine } from "./audio.js";
 import {
     emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, handleDisconnect, joinSession,
-    showAnnouncement, startPositionChangeAnimation, startTimeout, stopTimeout
+    showAnnouncement, startPositionChangeAnimation, startTimeout, stopTimeout, updateLeaderboard
 } from "./session-utils.js";
 import { io } from "../controller.js";
 import { DebugLogType, debugLog, formatDebugLog } from "../misc/log.js";
 import { formatText, validatePlayerName } from "../misc/text-utils.js";
 
 function handleConnect(socket: Socket, sessionName: string, clientID: string, playerName: string, callback: PlayerSocketCallback[PlayerSocket.Connect]) {
-    sessionName = sessionName.toLowerCase();
+    sessionName = formatText(sessionName.toLowerCase());
     playerName = formatText(playerName.toLowerCase());
 
     let session = getSession(sessionName);
@@ -113,7 +113,7 @@ function recursiveReadCategoryName(sessionName: string) {
     // we're done reading category names
     if (session.readingCategoryIndex >= currentRound.settings.numCategories) {
         session.resetClueSelection();
-        session.promptClueSelection();
+        session.promptClueSelection(true);
         playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
         emitStateUpdate(sessionName);
         return;
@@ -557,10 +557,7 @@ function finishRevealClueDecision(sessionName: string, showCorrectAnswer: boolea
             const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
             if (!didForceSelectFinalClue) {
                 session.promptClueSelection();
-
-                if (session.hasNewClueSelector()) {
-                    playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
-                }
+                playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
             }
         }
     }
@@ -620,6 +617,7 @@ function finishRound(sessionName: string) {
         emitTriviaRoundUpdate(sessionName);
 
         if (session.state === SessionState.GameOver) {
+            updateLeaderboard(sessionName);
             return;
         }
 

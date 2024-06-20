@@ -1,7 +1,10 @@
 
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { Box, Button, Divider, Heading, Input, Link, ListItem, Stack, Text, Tooltip, UnorderedList } from "@chakra-ui/react";
-import { getSortedSessionPlayerIDs, HostServerSocket, HostSocket, Player, SocketID, TriviaGameSettingsPreset } from "jparty-shared";
+import {
+    getSortedSessionPlayerIDs, HostServerSocket, HostSocket, LeaderboardPlayers, LeaderboardPlayerSchema, LeaderboardType,
+    Player, SocketID, TriviaGameSettingsPreset
+} from "jparty-shared";
 import { useContext, useEffect, useRef, useState } from "react";
 
 import { LayoutContext } from "../common/Layout";
@@ -26,17 +29,19 @@ function JoinedPlayerBox(player: Player) {
     );
 }
 
-function LeaderboardPlayerBox(player: Player, index: number) {
+function LeaderboardPlayerBox(leaderboardType: LeaderboardType, leaderboardPlayer: LeaderboardPlayerSchema, index: number) {
     return (
-        <Box key={player.clientID} className={"child-box"} height={"4em"} paddingLeft={"0.5em"} marginTop={"1em"} width={"80%"} marginLeft={"auto"} marginRight={"auto"}>
+        <Box key={`${leaderboardType}-${leaderboardPlayer.name}-${leaderboardPlayer.timestampMs}`}
+            className={"child-box"} height={"4em"} paddingLeft={"0.5em"} marginTop={"1em"} width={"80%"} marginLeft={"auto"} marginRight={"auto"}>
+
             <Stack direction={"column"} paddingRight={"1em"} overflow={"hidden"}>
                 <Box textAlign={"left"} whiteSpace={"nowrap"}>
-                    <b>{index + 1}. {player.name}</b>
+                    <b>{index + 1}. {leaderboardPlayer.name}</b>
                 </Box>
 
                 <Box textAlign={"left"} whiteSpace={"nowrap"}>
                     <Text fontSize={"2em"} position={"relative"} bottom={"0.4em"}>
-                        <i>{formatDollarValue(player.score)}</i>
+                        <i>{formatDollarValue(leaderboardPlayer.score)}</i>
                     </Text>
                 </Box>
             </Stack>
@@ -44,31 +49,19 @@ function LeaderboardPlayerBox(player: Player, index: number) {
     );
 }
 
-function PlaceholderLeaderboardPlayerBoxes() {
-    let player1 = new Player("1", "aristotle");
-    player1.score = 131127;
-
-    let player2 = new Player("2", "plato");
-    player2.score = 130022;
-
-    let player3 = new Player("3", "socrates");
-    player3.score = 118816;
-
-    return (
-        <>
-            {LeaderboardPlayerBox(player1, 0)}
-            {LeaderboardPlayerBox(player2, 1)}
-            {LeaderboardPlayerBox(player3, 2)}
-        </>
-    )
+interface HostLobbyProps {
+    allTimeLeaderboardPlayers: LeaderboardPlayers | undefined;
+    monthlyLeaderboardPlayers: LeaderboardPlayers | undefined;
+    weeklyLeaderboardPlayers: LeaderboardPlayers | undefined;
 }
 
-export default function HostLobby() {
+export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboardPlayers, weeklyLeaderboardPlayers }: HostLobbyProps) {
     const joinedPlayersBoxRef = useRef(null);
 
     const context = useContext(LayoutContext);
     const [spectateSessionName, setSpectateSessionName] = useState("");
     const [gameSettingsPreset, setGameSettingsPreset] = useState(TriviaGameSettingsPreset.Normal);
+    const [currentLeaderboardType, setCurrentLeaderboardType] = useState(LeaderboardType.AllTime);
 
     useEffect(() => {
         socket.on(HostServerSocket.UpdateGameSettingsPreset, handleUpdateGameSettingsPreset);
@@ -102,6 +95,25 @@ export default function HostLobby() {
     }
 
     const sortedSessionPlayerIDs = getSortedSessionPlayerIDs(context.sessionPlayers);
+
+    let leaderboardPlayers = undefined;
+    switch (currentLeaderboardType) {
+        case LeaderboardType.AllTime:
+            {
+                leaderboardPlayers = allTimeLeaderboardPlayers;
+            }
+            break;
+        case LeaderboardType.Monthly:
+            {
+                leaderboardPlayers = monthlyLeaderboardPlayers;
+            }
+            break;
+        case LeaderboardType.Weekly:
+            {
+                leaderboardPlayers = weeklyLeaderboardPlayers;
+            }
+            break;
+    }
 
     return (
         <Stack direction={"row"}>
@@ -186,18 +198,42 @@ export default function HostLobby() {
 
                     <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>tips</Heading>
                     <UnorderedList justifyContent={"center"} listStyleType={"none"} margin={0}>
-                        <ListItem>Use the menu to adjust volume</ListItem>
-                        <ListItem>Change text size with Ctrl-/Ctrl+</ListItem>
-                        <ListItem>Go fullscreen with F11</ListItem>
+                        <ListItem>use the menu to adjust volume</ListItem>
+                        <ListItem>change text size with Ctrl-/Ctrl+</ListItem>
+                        <ListItem>go fullscreen with F11</ListItem>
                     </UnorderedList>
                 </Box>
             </Stack>
 
             <Box id={"leaderboard-box"} className={"box side-box"}>
-                <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>leaderboard<br />(coming soon)</Heading>
-                <Text fontSize={"0.75em"}>Games must be normal mode. Player must not have earned more than $2000 from decision reversals</Text>
+                <Tooltip label={"games must be normal mode. Player must not have earned more than $2000 from decision reversals"} placement={"top"}>
+                    <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>leaderboard</Heading>
+                </Tooltip>
 
-                {PlaceholderLeaderboardPlayerBoxes()}
+                <Stack direction={"row"} justifyContent={"center"}>
+                    <Button
+                        paddingLeft={"0.5em"} paddingRight={"0.5em"}
+                        onClick={() => setCurrentLeaderboardType(LeaderboardType.AllTime)}
+                        colorScheme={"blue"} variant={currentLeaderboardType === LeaderboardType.AllTime ? "solid" : "outline"}>
+                        all time
+                    </Button>
+
+                    <Button
+                        paddingLeft={"0.5em"} paddingRight={"0.5em"}
+                        onClick={() => setCurrentLeaderboardType(LeaderboardType.Monthly)}
+                        colorScheme={"blue"} variant={currentLeaderboardType === LeaderboardType.Monthly ? "solid" : "outline"}>
+                        monthly
+                    </Button>
+
+                    <Button
+                        paddingLeft={"0.5em"} paddingRight={"0.5em"}
+                        onClick={() => setCurrentLeaderboardType(LeaderboardType.Weekly)}
+                        colorScheme={"blue"} variant={currentLeaderboardType === LeaderboardType.Weekly ? "solid" : "outline"}>
+                        weekly
+                    </Button>
+                </Stack>
+
+                {leaderboardPlayers?.map((leaderboardPlayer, index) => LeaderboardPlayerBox(currentLeaderboardType, leaderboardPlayer, index))}
             </Box>
         </Stack>
     );

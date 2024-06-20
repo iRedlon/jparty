@@ -1,7 +1,7 @@
 
 import {
     AudioType,
-    getRandomNum, HostServerSocket, PLACEHOLDER_TRIVIA_ROUND, Player, PlayerResponseType, PlayerState, ServerSocket,
+    getRandomNum, HostServerSocket, LeaderboardType, PLACEHOLDER_LEADERBOARD_PLAYERS, PLACEHOLDER_TRIVIA_ROUND, Player, PlayerResponseType, PlayerState, ServerSocket,
     SessionAnnouncement, SessionState, SessionTimeout, TriviaCategory, TriviaClue,
     TriviaClueDecision, TriviaClueDecisionInfo, TriviaRound, VoiceType
 } from "jparty-shared";
@@ -71,6 +71,10 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
                 emitMockSocketEvent(ServerSocket.UpdateTriviaRound, triviaRound);
                 emitMockSocketEvent(ServerSocket.SelectClue, 0, 0);
                 emitMockSocketEvent(ServerSocket.UpdateSpotlightResponderID, "socket1");
+
+                emitMockSocketEvent(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.AllTime, PLACEHOLDER_LEADERBOARD_PLAYERS);
+                emitMockSocketEvent(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.Monthly, PLACEHOLDER_LEADERBOARD_PLAYERS);
+                emitMockSocketEvent(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.Weekly, PLACEHOLDER_LEADERBOARD_PLAYERS);
             }
             break;
         case DebugCommand.UpdateSessionState:

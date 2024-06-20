@@ -183,7 +183,7 @@ function addClueBonuses(triviaGame: TriviaGame) {
                 const categoryName = triviaGame.rounds[roundIndex].categories[categoryIndex].name;
                 const clueValue = triviaGame.rounds[roundIndex].categories[categoryIndex].clues[clueIndex].value;
 
-                debugLog(DebugLogType.GameGeneration, `adding ${TriviaClueBonus[clueBonus]} to \"${categoryName}\" for $${clueValue}`);
+                debugLog(DebugLogType.TriviaDatabase, `adding ${TriviaClueBonus[clueBonus]} to \"${categoryName}\" for $${clueValue}`);
 
                 triviaGame.rounds[roundIndex].categories[categoryIndex].clues[clueIndex].bonus = clueBonus;
 
@@ -222,8 +222,8 @@ export async function generateTriviaGame(gameSettings: TriviaGameSettings) {
         roundIndex++;
     }
 
-    debugLog(DebugLogType.GameGeneration, `finished generating trivia game`);
-    debugLog(DebugLogType.GameGeneration, triviaGame, true);
+    debugLog(DebugLogType.TriviaDatabase, `finished generating trivia game`);
+    debugLog(DebugLogType.TriviaDatabase, triviaGame, true);
 
     if (timeout) {
         throw new Error(formatDebugLog("the game generation process timed out"));

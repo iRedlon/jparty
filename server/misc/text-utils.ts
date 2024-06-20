@@ -3,8 +3,8 @@ import cleanTextUtils from "clean-text-utils";
 import { VoiceLineType } from "jparty-shared";
 import { containsProfanities, isProfane } from "no-profanity";
 
-const MAX_PLAYER_NAME_LENGTH = 15;
-const MAX_RESPONSE_LENGTH = 20;
+const MAX_PLAYER_NAME_LENGTH = 20;
+const MAX_RESPONSE_LENGTH = 30;
 
 export interface ValidationResults {
     isValid: boolean,

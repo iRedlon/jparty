@@ -6,7 +6,7 @@ import {
 import { generate as generateRandomWord } from "random-words";
 import { Socket } from "socket.io";
 
-import { createSession, deleteSession, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost } from "./session-utils.js";
+import { createSession, deleteSession, emitLeaderboardUpdate, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost } from "./session-utils.js";
 import { io } from "../controller.js";
 import { debugLog, DebugLogType } from "../misc/log.js";
 
@@ -155,6 +155,7 @@ function handlePlayAgain(socket: Socket, sessionName: string) {
     session.resetGame();
     emitStateUpdate(sessionName);
     emitTriviaRoundUpdate(sessionName);
+    emitLeaderboardUpdate(socket);
 }
 
 const handlers: Record<HostSocket, Function> = {

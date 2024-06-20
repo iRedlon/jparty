@@ -1,6 +1,6 @@
 
 import { Box, Center, Flex } from "@chakra-ui/react";
-import { AudioType, HostServerSocket, SessionAnnouncement, SessionState, VoiceType } from "jparty-shared";
+import { AudioType, HostServerSocket, LeaderboardPlayers, LeaderboardType, SessionAnnouncement, SessionState, VoiceType } from "jparty-shared";
 import { useContext, useEffect, useRef, useState } from "react";
 import { GoMute } from "react-icons/go";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
@@ -37,6 +37,9 @@ export default function HostLayout() {
 
     const context = useContext(LayoutContext);
     const [isMuted, setIsMuted] = useState(true);
+    const [allTimeLeaderboardPlayers, setAllTimeLeaderboardPlayers] = useState<LeaderboardPlayers | undefined>();
+    const [monthlyLeaderboardPlayers, setMonthlyLeaderboardPlayers] = useState<LeaderboardPlayers | undefined>();
+    const [weeklyLeaderboardPlayers, setWeeklyLeaderboardPlayers] = useState<LeaderboardPlayers | undefined>();
     const [announcement, setAnnouncement] = useState<SessionAnnouncement | undefined>();
     const [queuedToHideAnnouncement, setQueuedToHideAnnouncement] = useState(false);
     const [numSubmittedResponders, setNumSubmittedResponders] = useState(0);
@@ -44,6 +47,7 @@ export default function HostLayout() {
     const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
 
     useEffect(() => {
+        socket.on(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
         socket.on(HostServerSocket.PlayAudio, handlePlayAudio);
         socket.on(HostServerSocket.PlayVoice, handlePlayVoice);
         socket.on(HostServerSocket.ShowAnnouncement, handleShowAnnouncement);
@@ -51,6 +55,7 @@ export default function HostLayout() {
         socket.on(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         socket.on(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
+        addMockSocketEventHandler(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
         addMockSocketEventHandler(HostServerSocket.PlayAudio, handlePlayAudio);
         addMockSocketEventHandler(HostServerSocket.PlayVoice, handlePlayVoice);
         addMockSocketEventHandler(HostServerSocket.ShowAnnouncement, handleShowAnnouncement);
@@ -59,6 +64,7 @@ export default function HostLayout() {
         addMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
         return () => {
+            socket.off(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
             socket.off(HostServerSocket.PlayAudio, handlePlayAudio);
             socket.off(HostServerSocket.PlayVoice, handlePlayVoice);
             socket.off(HostServerSocket.ShowAnnouncement, handleShowAnnouncement);
@@ -66,6 +72,7 @@ export default function HostLayout() {
             socket.off(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
             socket.off(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
+            removeMockSocketEventHandler(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
             removeMockSocketEventHandler(HostServerSocket.PlayAudio, handlePlayAudio);
             removeMockSocketEventHandler(HostServerSocket.PlayVoice, handlePlayVoice);
             removeMockSocketEventHandler(HostServerSocket.ShowAnnouncement, handleShowAnnouncement);
@@ -82,6 +89,26 @@ export default function HostLayout() {
             setAnnouncement(undefined);
         }
     }, [context.sessionState]);
+
+    const handleUpdateLeaderboardPlayers = (leaderboardType: LeaderboardType, leaderboardPlayers: LeaderboardPlayers) => {
+        switch (leaderboardType) {
+            case LeaderboardType.AllTime:
+                {
+                    setAllTimeLeaderboardPlayers(JSON.parse(JSON.stringify(leaderboardPlayers)));
+                }
+                break;
+            case LeaderboardType.Monthly:
+                {
+                    setMonthlyLeaderboardPlayers(JSON.parse(JSON.stringify(leaderboardPlayers)));
+                }
+                break;
+            case LeaderboardType.Weekly:
+                {
+                    setWeeklyLeaderboardPlayers(JSON.parse(JSON.stringify(leaderboardPlayers)));
+                }
+                break;
+        }
+    }
 
     const handlePlayAudio = (audioType: AudioType) => {
         playAudio(audioType);
@@ -134,7 +161,12 @@ export default function HostLayout() {
         }
 
         if (context.sessionState === SessionState.Lobby) {
-            return context.sessionName ? [<HostLobby />, HostComponentState.Lobby] : [<></>, HostComponentState.None];
+            return context.sessionName ?
+                [<HostLobby
+                    allTimeLeaderboardPlayers={allTimeLeaderboardPlayers}
+                    monthlyLeaderboardPlayers={monthlyLeaderboardPlayers}
+                    weeklyLeaderboardPlayers={weeklyLeaderboardPlayers} />, HostComponentState.Lobby] :
+                [<></>, HostComponentState.None];
         }
 
         if (!context.triviaRound) {
@@ -174,7 +206,7 @@ export default function HostLayout() {
 
         return [<></>, HostComponentState.None];
     }
-    
+
     const [HostComponent, componentState] = getHostComponent();
 
     return (

@@ -1,6 +1,6 @@
 
 import { Box, Button, Text } from "@chakra-ui/react";
-import { PlayerSocket, SocketID, TriviaClueDecision } from "jparty-shared";
+import { MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD, Player, PlayerSocket, SocketID, TriviaClueDecision, TriviaClueDecisionInfo } from "jparty-shared";
 import { useContext } from "react";
 
 import { LayoutContext } from "../common/Layout";
@@ -12,7 +12,17 @@ function getNumRequiredVoters(numPlayers: number) {
     return Math.max(Math.floor(halfNumPlayers), Math.floor(halfNumPlayers + 1));
 }
 
-function emitVoteToReverseDecision(responderID: SocketID) {
+function emitVoteToReverseDecision(responderID: SocketID, responder: Player, clueDecisionInfo: TriviaClueDecisionInfo) {
+    const wasRuledIncorrect = clueDecisionInfo.decision === TriviaClueDecision.Incorrect;
+    const isResponderQualified = responder.earnedReversalScore <= MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD;
+
+    // check to see if this responder is currently qualified, and that this reversal would grant them enough money to disqualify them
+    const needsConfirmation = wasRuledIncorrect && isResponderQualified && ((responder.earnedReversalScore + clueDecisionInfo.clueValue) > MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD);
+
+    if (needsConfirmation && !confirm(`Are you sure? ${responder.name.toUpperCase()} has earned ${formatDollarValue(responder.earnedReversalScore)} from decision reversals. They will be disqualified from the leaderboard if this decision is reversed.`)) {
+        return;
+    }
+
     // responderID is the socket ID of the player whose decision we want to reverse
     socket.emit(PlayerSocket.VoteToReverseDecision, responderID);
 }
@@ -21,7 +31,6 @@ interface ClueDecisionInfoProps {
     playerID: SocketID
 }
 
-// shows the recent
 export default function ClueDecisionInfo({ playerID }: ClueDecisionInfoProps) {
     const context = useContext(LayoutContext);
 
@@ -50,7 +59,7 @@ export default function ClueDecisionInfo({ playerID }: ClueDecisionInfoProps) {
     return (
         <Box key={player.clientID} className={"child-box"} padding={"0.5em"} margin={"0.5em"}>
             <Text wordBreak={"keep-all"}> "<i>{info.response}</i>" was {rulingString} {info.decision} {clueValueString}</Text>
-            {canVoteToReverseDecision && <Button onClick={() => emitVoteToReverseDecision(playerID)} size={"sm"} margin={"0.5em"}>vote to reverse</Button>}
+            {canVoteToReverseDecision && <Button onClick={() => emitVoteToReverseDecision(playerID, player, info)} size={"sm"} margin={"0.5em"}>vote to reverse</Button>}
             {hasVotedToReverseDecision && <Text>{numCurrentVoters}/{numRequiredVoters} required votes to reverse</Text>}
         </Box>
     )

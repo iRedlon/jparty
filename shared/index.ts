@@ -1,5 +1,6 @@
 
 export * from "./src/audio-constants";
+export * from "./src/leaderboard-constants";
 export * from "./src/placeholder-data";
 export * from "./src/session-constants";
 export * from "./src/socket-constants";

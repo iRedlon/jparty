@@ -1,12 +1,13 @@
 
 import {
-    AttemptReconnectResult, ClientSocket, ClientSocketCallback, getEnumSize, HostServerSocket,
-    ServerSocket, ServerSocketMessage, SessionAnnouncement, SessionState, SessionTimeout, VoiceLineType
+    AttemptReconnectResult, ClientSocket, ClientSocketCallback, getEnumSize, HostServerSocket, LeaderboardType,
+    ServerSocket, ServerSocketMessage, SessionAnnouncement, SessionState, SessionTimeout, TriviaGameSettingsPreset, VoiceLineType
 } from "jparty-shared";
 import { Socket } from "socket.io";
 
 import { playVoiceLine } from "./audio.js";
 import { Session } from "./session.js";
+import { addNewLeaderboardPlayer, getLeaderboardPlayers } from "../api-requests/leaderboard-db.js";
 import { io } from "../controller.js";
 import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
 
@@ -106,6 +107,7 @@ export function joinSessionAsHost(socket: Socket, sessionName: string) {
         socket.emit(ServerSocket.BeginSpectate);
     }
 
+    emitLeaderboardUpdate(socket);
     socket.emit(HostServerSocket.UpdateGameSettingsPreset, session.triviaGameSettingsPreset);
     socket.emit(HostServerSocket.UpdateReadingCategoryIndex, session.readingCategoryIndex);
 
@@ -226,6 +228,29 @@ export function startPositionChangeAnimation(sessionName: string) {
     }, POSITION_CHANGE_ANIMATION_DURATION_MS);
 }
 
+export async function updateLeaderboard(sessionName: string) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    if (session.triviaGameSettingsPreset !== TriviaGameSettingsPreset.Normal) {
+        return;
+    }
+
+    session.clearPlayerClueDecisions();
+    emitStateUpdate(sessionName);
+
+    for (const playerID in session.players) {
+        const player = session.players[playerID];
+        if (!player || !player.qualifiesForLeaderboard()) {
+            continue;
+        }
+
+        await addNewLeaderboardPlayer(player);
+    }
+}
+
 export function startTimeout(sessionName: string, timeout: SessionTimeout, callback: Function) {
     let session = getSession(sessionName);
     if (!session) {
@@ -317,6 +342,12 @@ export function emitTriviaRoundUpdate(sessionName: string) {
     }
 
     io.in(sessionName).emit(ServerSocket.UpdateTriviaRound, session.getCurrentRound());
+}
+
+export async function emitLeaderboardUpdate(socket: Socket) {
+    socket.emit(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.AllTime, await getLeaderboardPlayers(LeaderboardType.AllTime));
+    socket.emit(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.Monthly, await getLeaderboardPlayers(LeaderboardType.Monthly));
+    socket.emit(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.Weekly, await getLeaderboardPlayers(LeaderboardType.Weekly));
 }
 
 export function emitServerError(error: any, socket?: Socket, sessionName?: string) {
