@@ -12,3 +12,5 @@
 - Fix nitpick: a leading italic "j" gets cut off in the responder info box on HostClue
 - Consider bringing back bespoke "lobby music" and "game music"
 - Notify individual players when they make it on the leaderboard and what place they made
+- Add opt-in newsletter
+- Add custom events for google analytics

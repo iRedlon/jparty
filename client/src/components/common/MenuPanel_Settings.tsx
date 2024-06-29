@@ -24,10 +24,11 @@ export function emitLeaveSession(isPlayer: boolean) {
 }
 
 interface MenuPanel_SettingsProps {
-    voiceType?: VoiceType
+    voiceType?: VoiceType,
+    modernVoicesDisabled?: boolean
 }
 
-export default function MenuPanel_Settings({ voiceType }: MenuPanel_SettingsProps) {
+export default function MenuPanel_Settings({ voiceType, modernVoicesDisabled }: MenuPanel_SettingsProps) {
     const context = useContext(LayoutContext);
     const [masterVolume, setMasterVolume] = useState(getVolume(VolumeType.Master) * VOLUME_STATE_MULTIPLIER);
     const [musicVolume, setMusicVolume] = useState(getVolume(VolumeType.Music) * VOLUME_STATE_MULTIPLIER);
@@ -123,11 +124,20 @@ export default function MenuPanel_Settings({ voiceType }: MenuPanel_SettingsProp
 
                             <RadioGroup isDisabled={context.isSpectator} onChange={emitUpdateVoiceType} value={voiceType}>
                                 <Stack direction={"row"} justifyContent={"center"}>
-                                    <Radio value={VoiceType.ModernMasculine}>Modern (Masculine)</Radio>
-                                    <Radio value={VoiceType.ModernFeminine}>Modern (Feminine)</Radio>
+                                    {
+                                        !modernVoicesDisabled && (
+                                            <>
+                                                <Radio value={VoiceType.ModernMasculine}>Modern (Masculine)</Radio>
+                                                <Radio value={VoiceType.ModernFeminine}>Modern (Feminine)</Radio>
+                                            </>
+                                        )
+                                    }
+
                                     <Radio value={VoiceType.ClassicMasculine}>Classic (Masculine)</Radio>
                                     <Radio value={VoiceType.ClassicFeminine}>Classic (Feminine)</Radio>
                                 </Stack>
+                                
+                                {modernVoicesDisabled && <Text marginTop={"1em"}><i>Note: modern voices are currently disabled due to API limits. Use Google Chrome for best classic voice experience</i></Text>}
                             </RadioGroup>
                         </Box>
 

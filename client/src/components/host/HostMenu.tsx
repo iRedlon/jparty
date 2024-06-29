@@ -14,11 +14,11 @@ import MenuPanel_Feedback from "../common/MenuPanel_Feedback";
 import MenuPanel_Settings from "../common/MenuPanel_Settings";
 import { socket } from "../../misc/socket";
 import { Layer } from "../../misc/ui-constants";
-import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
 
 export default function HostMenu() {
     const context = useContext(LayoutContext);
-    const [voiceType, setVoiceType] = useState(VoiceType.ModernMasculine);
+    const [voiceType, setVoiceType] = useState(VoiceType.ClassicMasculine);
+    const [modernVoicesDisabled, setModernVoicesDisabled] = useState(true);
     const { isOpen, onOpen, onClose } = useDisclosure();
 
     useEffect(() => {
@@ -29,8 +29,9 @@ export default function HostMenu() {
         }
     }, []);
 
-    const handleUpdateVoiceType = (voiceType: VoiceType) => {
+    const handleUpdateVoiceType = (voiceType: VoiceType, modernVoicesDisabled: boolean) => {
         setVoiceType(voiceType);
+        setModernVoicesDisabled(modernVoicesDisabled);
     }
 
     const menuTabs = [
@@ -42,7 +43,7 @@ export default function HostMenu() {
     ];
 
     const menuPanels = [
-        <MenuPanel_Settings key={"settings-tab-panel"} voiceType={voiceType} />,
+        <MenuPanel_Settings key={"settings-tab-panel"} voiceType={voiceType} modernVoicesDisabled={modernVoicesDisabled} />,
         <TabPanel key={"game-settings-tab-panel"}><GameSettings onCloseHostMenu={onClose} /></TabPanel>,
         <MenuPanel_Feedback key={"feedback-tab-panel"} />,
         <MenuPanel_Credits key={"credits-tab-panel"} />,

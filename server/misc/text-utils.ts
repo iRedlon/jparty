@@ -4,7 +4,7 @@ import { VoiceLineType } from "jparty-shared";
 import { containsProfanities, isProfane } from "no-profanity";
 
 const MAX_PLAYER_NAME_LENGTH = 20;
-const MAX_RESPONSE_LENGTH = 30;
+const MAX_RESPONSE_LENGTH = 50;
 
 export interface ValidationResults {
     isValid: boolean,

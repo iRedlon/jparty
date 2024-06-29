@@ -1,7 +1,8 @@
 
 import {
     AttemptReconnectResult, ClientSocket, ClientSocketCallback, getEnumSize, HostServerSocket, LeaderboardType,
-    ServerSocket, ServerSocketMessage, SessionAnnouncement, SessionState, SessionTimeout, TriviaGameSettingsPreset, VoiceLineType
+    ServerSocket, ServerSocketMessage, SessionAnnouncement, SessionState, SessionTimeout, TriviaGameSettingsPreset, VoiceLineType,
+    VoiceType
 } from "jparty-shared";
 import { Socket } from "socket.io";
 
@@ -31,6 +32,12 @@ setInterval(() => {
 
 export function createSession(sessionName: string, hostID: string, clientID: string) {
     sessions[sessionName] = new Session(sessionName, hostID, clientID);
+
+    // modern masculine is normally the default, but we can't use it if open AI TTS is disabled
+    if (!process.env.USE_OPENAI_TTS) {
+        sessions[sessionName].voiceType = VoiceType.ClassicMasculine;
+    }
+
     return sessions[sessionName];
 }
 
@@ -90,8 +97,6 @@ export function joinSession(socket: Socket, sessionName: string) {
         socket.emit(HostServerSocket.HideAnnouncement, true);
     }
 
-    socket.emit(HostServerSocket.UpdateVoiceType, session.voiceType);
-
     emitStateUpdate(session.name);
 }
 
@@ -102,6 +107,8 @@ export function joinSessionAsHost(socket: Socket, sessionName: string) {
     }
 
     joinSession(socket, sessionName);
+
+    socket.emit(HostServerSocket.UpdateVoiceType, session.voiceType, !process.env.USE_OPENAI_TTS /* modernVoicesDisabled */);
 
     if (socket.id !== session.creatorSocketID) {
         socket.emit(ServerSocket.BeginSpectate);

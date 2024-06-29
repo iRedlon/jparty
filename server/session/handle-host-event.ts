@@ -45,7 +45,7 @@ function handleUpdateVoiceType(socket: Socket, sessionName: string, voiceType: V
     debugLog(DebugLogType.Voice, `updating session (${sessionName}) to use voice type: ${voiceType}`);
 
     session.voiceType = voiceType;
-    io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateVoiceType, voiceType);
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateVoiceType, voiceType, !process.env.USE_OPENAI_TTS /* modernVoicesDisabled */);
 }
 
 function handleUpdateVoiceDuration(socket: Socket, sessionName: string, durationSec: number) {

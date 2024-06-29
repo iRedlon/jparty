@@ -4,7 +4,7 @@ import { TriviaClueDecision } from "./trivia-game-constants";
 
 // this estimate is quite generous. the client will always tell the server to cancel the timeout early once its utterance is complete anyway
 // that is to say, as long as we don't underestimate the voice duration, the timing will always be as smooth as it can possibly be
-export const ESTIMATE_VOICE_DURATION_MS_PER_CHARACTER = 100;
+export const ESTIMATE_VOICE_DURATION_MS_PER_CHARACTER = 200;
 
 export function getVoiceDurationMs(text: string) {
     return text.length * ESTIMATE_VOICE_DURATION_MS_PER_CHARACTER;
