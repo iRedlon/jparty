@@ -3,7 +3,7 @@
 ### _Planned work that isn't high enough priority to be on a TODO list yet_
 
 - Query to mark (not delete) image clues using keywords like "seen here". Explore the possibility of finding and displaying images for such clues where appropriate
-- Categories (particularly in a party game) should never have the exact same answer unless it's an answer that's enumerated in the category name
+- Categories (particularly in a party game) should never have two clues with the exact same answer, unless that answer was enumerated in the category name i.e. (NBA, NFL, or NHL)
 - Decide who should own voice line/sound effect validation i.e. what to say depending on the current game situation
 - Make OpenAI TTS voice more resilient to symbols, for example: "4.3" as "4 point 3", "%" as "percent" instead of "cent"
 - Prevent the same voice line from being randomly chosen twice in a row for a given voice line type
