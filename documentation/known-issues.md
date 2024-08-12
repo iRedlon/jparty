@@ -6,3 +6,5 @@
 - The timer may expire several seconds before a responding player is actually prompted to respond
 - The game may freeze after reversing a decision
 - The decision assistant may accept an answer that is clearly indicated in the category name i.e. "William" alone being correct for the category "Famous Williams"
+- "getWeightedRandomKey" error when using custom game settings
+- Double tap for selecting clues doesn't always work, should really be single tap

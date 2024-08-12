@@ -10,7 +10,7 @@
         "heroku-postbuild": "npm run build && cd client && npm run build",
         "build-all": "npm run heroku-postbuild",
         "debug": "cross-env DEBUG_MODE=true npx tsx ./build/server/controller.js",
-        "prod": "npx tsx ./build/server/controller.js"
+        "prod": "npx tsx -r newrelic ./build/server/controller.js"
     },
     "dependencies": {
         "@types/express": "^4.17.21",
@@ -23,6 +23,7 @@
         "express": "^4.18.2",
         "jparty-shared": "file:./shared",
         "mongodb": "^6.3.0",
+        "newrelic": "^12.0.0",
         "no-profanity": "^1.5.1",
         "nodemailer": "^6.9.13",
         "openai": "^4.24.1",
