@@ -156,6 +156,9 @@ export function playOpenAIVoice(audioBase64: string) {
     }
 }
 
+let utteranceStarted = false;
+let utteranceStartedInterval: NodeJS.Timeout;
+
 export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string) {
     const voice = getSpeechSynthesisVoice(voiceType);
     if (!voice) {
@@ -167,11 +170,27 @@ export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string
     utterance.volume = getModVolume(VolumeType.Voice);
     utterance.voice = voice;
     utterance.rate = 1.2;
+    utterance.onstart = () => {
+        utteranceStarted = true;
+    }
     utterance.onend = () => {
         // this utterance has ended so our new duration should be... nothing cause we're done!
         socket.emit(HostSocket.UpdateVoiceDuration, 0);
     }
+    utterance.onerror = (e) => {
+        console.log(e);
+    }
 
+    clearInterval(utteranceStartedInterval);
+    utteranceStartedInterval = setInterval(() => {
+        if (!utteranceStarted) {
+            // utterances randomly fail to start once in a while... not much I can do about an external API so just manually solving this
+            // by recursing in order to retry the failed voice line
+            playSpeechSynthesisVoice(voiceType, voiceLine);
+        }
+    }, 500);
+
+    utteranceStarted = false;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
 }

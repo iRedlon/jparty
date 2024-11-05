@@ -2,7 +2,7 @@
 import {
     AudioType,
     getRandomNum, HostServerSocket, LeaderboardType, PLACEHOLDER_LEADERBOARD_PLAYERS, PLACEHOLDER_TRIVIA_ROUND, Player, PlayerResponseType, PlayerState, ServerSocket,
-    SessionAnnouncement, SessionState, SessionTimeout, TriviaCategory, TriviaClue,
+    SessionAnnouncement, SessionState, SessionTimeoutType, TriviaCategory, TriviaClue,
     TriviaClueDecision, TriviaClueDecisionInfo, TriviaRound, VoiceType
 } from "jparty-shared";
 
@@ -114,7 +114,7 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
             break;
         case DebugCommand.StartTimeout:
             {
-                emitMockSocketEvent(ServerSocket.StartTimeout, SessionTimeout.Announcement, 60000);
+                emitMockSocketEvent(ServerSocket.StartTimeout, SessionTimeoutType.Announcement, 60000);
             }
             break;
         case DebugCommand.ShowAnnouncement:

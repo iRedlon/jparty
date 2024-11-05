@@ -92,7 +92,7 @@ export function cleanupTriviaData() {
         // updateCategoryType(29, TriviaCategoryType.Miscellaneous, TriviaCategoryType.Geography);
     }
     catch (e) {
-        // this cleanup will only happen on dev servers, no need to worry about error safety
+        console.error(e);
     }
 }
 

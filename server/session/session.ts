@@ -1,33 +1,65 @@
 
 import {
-    AttemptReconnectResult, getEnumSize, getRandomChoice, getSortedSessionPlayerIDs, getVoiceDurationMs, getWeightedRandomKey, Host, MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD, Player, PlayerResponseType, PlayerState,
-    SessionAnnouncement, SessionHosts, SessionPlayers, SessionState, SessionTimeout, SocketID,
-    TriviaClue, TriviaClueBonus, TriviaClueDecision, TriviaClueDecisionInfo,
-    TriviaGame, TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
+    AttemptReconnectResult, getEnumSize, getRandomChoice, getSortedSessionPlayerIDs, getVoiceDurationMs, getWeightedRandomKey, Host, MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD, 
+    Player, PlayerResponseType, PlayerState, SessionAnnouncement, SessionHosts, SessionPlayers, SessionState, SessionTimeoutType, SocketID,
+    TriviaClue, TriviaClueBonus, TriviaClueDecision, TriviaClueDecisionInfo, TriviaGame, TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
 } from "jparty-shared";
 
 import { getClueDecision } from "../api-requests/clue-decision.js";
 import { generateTriviaGame } from "../api-requests/generate-trivia-game.js";
+import { debugLog, DebugLogType } from "../misc/log.js";
 import { formatClueResponse } from "../misc/text-utils.js";
 
-import { debugLog, DebugLogType } from "../misc/log.js";
-
-// store timeouts in their own container so we can cancel a timeout early and still trigger its callback
+// this is a wrapper for Node timeouts. we utilize it to keep track of timeouts that are in progress, start/stop/restart them in an abstract way, and delay them if needed
 export class TimeoutInfo {
+    type: SessionTimeoutType;
+    id: string;
+    queued: boolean;
     timeout: NodeJS.Timeout;
     callback: Function;
     durationMs: number;
     endTimeMs: number;
 
-    constructor(callback: Function, durationMs: number) {
-        this.timeout = setTimeout(() => callback(), durationMs);
+    constructor(type: SessionTimeoutType, callback: Function, durationMs: number) {
+        this.type = type;
+        this.id = Math.random().toString(16).slice(2, 6);
         this.callback = callback;
         this.durationMs = durationMs;
-        this.endTimeMs = Date.now() + durationMs;
+
+        debugLog(DebugLogType.Timeout, `(${this.getDisplayName()}) was constructed`);
+
+        this.resetEndTimeMs();
+        this.queueStartTimeout();
+    }
+
+    getDisplayName() {
+        return `${SessionTimeoutType[this.type]}-${this.id}`;
     }
 
     getRemainingDurationMs() {
         return Math.max(this.endTimeMs - Date.now(), 0);
+    }
+
+    resetEndTimeMs() {
+        this.endTimeMs = Date.now() + this.durationMs;
+    }
+
+    queueStartTimeout() {
+        debugLog(DebugLogType.Timeout, `(${this.getDisplayName()}) was queued to start`);
+        this.queued = true;
+    }
+
+    startTimeout() {
+        if (!this.queued) {
+            return;
+        }
+
+        debugLog(DebugLogType.Timeout, `(${this.getDisplayName()}) has started`);
+        debugLog(DebugLogType.Timeout, `--------------------------------------`);
+
+        this.queued = false;
+        this.timeout = setTimeout(() => this.callback(), this.durationMs);
+        this.resetEndTimeMs();
     }
 }
 
@@ -428,21 +460,21 @@ export class Session {
 
     static TOSSUP_WINDOW_DURATION_MS = 750;
 
-    getTimeoutDurationMs(timeout: SessionTimeout) {
+    getTimeoutDurationMs(timeoutType: SessionTimeoutType) {
         let durationMs = 0;
 
         if (!this.triviaGame) {
             return durationMs;
         }
 
-        switch (timeout) {
-            case SessionTimeout.ReadingCategoryName:
-            case SessionTimeout.Announcement:
+        switch (timeoutType) {
+            case SessionTimeoutType.ReadingCategoryName:
+            case SessionTimeoutType.Announcement:
                 {
                     durationMs = getVoiceDurationMs(this.currentVoiceLine);
                 }
                 break;
-            case SessionTimeout.ReadingClue:
+            case SessionTimeoutType.ReadingClue:
                 {
                     const currentQuestion = this.getCurrentClue()?.question;
                     if (currentQuestion) {
@@ -450,12 +482,12 @@ export class Session {
                     }
                 }
                 break;
-            case SessionTimeout.BuzzWindow:
+            case SessionTimeoutType.BuzzWindow:
                 {
                     durationMs = this.triviaGame.settings.buzzWindowDurationSec * 1000;
                 }
                 break;
-            case SessionTimeout.TossupWindow:
+            case SessionTimeoutType.TossupWindow:
                 {
                     durationMs = Session.TOSSUP_WINDOW_DURATION_MS;
 
@@ -467,7 +499,7 @@ export class Session {
                     }
                 }
                 break;
-            case SessionTimeout.ResponseWindow:
+            case SessionTimeoutType.ResponseWindow:
                 {
                     durationMs = this.triviaGame.settings.responseDurationSec * 1000;
 
@@ -477,7 +509,7 @@ export class Session {
                     }
                 }
                 break;
-            case SessionTimeout.ReadingClueDecision:
+            case SessionTimeoutType.ReadingClueDecision:
                 {
                     durationMs = this.triviaGame.settings.revealDecisionDurationSec * 1000;
                 }
@@ -491,30 +523,38 @@ export class Session {
         return durationMs;
     }
 
-    startTimeout(timeout: SessionTimeout, callback: Function) {
-        this.stopTimeout(timeout);
-        this.timeoutInfo[timeout] = new TimeoutInfo(callback, this.getTimeoutDurationMs(timeout));
+    startTimeout(timeoutType: SessionTimeoutType, callback: Function) {
+        debugLog(DebugLogType.Timeout, `(session-utils.startTimeout): ${SessionTimeoutType[timeoutType]}`);
+        this.stopTimeout(timeoutType);
+        this.timeoutInfo[timeoutType] = new TimeoutInfo(timeoutType, callback, this.getTimeoutDurationMs(timeoutType));
     }
 
-    stopTimeout(timeout: SessionTimeout) {
-        let timeoutInfo = this.timeoutInfo[timeout];
+    stopTimeout(timeoutType: SessionTimeoutType) {
+        let timeoutInfo = this.timeoutInfo[timeoutType];
         if (timeoutInfo) {
+            debugLog(DebugLogType.Timeout, `(session-utils.stopTimeout): ${SessionTimeoutType[timeoutType]}`);
             clearTimeout(timeoutInfo.timeout);
-            delete this.timeoutInfo[timeout];
+            delete this.timeoutInfo[timeoutType];
         }
     }
 
     stopAllTimeouts() {
-        for (let timeout = 0; timeout < getEnumSize(SessionTimeout); timeout++) {
-            this.stopTimeout(timeout);
+        for (let timeoutType = 0; timeoutType < getEnumSize(SessionTimeoutType); timeoutType++) {
+            this.stopTimeout(timeoutType);
         }
     }
 
-    restartTimeout(timeout: SessionTimeout, newDurationMs: number) {
-        let timeoutInfo = this.timeoutInfo[timeout];
+    restartTimeout(timeoutType: SessionTimeoutType, newDurationMs: number) {
+        let timeoutInfo = this.timeoutInfo[timeoutType];
         if (timeoutInfo) {
-            this.stopTimeout(timeout);
-            this.timeoutInfo[timeout] = new TimeoutInfo(timeoutInfo.callback, newDurationMs);
+            const oldTimeoutID = timeoutInfo.id;
+
+            this.stopTimeout(timeoutType);
+            this.timeoutInfo[timeoutType] = new TimeoutInfo(timeoutType, timeoutInfo.callback, newDurationMs);
+
+            const newTimeoutID = this.timeoutInfo[timeoutType].id;
+
+            debugLog(DebugLogType.Timeout, `(session-utils.restartTimeout): ${SessionTimeoutType[timeoutType]} was (${oldTimeoutID}) but is now (${newTimeoutID})`);
         }
     }
 

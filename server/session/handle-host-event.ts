@@ -1,12 +1,12 @@
 
 import {
-    HostServerSocket, HostSocket, HostSocketCallback, ServerSocket, ServerSocketMessage, SessionState, SessionTimeout,
+    HostServerSocket, HostSocket, HostSocketCallback, ServerSocket, ServerSocketMessage, SessionState, SessionTimeoutType,
     TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
 } from "jparty-shared";
 import { generate as generateRandomWord } from "random-words";
 import { Socket } from "socket.io";
 
-import { createSession, deleteSession, emitLeaderboardUpdate, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost } from "./session-utils.js";
+import { createSession, deleteSession, emitLeaderboardUpdate, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost, restartTimeout } from "./session-utils.js";
 import { io } from "../controller.js";
 import { debugLog, DebugLogType } from "../misc/log.js";
 
@@ -62,23 +62,25 @@ function handleUpdateVoiceDuration(socket: Socket, sessionName: string, duration
     // we can restart the timeout with a much more accurate duration
     debugLog(DebugLogType.Voice, `got a new duration for OpenAI voice line: ${durationSec} seconds`);
 
+    const durationMs = durationSec * 1000;
+
     if (session.currentAnnouncement) {
-        session.restartTimeout(SessionTimeout.Announcement, durationSec * 1000);
+        restartTimeout(sessionName, SessionTimeoutType.Announcement, durationMs);
     }
 
     switch (session.state) {
         case SessionState.ReadingCategoryNames:
             {
-                session.restartTimeout(SessionTimeout.ReadingCategoryName, durationSec * 1000);
+                restartTimeout(sessionName, SessionTimeoutType.ReadingCategoryName, durationMs);
             }
         case SessionState.ReadingClueSelection:
             {
-                session.restartTimeout(SessionTimeout.ReadingClueSelection, durationSec * 1000);
+                restartTimeout(sessionName, SessionTimeoutType.ReadingClueSelection, durationMs);
             }
             break;
         case SessionState.ReadingClue:
             {
-                session.restartTimeout(SessionTimeout.ReadingClue, durationSec * 1000);
+                restartTimeout(sessionName, SessionTimeoutType.ReadingClue, durationMs);
             }
             break;
     }

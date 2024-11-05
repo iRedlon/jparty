@@ -12,7 +12,8 @@ export enum DebugLogType {
     ClueDecision,
     Email,
     Voice,
-    Leaderboard
+    Leaderboard,
+    Timeout
 }
 
 export enum LogLevel {
@@ -27,10 +28,11 @@ const NORMAL_LOG_LEVEL_TYPES = [
 
 const DEBUG_LOG_LEVEL_TYPES = NORMAL_LOG_LEVEL_TYPES.concat([
     // DebugLogType.Buzz,
-    DebugLogType.TriviaDatabase,
+    // DebugLogType.TriviaDatabase,
     // DebugLogType.ClueDecision,
     // DebugLogType.Email,
-    // DebugLogType.Voice
+    // DebugLogType.Voice,
+    DebugLogType.Timeout
 ]);
 
 const VERBOSE_LOG_LEVEL_TYPES = DEBUG_LOG_LEVEL_TYPES.concat([

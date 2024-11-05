@@ -16,7 +16,7 @@ export enum SessionState {
     GameOver
 }
 
-export enum SessionTimeout {
+export enum SessionTimeoutType {
     ReadingCategoryName,
     Announcement,
     ReadingClueSelection,

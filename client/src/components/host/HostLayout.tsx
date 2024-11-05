@@ -47,6 +47,8 @@ export default function HostLayout() {
     const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
 
     useEffect(() => {
+        window.speechSynthesis.getVoices();
+        
         socket.on(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
         socket.on(HostServerSocket.PlayAudio, handlePlayAudio);
         socket.on(HostServerSocket.PlayVoice, handlePlayVoice);

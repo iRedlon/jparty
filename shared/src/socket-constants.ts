@@ -26,7 +26,8 @@ export enum ServerSocket {
     SelectClue = "server_select_clue",
     UpdateSpotlightResponderID = "server_update_spotlight_responder_id",
     StartTimeout = "server_start_timeout",
-    StopTimeout = "server_stop_timeout"
+    StopTimeout = "server_stop_timeout",
+    TimeoutAckRequest = "server_timeout_ack_request"
 }
 
 export enum ClientSocket {

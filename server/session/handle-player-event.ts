@@ -1,14 +1,14 @@
 
 import {
     AudioType, HostServerSocket, NORMAL_GAME_SETTINGS, PARTY_GAME_SETTINGS, PlayerResponseType, PlayerSocket, PlayerSocketCallback, ServerSocket, ServerSocketMessage,
-    SessionAnnouncement, SessionState, SessionTimeout, SocketID, TriviaClueBonus, TriviaClueDecision, TriviaGameSettingsPreset, VoiceLineType
+    SessionAnnouncement, SessionState, SessionTimeoutType, SocketID, TriviaClueBonus, TriviaClueDecision, TriviaGameSettingsPreset, VoiceLineType
 } from "jparty-shared";
 import { Socket } from "socket.io";
 
 import { playAudio, playVoiceLine } from "./audio.js";
 import {
     emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, handleDisconnect, joinSession,
-    showAnnouncement, startPositionChangeAnimation, startTimeout, stopTimeout, updateLeaderboard
+    restartTimeout, showAnnouncement, startPositionChangeAnimation, startTimeout, stopTimeout, updateLeaderboard
 } from "./session-utils.js";
 import { io } from "../controller.js";
 import { DebugLogType, debugLog, formatDebugLog } from "../misc/log.js";
@@ -120,7 +120,7 @@ function recursiveReadCategoryName(sessionName: string) {
     }
 
     playVoiceLine(sessionName, VoiceLineType.ReadCategoryName);
-    startTimeout(sessionName, SessionTimeout.ReadingCategoryName, () => {
+    startTimeout(sessionName, SessionTimeoutType.ReadingCategoryName, () => {
         let session = getSession(sessionName);
         if (!session) {
             return;
@@ -140,7 +140,7 @@ function promptResponse(sessionName: string, responseType: PlayerResponseType, .
     }
 
     session.promptResponse(responseType, ...responderIDs);
-    startTimeout(sessionName, SessionTimeout.ResponseWindow, () => finishResponseWindow(sessionName));
+    startTimeout(sessionName, SessionTimeoutType.ResponseWindow, () => finishResponseWindow(sessionName));
 
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateNumSubmittedResponders, 0, responderIDs.length);
 
@@ -161,13 +161,13 @@ function readClue(sessionName: string) {
 
     emitStateUpdate(sessionName);
 
-    startTimeout(sessionName, SessionTimeout.ReadingClue, () => {
+    startTimeout(sessionName, SessionTimeoutType.ReadingClue, () => {
         let session = getSession(sessionName);
         if (!session) {
             return;
         }
 
-        session.stopTimeout(SessionTimeout.ReadingClue);
+        session.stopTimeout(SessionTimeoutType.ReadingClue);
 
         if (session.getCurrentClue()?.bonus === TriviaClueBonus.None) {
             displayTossupClue(sessionName);
@@ -186,7 +186,7 @@ function displayTossupClue(sessionName: string) {
     }
 
     session.displayTossupClue();
-    startTimeout(sessionName, SessionTimeout.BuzzWindow, () => finishBuzzWindow(sessionName));
+    startTimeout(sessionName, SessionTimeoutType.BuzzWindow, () => finishBuzzWindow(sessionName));
     emitStateUpdate(sessionName);
 }
 
@@ -254,7 +254,7 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
             return;
         }
 
-        stopTimeout(sessionName, SessionTimeout.ReadingClueSelection);
+        stopTimeout(sessionName, SessionTimeoutType.ReadingClueSelection);
 
         switch (session.getCurrentClue()?.bonus) {
             case TriviaClueBonus.Wager:
@@ -313,7 +313,7 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
 
         emitStateUpdate(sessionName);
 
-        startTimeout(sessionName, SessionTimeout.ReadingClueSelection, handleSelectClueInternal);
+        startTimeout(sessionName, SessionTimeoutType.ReadingClueSelection, handleSelectClueInternal);
     } else {
         handleSelectClueInternal();
     }
@@ -325,12 +325,12 @@ function finishBuzzWindow(sessionName: string) {
         return;
     }
 
-    stopTimeout(sessionName, SessionTimeout.BuzzWindow);
+    stopTimeout(sessionName, SessionTimeoutType.BuzzWindow);
 
     // if the tossup window is active, it means that someone buzzed in. the buzz window didn't really end, so bail out
-    if (session.timeoutInfo[SessionTimeout.TossupWindow]) {
+    if (session.timeoutInfo[SessionTimeoutType.TossupWindow]) {
         // restarting a timeout back to 0 is meant to immediatly trigger its callback
-        session.restartTimeout(SessionTimeout.TossupWindow, 0);
+        restartTimeout(sessionName, SessionTimeoutType.TossupWindow, 0);
         return;
     }
 
@@ -346,7 +346,7 @@ function finishBuzzWindow(sessionName: string) {
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
     playVoiceLine(sessionName, VoiceLineType.ShowCorrectAnswer);
 
-    startTimeout(sessionName, SessionTimeout.ReadingClueDecision, () => finishRevealClueDecision(sessionName, showCorrectAnswer));
+    startTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, () => finishRevealClueDecision(sessionName, showCorrectAnswer));
 }
 
 function handleBuzz(socket: Socket, sessionName: string) {
@@ -357,8 +357,8 @@ function handleBuzz(socket: Socket, sessionName: string) {
 
     // this must be the first buzz attempt!
     if (!session.buzzPlayerIDs.length) {
-        startTimeout(sessionName, SessionTimeout.TossupWindow, () => {
-            stopTimeout(sessionName, SessionTimeout.TossupWindow);
+        startTimeout(sessionName, SessionTimeoutType.TossupWindow, () => {
+            stopTimeout(sessionName, SessionTimeoutType.TossupWindow);
 
             let session = getSession(sessionName);
             if (!session || (session.state !== SessionState.ClueTossup)) {
@@ -367,7 +367,7 @@ function handleBuzz(socket: Socket, sessionName: string) {
 
             const responderID = session.getFinalBuzzPlayerID();
             if (responderID) {
-                stopTimeout(sessionName, SessionTimeout.BuzzWindow);
+                stopTimeout(sessionName, SessionTimeoutType.BuzzWindow);
                 promptResponse(sessionName, PlayerResponseType.Clue, responderID);
             }
         });
@@ -425,7 +425,7 @@ async function finishResponseWindow(sessionName: string) {
         return;
     }
 
-    stopTimeout(sessionName, SessionTimeout.ResponseWindow);
+    stopTimeout(sessionName, SessionTimeoutType.ResponseWindow);
 
     // it's possible the response window ended early (because all of the players finished submitting responses, for example)
     io.in(sessionName).emit(ServerSocket.StopTimeout);
@@ -445,7 +445,7 @@ async function finishResponseWindow(sessionName: string) {
                     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
                     playVoiceLine(sessionName, VoiceLineType.ShowCorrectAnswer);
 
-                    startTimeout(sessionName, SessionTimeout.ReadingClueDecision, () => recursiveRevealClueDecision(sessionName, true));
+                    startTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, () => recursiveRevealClueDecision(sessionName, true));
                 }
                 else {
                     recursiveRevealClueDecision(sessionName);
@@ -468,7 +468,7 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
         return;
     }
 
-    stopTimeout(sessionName, SessionTimeout.ReadingClueDecision);
+    stopTimeout(sessionName, SessionTimeoutType.ReadingClueDecision);
 
     // turn off the client timer while we wait for a decision. it's an async process, so we can't guarantee how long it will take
     io.in(sessionName).emit(ServerSocket.StopTimeout);
@@ -531,7 +531,7 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
 
     debugLog(DebugLogType.ClueDecision, `got clue decision: ${decision}. display correct answer?: ${showCorrectAnswer}`);
 
-    startTimeout(sessionName, SessionTimeout.ReadingClueDecision, () => {
+    startTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, () => {
         recursiveRevealClueDecision(sessionName, showCorrectAnswer);
     });
 }
@@ -542,7 +542,7 @@ function finishRevealClueDecision(sessionName: string, showCorrectAnswer: boolea
         return;
     }
 
-    stopTimeout(sessionName, SessionTimeout.ReadingClueDecision);
+    stopTimeout(sessionName, SessionTimeoutType.ReadingClueDecision);
 
     // if we displayed the correct answer for any reason, we need to move on to a new clue
     if (showCorrectAnswer) {

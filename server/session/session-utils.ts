@@ -1,7 +1,7 @@
 
 import {
     AttemptReconnectResult, ClientSocket, ClientSocketCallback, getEnumSize, HostServerSocket, LeaderboardType,
-    ServerSocket, ServerSocketMessage, SessionAnnouncement, SessionState, SessionTimeout, TriviaGameSettingsPreset, VoiceLineType,
+    ServerSocket, ServerSocketMessage, SessionAnnouncement, SessionState, SessionTimeoutType, TriviaGameSettingsPreset, VoiceLineType,
     VoiceType
 } from "jparty-shared";
 import { Socket } from "socket.io";
@@ -80,13 +80,13 @@ export function joinSession(socket: Socket, sessionName: string) {
         socket.emit(ServerSocket.SelectClue, session.categoryIndex, session.clueIndex);
     }
 
-    for (let timeout = 0; timeout < getEnumSize(SessionTimeout); timeout++) {
-        let sessionTimeout = session.timeoutInfo[timeout];
+    for (let timeoutType = 0; timeoutType < getEnumSize(SessionTimeoutType); timeoutType++) {
+        let sessionTimeout = session.timeoutInfo[timeoutType];
         if (!sessionTimeout) {
             continue;
         }
 
-        emitTimeoutUpdate(sessionName, timeout);
+        emitTimeoutUpdate(sessionName, timeoutType);
         break;
     }
 
@@ -258,13 +258,13 @@ export async function updateLeaderboard(sessionName: string) {
     }
 }
 
-export function startTimeout(sessionName: string, timeout: SessionTimeout, callback: Function) {
+export function startTimeout(sessionName: string, timeoutType: SessionTimeoutType, callback: Function) {
     let session = getSession(sessionName);
     if (!session) {
         return;
     }
 
-    session.startTimeout(timeout, () => {
+    session.startTimeout(timeoutType, () => {
         try {
             callback();
         }
@@ -273,33 +273,44 @@ export function startTimeout(sessionName: string, timeout: SessionTimeout, callb
         }
     });
 
-    emitTimeoutUpdate(sessionName, timeout);
+    emitTimeoutAckRequest(sessionName, timeoutType);
 }
 
-export function stopTimeout(sessionName: string, timeout: SessionTimeout) {
+export function stopTimeout(sessionName: string, timeoutType: SessionTimeoutType) {
     let session = getSession(sessionName);
     if (!session) {
         return;
     }
 
-    session.stopTimeout(timeout);
+    session.stopTimeout(timeoutType);
 }
 
-function emitTimeoutUpdate(sessionName: string, timeout: SessionTimeout) {
+export function restartTimeout(sessionName: string, timeoutType: SessionTimeoutType, newDurationMs: number) {
     let session = getSession(sessionName);
     if (!session) {
         return;
     }
 
-    const timeoutInfo = session.timeoutInfo[timeout];
+    session.restartTimeout(timeoutType, newDurationMs);
+
+    emitTimeoutAckRequest(sessionName, timeoutType);
+}
+
+function emitTimeoutUpdate(sessionName: string, timeoutType: SessionTimeoutType) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    const timeoutInfo = session.timeoutInfo[timeoutType];
     if (!timeoutInfo) {
         return;
     }
 
-    const displayTimeout = (timeout === SessionTimeout.BuzzWindow) || (timeout === SessionTimeout.ResponseWindow);
+    const displayTimeout = (timeoutType === SessionTimeoutType.BuzzWindow) || (timeoutType === SessionTimeoutType.ResponseWindow);
 
     if (displayTimeout) {
-        io.in(session.name).emit(ServerSocket.StartTimeout, timeout, timeoutInfo.getRemainingDurationMs());
+        io.in(session.name).emit(ServerSocket.StartTimeout, timeoutType, timeoutInfo.getRemainingDurationMs());
     }
 }
 
@@ -314,13 +325,13 @@ export function showAnnouncement(sessionName: string, announcement: SessionAnnou
 
     io.in(sessionName).emit(HostServerSocket.ShowAnnouncement, announcement, session.currentVoiceLine);
 
-    startTimeout(sessionName, SessionTimeout.Announcement, () => {
+    startTimeout(sessionName, SessionTimeoutType.Announcement, () => {
         let session = getSession(sessionName);
         if (!session) {
             return;
         }
 
-        stopTimeout(sessionName, SessionTimeout.Announcement);
+        stopTimeout(sessionName, SessionTimeoutType.Announcement);
 
         const forceHideAnnouncement = announcement === SessionAnnouncement.GameOver;
         io.in(sessionName).emit(HostServerSocket.HideAnnouncement, forceHideAnnouncement);
@@ -349,6 +360,39 @@ export function emitTriviaRoundUpdate(sessionName: string) {
     }
 
     io.in(sessionName).emit(ServerSocket.UpdateTriviaRound, session.getCurrentRound());
+}
+
+function emitTimeoutAckRequest(sessionName: string, timeoutType: SessionTimeoutType) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    const timeoutInfo = session.timeoutInfo[timeoutType];
+    if (!timeoutInfo) {
+        return;
+    }
+
+    const oldTimeoutInfoID = timeoutInfo.id;
+
+    debugLog(DebugLogType.Timeout, `(session-utils.emitTimeoutAckRequest): requesting... ${SessionTimeoutType[timeoutType]}`);
+
+    const TIMEOUT_ACK_REQUEST_TIME_MS = 5000;
+    io.in(sessionName).timeout(TIMEOUT_ACK_REQUEST_TIME_MS).emit(ServerSocket.TimeoutAckRequest, timeoutType, oldTimeoutInfoID, (err: any, responses: any) => {
+        let timeoutInfo = session.timeoutInfo[timeoutType];
+        if (!timeoutInfo) {
+            return;
+        }
+
+        if (oldTimeoutInfoID != timeoutInfo.id) {
+            return;
+        }
+
+        debugLog(DebugLogType.Timeout, `(session-utils.emitTimeoutAckRequest): heard acknowledgement from (${JSON.stringify(responses)})... ${SessionTimeoutType[timeoutType]}`);
+
+        timeoutInfo.startTimeout();
+        emitTimeoutUpdate(sessionName, timeoutType);
+    });
 }
 
 export async function emitLeaderboardUpdate(socket: Socket) {

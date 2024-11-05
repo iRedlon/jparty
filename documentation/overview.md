@@ -16,7 +16,7 @@ In production, they're set manually within the server environment provided by ou
 ### Server Environment (store at .env in root directory)
 #### server settings
 - PORT
-- LOG_LEVEL: a value defined in logging-utils, the log level determines which systems' debug messages will be logged
+- LOG_LEVEL: a value defined in misc/log.ts, the log level determines which systems' debug messages will be logged
 - DEBUG_MODE (optional): enables debug logging on server and the debug menu on client
 - USE_OPENAI_TTS (optional): enables OpenAI API requests for TTS voice lines. Browser screen reader will otherwise be used as a fallback
 
