@@ -48,7 +48,7 @@ function handleUpdateVoiceType(socket: Socket, sessionName: string, voiceType: V
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateVoiceType, voiceType, !process.env.USE_OPENAI_TTS /* modernVoicesDisabled */);
 }
 
-function handleUpdateVoiceDuration(socket: Socket, sessionName: string, durationSec: number) {
+function handleUpdateVoiceDuration(socket: Socket, sessionName: string, voiceLine: string, durationSec: number) {
     let session = getSession(sessionName);
     if (!session) {
         return;
@@ -58,9 +58,13 @@ function handleUpdateVoiceDuration(socket: Socket, sessionName: string, duration
         return;
     }
 
+    if (voiceLine !== session.currentVoiceLine) {
+        return;
+    }
+
     // an estimated voice duration timeout will have already started, but now that we know exactly how long it will take...
     // we can restart the timeout with a much more accurate duration
-    debugLog(DebugLogType.Voice, `got a new duration for OpenAI voice line: ${durationSec} seconds`);
+    debugLog(DebugLogType.Voice, `got a new duration of ${durationSec} seconds for current voice line: "${session.currentVoiceLine}"`);
 
     const durationMs = durationSec * 1000;
 

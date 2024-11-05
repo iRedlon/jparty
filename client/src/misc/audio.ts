@@ -175,7 +175,7 @@ export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string
     }
     utterance.onend = () => {
         // this utterance has ended so our new duration should be... nothing cause we're done!
-        socket.emit(HostSocket.UpdateVoiceDuration, 0);
+        socket.emit(HostSocket.UpdateVoiceDuration, voiceLine, 0);
     }
     utterance.onerror = (e) => {
         console.log(e);
