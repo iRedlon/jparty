@@ -23,15 +23,18 @@ export enum LogLevel {
 }
 
 const NORMAL_LOG_LEVEL_TYPES = [
-    DebugLogType.Server
+    DebugLogType.Server,
+    DebugLogType.Buzz,
+    DebugLogType.Voice,
+    DebugLogType.Timeout
 ];
 
 const DEBUG_LOG_LEVEL_TYPES = NORMAL_LOG_LEVEL_TYPES.concat([
-    // DebugLogType.Buzz,
+    DebugLogType.Buzz,
     // DebugLogType.TriviaDatabase,
     // DebugLogType.ClueDecision,
     // DebugLogType.Email,
-    // DebugLogType.Voice,
+    DebugLogType.Voice,
     DebugLogType.Timeout
 ]);
 
