@@ -6,7 +6,7 @@ import { useContext, useState } from "react";
 
 import { LayoutContext } from "./Layout";
 import { socket } from "../../misc/socket";
-import { FEEDBACK_TYPE_DISPLAY_NAMES, KNOWN_ISSUES_LINK, ROADMAP_LINK } from "../../misc/ui-constants";
+import { FEEDBACK_TYPE_DISPLAY_NAMES, KNOWN_ISSUES_LINK } from "../../misc/ui-constants";
 
 export default function MenuPanel_Feedback() {
     const context = useContext(LayoutContext);
@@ -40,10 +40,6 @@ export default function MenuPanel_Feedback() {
                 </Link>
 
                 <br />
-
-                <Link href={ROADMAP_LINK} isExternal>
-                    <u>Roadmap</u><ExternalLinkIcon mx={"2px"} />
-                </Link>
 
                 <Box marginTop={"1em"} marginBottom={"1em"}>
                     <Select

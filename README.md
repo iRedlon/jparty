@@ -3,7 +3,6 @@
 ### _A couch co-op trivia game_
 
 ## [Patch Notes](documentation/patch-notes.md)
-## [Roadmap](documentation/roadmap.md)
 ## [Known Issues](documentation/known-issues.md)
 
 ## Development
