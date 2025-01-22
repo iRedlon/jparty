@@ -14,3 +14,19 @@
 - Notify individual players when they make it on the leaderboard and what place they made
 - Add opt-in newsletter
 - Add custom events for google analytics
+
+## Feedback from friends
+
+- Pauses between evaluating each player answer is too long during all play
+- Not enough visual feedback when doing things on mobile device: selecting clue, submitting answer, etc.
+- Correct answer formatting sometimes weird and cut off
+- Scores can get cut off if they're too big on final scoreboard screen or just mobile scoreboard screen
+- Audio cues for someone buzzing in and when submitting an answer
+- More sound FX, maybe bring back the crowd noises (awwww/applause/etc.)
+- After hitting the buzzer, it switches to the scoreboard so you can accidentally click "edit signature" while spamming
+- Automatically opening the keyboard after a buzzer click would be nice
+- Answer check delay is a neccessary evil because it's a network request but maybe some audio would help smooth it out
+- Opinion: all play answers should be penalized if you attempt an answer (but not if you don't even try)
+- Don't bother waiting for network request if answer is obviously correct (use the old answer checking basically to save some time and API money)
+- Add support for anki flashcards
+- Add experimental support for locales by using OpenAI translate for a few popular languages (and maybe excluding America-specific trivia if possible)
