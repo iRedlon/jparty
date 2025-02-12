@@ -6,16 +6,17 @@
 ## [Known Issues](documentation/known-issues.md)
 
 ## Development
-Read the [overview](documentation/overview.md) for an overall description of the codebase
+Read the [overview](documentation/overview.md) for an overall description of the codebase. It's important to understand that the game is split into three separate
+node packages: "client", "server", and "shared"
 
 ```
--- install node modules in both projects
+-- install node modules in server and client
 npm install
 
--- build both projects
+-- build server and client
 npm run build-all
 
--- run the game in debug mode (enables debug tools and extra logging)
+-- run the game in debug mode (enables client debug tools and additional logging)
 npm run debug
 
 -- run the game in production mode

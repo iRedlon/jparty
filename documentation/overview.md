@@ -9,7 +9,7 @@ Linked files/folders lead to relevant code locations for each concept
 - The shared directory contains the "shared project" (jparty-shared); written in node typescript; contains enums/classes/types/etc. that are shared by both the server and client projects. Both projects utilize the shared project in the form of a local npm dependency
 
 ## Environment Variables
-jparty server and client both rely on environment variables, most notably the credentials for connecting to 3rd-party services.
+jparty server and client both rely on environment variables, most notably to store the credentials for connecting to 3rd-party services.
 Locally, these environment variables are set with a .env file in the base directory of jparty/server and jparty/client which are loaded with dotenv.
 In production, they're set manually within the server environment provided by our hosting service.
 
@@ -82,8 +82,8 @@ In production, they're set manually within the server environment provided by ou
 
 ## Buzz Tossup
 - A new feature in jparty is a catchup mechanic intended to handle "buzz tossups" in a more even way
-- A "buzz tossup" is a situation where multiple people buzz in for a clue at around the same moment. In a real trivia competition, it's just a matter of speed but there's no guarantee in network speed between different player devices. Thus we shouldn't give the buzz to the first player that the server hears from
-- The solution is to add a small delay (less than a second) when the initial player buzzes in, creating a window where other players may still buzz in. Once this window closes, the buzz is granted to a player based on a weighted random selection
+- A "buzz tossup" is a situation where multiple people buzz in for a clue at around the same moment. In a real trivia competition, it's just a matter of speed but there's no guarantee in network speed between different player devices. Thus it's unfair give the buzz to the first player that the server hears from
+- The solution is to add a small delay (less than a second) when an initial player buzzes in, creating a window where other players may still buzz in. Once this window closes, the buzz is granted to a player based on a weighted random selection
 - This weight representing win likelihood is the crux of the catchup mechanic. All players start with an equal weight of 1. Winning a buzz tossup halves a player's weight, while lossing a buzz tossup doubles their weight. Thus everyone should win around the same number of buzz tossups
 - This delay is somewhat annoying in that it's not as responsive as other user inputs in the game. I think it's a neccessary evil though, so to lessen the blow: the delay timer for each clue is divided by its clue dificulty. That is to say that a very easy clue will use the full 750ms, while a very difficult one will only have a 150ms delay
 - This is because easier clues are more likely to result in a buzz tossup where multiple players know the answer
