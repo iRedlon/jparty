@@ -10,17 +10,17 @@ import {
   RadioGroup,
   Stack,
   Tab,
-  Tabs,
   TabList,
   TabPanel,
   TabPanels,
+  Tabs,
   Text,
   useColorModeValue,
 } from "@chakra-ui/react";
 import {
-  NORMAL_SINGLE_ROUND_SETTINGS,
-  NORMAL_GAME_SETTINGS,
   HostSocket,
+  NORMAL_GAME_SETTINGS,
+  NORMAL_SINGLE_ROUND_SETTINGS,
   PARTY_GAME_SETTINGS,
   SessionState,
   TEST_GAME_SETTINGS,
@@ -31,9 +31,9 @@ import {
 } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
 
-import RoundSettings, { numberInputForm } from "./RoundSettings";
-import { LayoutContext } from "../common/Layout";
 import { socket } from "../../misc/socket";
+import { LayoutContext } from "../common/Layout";
+import RoundSettings, { numberInputForm } from "./RoundSettings";
 
 export interface GameSettingsProps {
   onCloseHostMenu: Function;
@@ -118,7 +118,7 @@ export default function GameSettings({ onCloseHostMenu }: GameSettingsProps) {
       <Heading size="md" textAlign="center">
         {context.isSpectator
           ? "Only the session creator can customize game settings"
-          : "Customize your game settings; then save them down below"}
+          : "Customize your game settings below; then save to confirm"}
       </Heading>
     ) : (
       <Heading size="md" textAlign="center">
@@ -134,7 +134,7 @@ export default function GameSettings({ onCloseHostMenu }: GameSettingsProps) {
         variant="outline"
         size="sm"
       >
-        Use normal settings
+        Preset: normal mode
       </Button>
       <Button
         onClick={() => applySettings(PARTY_GAME_SETTINGS)}
@@ -142,7 +142,7 @@ export default function GameSettings({ onCloseHostMenu }: GameSettingsProps) {
         variant="outline"
         size="sm"
       >
-        Use party settings
+        Preset: party mode
       </Button>
       {context.debugMode && (
         <Button
@@ -277,6 +277,8 @@ export default function GameSettings({ onCloseHostMenu }: GameSettingsProps) {
             {heading}
             {presetButtons}
 
+            {selectedRoundIndex === -1 && gameSummary}
+
             <Box bg={sectionBg} p={4} borderRadius="xl">
               <Stack spacing={4}>
                 {minClueYearForm}
@@ -349,8 +351,6 @@ export default function GameSettings({ onCloseHostMenu }: GameSettingsProps) {
                 </TabPanels>
               </Tabs>
             </Box>
-
-            {selectedRoundIndex === -1 && gameSummary}
           </Stack>
         </Box>
       </Box>

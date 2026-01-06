@@ -86,7 +86,7 @@ export default function PlayerMenu() {
         <ModalOverlay />
         <ModalContent
           overflowY={"scroll"}
-          height={"90vh"}
+          height={"80vh"}
           width={"80vw"}
           marginTop={"auto"}
           marginBottom={"auto"}

@@ -91,7 +91,7 @@ export default function HostMenu() {
         <ModalOverlay />
         <ModalContent
           overflow={"auto"}
-          height={"90vh"}
+          height={"80vh"}
           minWidth={"60vw"}
           marginTop={"auto"}
           marginBottom={"auto"}
