@@ -65,9 +65,9 @@ async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSet
     let usedClueIDs: Set<number> = new Set();
     const sectionAnswerMap = new Map<string, string>();
 
-    const likelyToBeImageClue = (answer: string) => {
+    const likelyToBeImageClue = (clue: string) => {
         const imageClueKeywords = ["seen here", "pictured here", "featured here", "shown here"];
-        return imageClueKeywords.some(keyword => answer.toLowerCase().includes(keyword));
+        return imageClueKeywords.some(keyword => clue.toLowerCase().includes(keyword));
     }
 
     while (triviaCategory.clues.length < roundSettings.numClues) {
@@ -76,7 +76,7 @@ async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSet
         //ensure category doesn't have two clues with the same answer
         //also do a naive check to try to make sure it's not an image clue
         let ctr = 0;
-        while ((sectionAnswerMap.has(clueSchema.answer) || likelyToBeImageClue(clueSchema.answer)) && ctr < 10) {
+        while ((sectionAnswerMap.has(clueSchema.answer) || likelyToBeImageClue(clueSchema.question)) && ctr < 10) {
             clueSchema = getRandomChoice<TriviaClueSchema>(categorySchema.clues[clueDifficulty]);
             ctr++;
         }
