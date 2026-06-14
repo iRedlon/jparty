@@ -1,6 +1,6 @@
 {
     "name": "jparty-server",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "author": "Isaac Redlon",
     "type": "module",
     "heroku-run-build-script": true,

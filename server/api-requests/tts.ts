@@ -10,7 +10,15 @@ if (!process.env.OPENAI_SECRET_KEY) {
     throw new Error(formatDebugLog("attempted to connect to OpenAI without API key"));
 }
 
-export async function getVoiceAudioBase64(voiceType: VoiceType, voiceLine: string) {
+// tts-1 outputs MP3 at 24kbps CBR, so we can derive duration directly from file size
+const OPENAI_TTS_BYTES_PER_SEC = 24000 / 8;
+
+export interface VoiceAudio {
+    base64: string;
+    durationMs: number;
+}
+
+export async function getVoiceAudioBase64(voiceType: VoiceType, voiceLine: string): Promise<VoiceAudio | undefined> {
     if (!process.env.USE_OPENAI_TTS) {
         return;
     }
@@ -40,10 +48,14 @@ export async function getVoiceAudioBase64(voiceType: VoiceType, voiceLine: strin
     }
 
     try {
-        const arrayBuffer = await response.arrayBuffer(); // binary data
-        const base64Audio = Buffer.from(arrayBuffer).toString("base64"); // convert array buffer to a base64 encoded string
-        return base64Audio; // this encoded string will be converted back into binary data on the client, before being played as audio
-    } 
+        const arrayBuffer = await response.arrayBuffer();
+        const durationMs = Math.ceil((arrayBuffer.byteLength / OPENAI_TTS_BYTES_PER_SEC) * 1000);
+        const base64 = Buffer.from(arrayBuffer).toString("base64");
+
+        debugLog(DebugLogType.Voice, `computed TTS duration: ${durationMs}ms from ${arrayBuffer.byteLength} bytes`);
+
+        return { base64, durationMs };
+    }
     catch (e) {
         throw e;
     }
