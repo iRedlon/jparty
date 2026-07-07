@@ -118,7 +118,7 @@ export default function HostLayout() {
 
     const handlePlayVoice = (voiceType: VoiceType, voiceLine: string, audioBase64?: string) => {
         if (audioBase64) {
-            playOpenAIVoice(audioBase64);
+            playOpenAIVoice(voiceLine, audioBase64);
         }
         else {
             playSpeechSynthesisVoice(voiceType, voiceLine);

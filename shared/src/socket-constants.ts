@@ -26,17 +26,18 @@ export enum ServerSocket {
     SelectClue = "server_select_clue",
     UpdateSpotlightResponderID = "server_update_spotlight_responder_id",
     StartTimeout = "server_start_timeout",
-    StopTimeout = "server_stop_timeout",
-    TimeoutAckRequest = "server_timeout_ack_request"
+    StopTimeout = "server_stop_timeout"
 }
 
 export enum ClientSocket {
     AttemptReconnect = "client_attempt_reconnect",
-    SubmitFeedback = "client_submit_feedback"
+    SubmitFeedback = "client_submit_feedback",
+    SyncClock = "client_sync_clock"
 }
 
 export type ClientSocketCallback = {
     [ClientSocket.AttemptReconnect]: (result: AttemptReconnectResult) => any;
+    [ClientSocket.SyncClock]: (serverTimeMs: number) => any;
 }
 
 export enum HostSocket {

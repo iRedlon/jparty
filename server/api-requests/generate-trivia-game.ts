@@ -62,25 +62,33 @@ async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSet
 
     // generate a clue for each difficulty in the rolled order
     let clueIndex = 0;
-    let usedClueIDs: Set<number> = new Set();
-    const sectionAnswerMap = new Map<string, string>();
+    let usedClueIDs = new Set<number>();
+    let usedAnswers = new Set<string>();
 
     const likelyToBeImageClue = (clue: string) => {
         const imageClueKeywords = ["seen here", "pictured here", "featured here", "shown here"];
         return imageClueKeywords.some(keyword => clue.toLowerCase().includes(keyword));
     }
 
+    const isDuplicateAnswer = (answer: string) => {
+        const answerInCategoryName = triviaCategory.name.toLowerCase().includes(answer.toLowerCase());
+        return !answerInCategoryName && usedAnswers.has(answer);
+    }
+
     while (triviaCategory.clues.length < roundSettings.numClues) {
         const clueDifficulty = clueDifficultyOrder[clueIndex];
         let clueSchema: TriviaClueSchema = getRandomChoice<TriviaClueSchema>(categorySchema.clues[clueDifficulty]);
-        //ensure category doesn't have two clues with the same answer
-        //also do a naive check to try to make sure it's not an image clue
-        let ctr = 0;
-        while ((sectionAnswerMap.has(clueSchema.answer) || likelyToBeImageClue(clueSchema.question)) && ctr < 10) {
+        // ensure category doesn't have two clues with the same answer
+        // also do a naive check to try to make sure it's not an image clue
+        let attempts = 0;
+
+        while ((isDuplicateAnswer(clueSchema.answer) || likelyToBeImageClue(clueSchema.question)) && attempts < 10) {
             clueSchema = getRandomChoice<TriviaClueSchema>(categorySchema.clues[clueDifficulty]);
-            ctr++;
+            attempts++;
         }
-        sectionAnswerMap.set(clueSchema.answer, clueSchema.answer);
+
+        usedAnswers.add(clueSchema.answer);
+
         if (usedClueIDs.has(clueSchema.id)) {
             continue;
         }

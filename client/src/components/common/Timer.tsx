@@ -7,7 +7,7 @@ import { CSSTransition } from "react-transition-group";
 
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { getClientID } from "../../misc/client-utils";
-import { socket } from "../../misc/socket";
+import { estimateLocalTimeMs, socket } from "../../misc/socket";
 import { Layer } from "../../misc/ui-constants";
 
 import "../../style/components/Timer.css";
@@ -24,7 +24,6 @@ export default function Timer() {
 
         socket.on(ServerSocket.StartTimeout, handleStartTimeout);
         socket.on(ServerSocket.StopTimeout, handleStopTimeout);
-        socket.on(ServerSocket.TimeoutAckRequest, handleTimeoutAckRequest);
 
         addMockSocketEventHandler(ServerSocket.StartTimeout, handleStartTimeout);
 
@@ -32,25 +31,19 @@ export default function Timer() {
             clearInterval(interval);
             socket.off(ServerSocket.StartTimeout, handleStartTimeout);
             socket.off(ServerSocket.StopTimeout, handleStopTimeout);
-            socket.off(ServerSocket.TimeoutAckRequest, handleTimeoutAckRequest);
 
             removeMockSocketEventHandler(ServerSocket.StartTimeout, handleStartTimeout);
         };
     }, []);
 
-    const handleStartTimeout = (timeoutType: SessionTimeoutType, durationMs: number) => {
+    const handleStartTimeout = (timeoutType: SessionTimeoutType, openTimeMs: number, closeTimeMs: number) => {
         setCurrentTimeoutType(timeoutType);
-        setCurrentTimeoutEndTimeMs(Date.now() + durationMs);
+        setCurrentTimeoutEndTimeMs(estimateLocalTimeMs(closeTimeMs));
     }
 
     const handleStopTimeout = () => {
         setCurrentTimeoutType(undefined);
         setCurrentTimeoutEndTimeMs(0);
-    }
-
-    const handleTimeoutAckRequest = (timeoutType: SessionTimeoutType, id: string, callback: Function) => {
-        // console.log(`Sending ack for timeout: ${SessionTimeoutType[timeoutType]}-${id}`);
-        callback(socket.id);
     }
 
     const getTimeRemainingSec = () => {

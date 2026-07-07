@@ -19,14 +19,15 @@ dotenv.config();
 
 const app = express();
 const server = createServer(app);
-export const io = new Server(server);
+// tighter ping settings so dead or frozen clients are detected and removed promptly
+export const io = new Server(server, { pingInterval: 10000, pingTimeout: 10000 });
 const port = process.env.PORT || 3000;
 
 // serve react files from the client build folder
 let dirname = path.dirname(fileURLToPath(import.meta.url));
 app.use(express.static(path.join(dirname, "../../client/build")));
 
-cleanupTriviaData();
+// cleanupTriviaData();
 
 io.on(ReservedEvent.Connection, (socket: Socket) => {
     if (process.env.DEBUG_MODE) {
@@ -45,6 +46,10 @@ io.on(ReservedEvent.Connection, (socket: Socket) => {
 
     socket.on(ClientSocket.SubmitFeedback, (feedback: Feedback) => {
         handleSubmitFeedback(socket, feedback);
+    });
+
+    socket.on(ClientSocket.SyncClock, (callback: ClientSocketCallback[ClientSocket.SyncClock]) => {
+        callback(Date.now());
     });
 
     socket.onAny((event: string, ...args: any[]) => {

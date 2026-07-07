@@ -10,8 +10,8 @@ if (!process.env.OPENAI_SECRET_KEY) {
     throw new Error(formatDebugLog("attempted to connect to OpenAI without API key"));
 }
 
-// tts-1 outputs MP3 at 24kbps CBR, so we can derive duration directly from file size
-const OPENAI_TTS_BYTES_PER_SEC = 24000 / 8;
+// tts-1 outputs MP3 at 24kHz sample rate / 160kbps CBR, so we can derive duration directly from file size
+const OPENAI_TTS_BYTES_PER_SEC = 160000 / 8;
 
 export interface VoiceAudio {
     base64: string;
@@ -29,6 +29,7 @@ export async function getVoiceAudioBase64(voiceType: VoiceType, voiceLine: strin
 
     const response = await fetch("https://api.openai.com/v1/audio/speech", {
         method: "POST",
+        signal: AbortSignal.timeout(5000),
         headers: {
             "Authorization": `Bearer ${process.env.OPENAI_SECRET_KEY}`,
             "Content-Type": "application/json"

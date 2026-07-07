@@ -41,7 +41,7 @@ export async function getClueDecision(clue: TriviaClue, response: string) {
             }
         }
         
-        //short circuit if the response is clearly the correct answer
+        // short circuit if the response is clearly the correct answer
         if (response.toLowerCase().trim() === clue.answer.toLowerCase().trim()) {
             return TriviaClueDecision.Correct;
         }

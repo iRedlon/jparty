@@ -297,7 +297,7 @@ export function startTimeout(sessionName: string, timeoutType: SessionTimeoutTyp
         }
     });
 
-    emitTimeoutAckRequest(sessionName, timeoutType);
+    emitTimeoutUpdate(sessionName, timeoutType);
 }
 
 export function stopTimeout(sessionName: string, timeoutType: SessionTimeoutType) {
@@ -317,7 +317,7 @@ export function restartTimeout(sessionName: string, timeoutType: SessionTimeoutT
 
     session.restartTimeout(timeoutType, newDurationMs);
 
-    emitTimeoutAckRequest(sessionName, timeoutType);
+    emitTimeoutUpdate(sessionName, timeoutType);
 }
 
 function emitTimeoutUpdate(sessionName: string, timeoutType: SessionTimeoutType) {
@@ -334,7 +334,10 @@ function emitTimeoutUpdate(sessionName: string, timeoutType: SessionTimeoutType)
     const displayTimeout = (timeoutType === SessionTimeoutType.BuzzWindow) || (timeoutType === SessionTimeoutType.ResponseWindow);
 
     if (displayTimeout) {
-        io.in(session.name).emit(ServerSocket.StartTimeout, timeoutType, timeoutInfo.getRemainingDurationMs());
+        const displayWindow = session.getTimeoutDisplayWindowMs(timeoutType);
+        if (displayWindow) {
+            io.in(session.name).emit(ServerSocket.StartTimeout, timeoutType, displayWindow.openTimeMs, displayWindow.closeTimeMs);
+        }
     }
 }
 
@@ -384,39 +387,6 @@ export function emitTriviaRoundUpdate(sessionName: string) {
     }
 
     io.in(sessionName).emit(ServerSocket.UpdateTriviaRound, session.getCurrentRound());
-}
-
-function emitTimeoutAckRequest(sessionName: string, timeoutType: SessionTimeoutType) {
-    let session = getSession(sessionName);
-    if (!session) {
-        return;
-    }
-
-    const timeoutInfo = session.timeoutInfo[timeoutType];
-    if (!timeoutInfo) {
-        return;
-    }
-
-    const oldTimeoutInfoID = timeoutInfo.id;
-
-    debugLog(DebugLogType.Timeout, `(session-utils.emitTimeoutAckRequest): requesting... ${SessionTimeoutType[timeoutType]}`);
-
-    const TIMEOUT_ACK_REQUEST_TIME_MS = 5000;
-    io.in(sessionName).timeout(TIMEOUT_ACK_REQUEST_TIME_MS).emit(ServerSocket.TimeoutAckRequest, timeoutType, oldTimeoutInfoID, (err: any, responses: any) => {
-        let timeoutInfo = session.timeoutInfo[timeoutType];
-        if (!timeoutInfo) {
-            return;
-        }
-
-        if (oldTimeoutInfoID != timeoutInfo.id) {
-            return;
-        }
-
-        debugLog(DebugLogType.Timeout, `(session-utils.emitTimeoutAckRequest): heard acknowledgement from (${JSON.stringify(responses)})... ${SessionTimeoutType[timeoutType]}`);
-
-        timeoutInfo.startTimeout();
-        emitTimeoutUpdate(sessionName, timeoutType);
-    });
 }
 
 export async function emitLeaderboardUpdate(socket: Socket) {

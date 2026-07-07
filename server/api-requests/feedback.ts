@@ -1,5 +1,5 @@
 
-import { Feedback, FeedbackType, getDateStamp, ServerSocket, ServerSocketMessage } from "jparty-shared";
+import { Feedback, getDateStamp, ServerSocket, ServerSocketMessage } from "jparty-shared";
 import nodemailer from "nodemailer";
 import { Socket } from "socket.io";
 
@@ -8,18 +8,16 @@ import { getSession } from "../session/session-utils";
 
 let mailConfig;
 
-// in production: send emails to our actual feedback inbox with a real SMTP service
+// in production: send emails with a real SMTP service (Google)
 if (process.env.NODE_ENV === "production") {
     mailConfig = {
-        host: "mail.privateemail.com",
-        port: 465,
-        secure: true,
+        service: "gmail",
         auth: {
             user: process.env.FEEDBACK_EMAIL,
             pass: process.env.FEEDBACK_EMAIL_PASSWORD
         }
     };
-// in dev: send emails to a transient inbox with Etheral, a fake SMTP service
+// otherwise: send emails to a transient inbox with Ethereal, a fake SMTP service
 } else {
     mailConfig = {
         host: "smtp.ethereal.email",
@@ -37,22 +35,20 @@ export function handleSubmitFeedback(socket: Socket, feedback: Feedback) {
     debugLog(DebugLogType.Email, `heard feedback submission. attempting to send it as an email`);
     debugLog(DebugLogType.Email, JSON.stringify(feedback), true);
 
-    let message = feedback.message;
+    const escapeHtml = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    let message = `<b>FEEDBACK</b><br><br>${escapeHtml(feedback.message).replace(/\n/g, "<br>")}`;
 
     const session = getSession((socket as any).sessionName);
     if (session) {
-        message += `\n\n${JSON.stringify(session)}`;
-    }
-
-    if (feedback.category) {
-        message += `\n\nspecified category: "${feedback.category.name}"`;
+        message += `<br><br><b>SESSION DUMP</b><br><br>${escapeHtml(JSON.stringify(session))}`;
     }
 
     const mailOptions = {
         from: process.env.FEEDBACK_EMAIL,
-        to: process.env.FEEDBACK_EMAIL,
-        subject: `${FeedbackType[feedback.type]} Feedback (${getDateStamp()})`,
-        text: message
+        to: "isaacredlon@gmail.com",
+        subject: `Feedback (${getDateStamp()})`,
+        html: message
     };
 
     transporter.sendMail(mailOptions, (error) => {

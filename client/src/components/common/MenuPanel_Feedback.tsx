@@ -107,7 +107,7 @@ export default function MenuPanel_Feedback() {
             {/* Body */}
             <Box px={{ base: 4, md: 5 }} py={{ base: 4, md: 5 }}>
               <Stack spacing={4}>
-                <Select
+                {/* <Select
                   id={"feedback-type"}
                   value={feedbackType}
                   onChange={(e) => setFeedbackType(parseInt(e.target.value))}
@@ -147,11 +147,11 @@ export default function MenuPanel_Feedback() {
                       );
                     }
                   )}
-                </Select>
+                </Select> */}
 
                 <Textarea
                   id={"feedback-text"}
-                  placeholder={"Please include details, if applicable"}
+                  placeholder={"Report a bug, share your opinion, etc."}
                   value={feedbackMessage}
                   onChange={(e) => setFeedbackMessage(e.target.value)}
                   bg={inputBg}

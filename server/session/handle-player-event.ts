@@ -355,6 +355,11 @@ function handleBuzz(socket: Socket, sessionName: string) {
         return;
     }
 
+    // the buzzer isn't live on anyone's screen yet — ignore early buzzes from hacked or misbehaving clients
+    if (Date.now() < session.buzzWindowOpenTimeMs) {
+        return;
+    }
+
     // this must be the first buzz attempt!
     if (!session.buzzPlayerIDs.length) {
         startTimeout(sessionName, SessionTimeoutType.TossupWindow, () => {
@@ -387,6 +392,11 @@ function handleUpdateResponse(socket: Socket, sessionName: string, response: str
         return;
     }
 
+    // the response window isn't live on anyone's screen yet
+    if (Date.now() < session.responseWindowOpenTimeMs) {
+        return;
+    }
+
     response = response.toLowerCase();
 
     session.updateResponse(socket.id, response);
@@ -400,6 +410,11 @@ function handleSubmitResponse(socket: Socket, sessionName: string) {
     }
 
     if ((session.state !== SessionState.ClueResponse) && (session.state !== SessionState.WagerResponse)) {
+        return;
+    }
+
+    // the response window isn't live on anyone's screen yet
+    if (Date.now() < session.responseWindowOpenTimeMs) {
         return;
     }
 

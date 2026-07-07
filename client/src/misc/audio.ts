@@ -143,25 +143,54 @@ function getSpeechSynthesisVoice(voiceType: VoiceType) {
     return voices[0];
 }
 
-export function playOpenAIVoice(audioBase64: string) {
+// only one voice line should ever be playing at a time. whenever a new one starts, whatever is in progress gets cut off
+let currentVoiceAudio: HTMLAudioElement | undefined;
+
+function stopVoiceInProgress() {
+    if (currentVoiceAudio) {
+        currentVoiceAudio.pause();
+        URL.revokeObjectURL(currentVoiceAudio.src);
+        currentVoiceAudio = undefined;
+    }
+
+    window.speechSynthesis.cancel();
+}
+
+export function playOpenAIVoice(voiceLine: string, audioBase64: string) {
+    stopVoiceInProgress();
+
     const audioBlob = new Blob([Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0))], { type: "audio/mpeg" }); //  converts the base64 string back into a binary blob
     const audioUrl = URL.createObjectURL(audioBlob); // URL for the blob so it can be used as a source
     const audio = new Audio(audioUrl);
+
+    currentVoiceAudio = audio;
 
     audio.volume = getModVolume(VolumeType.Voice);
     audio.play().catch(e => console.error(`audio playback failed: ${e.message}`));
 
     audio.onloadedmetadata = () => {
-        socket.emit(HostSocket.UpdateVoiceDuration, audio.duration);
+        socket.emit(HostSocket.UpdateVoiceDuration, voiceLine, audio.duration);
+    }
+
+    audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
     }
 }
 
 let utteranceStarted = false;
 let utteranceStartedInterval: NodeJS.Timeout;
 
-export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string) {
+const MAX_UTTERANCE_RETRIES = 3;
+
+export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string, retryCount: number = 0) {
     const voice = getSpeechSynthesisVoice(voiceType);
     if (!voice) {
+        return;
+    }
+
+    if (retryCount >= MAX_UTTERANCE_RETRIES) {
+        clearInterval(utteranceStartedInterval);
+        socket.emit(HostSocket.UpdateVoiceDuration, voiceLine, 0);
         return;
     }
 
@@ -172,6 +201,7 @@ export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string
     utterance.rate = 1.2;
     utterance.onstart = () => {
         utteranceStarted = true;
+        clearInterval(utteranceStartedInterval);
     }
     utterance.onend = () => {
         // this utterance has ended so our new duration should be... nothing cause we're done!
@@ -186,11 +216,11 @@ export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string
         if (!utteranceStarted) {
             // utterances randomly fail to start once in a while... not much I can do about an external API so just manually solving this
             // by recursing in order to retry the failed voice line
-            playSpeechSynthesisVoice(voiceType, voiceLine);
+            playSpeechSynthesisVoice(voiceType, voiceLine, retryCount + 1);
         }
     }, 500);
 
     utteranceStarted = false;
-    window.speechSynthesis.cancel();
+    stopVoiceInProgress();
     window.speechSynthesis.speak(utterance);
 }

@@ -127,9 +127,9 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
             <Stack direction={"column"}>
                 <Box id={"logo-box"} className={"box"} padding={"2em"}>
                     <Heading fontFamily={"logo"} fontSize={"4em"}>jparty.io</Heading>
-                    {/* <Link href={PATCH_NOTES_LINK} isExternal>
-                        <i><u>patch notes</u></i> <ExternalLinkIcon mx={"2px"} />
-                    </Link> */}
+                    {<Link href={PATCH_NOTES_LINK} isExternal>
+                        <i><u>version 1.1 patch notes</u></i> <ExternalLinkIcon mx={"2px"} />
+                    </Link>}
 
                     <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
 
@@ -184,29 +184,29 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                             </Button>
                         </Tooltip>
 
-                        <Tooltip label={"use the menu to make a custom game"} placement={"top"}>
+                        {/* <Tooltip label={"use the menu to make a custom game"} placement={"top"}>
                             <Button
                                 isDisabled={context.isSpectator || (gameSettingsPreset !== TriviaGameSettingsPreset.Custom)}
                                 colorScheme={"blue"} variant={gameSettingsPreset === TriviaGameSettingsPreset.Custom ? "solid" : "outline"}
                                 marginLeft={"auto"} marginRight={"auto"}>
                                 custom mode
                             </Button>
-                        </Tooltip>
+                        </Tooltip> */}
                     </Stack>
 
                     <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
 
                     <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>tips</Heading>
                     <UnorderedList justifyContent={"center"} listStyleType={"none"} margin={0}>
-                        <ListItem>use the menu to adjust volume</ListItem>
-                        <ListItem>change text size with Ctrl-/Ctrl+</ListItem>
                         <ListItem>go fullscreen with F11</ListItem>
+                        <ListItem>change text size with Ctrl-/Ctrl+</ListItem>
+                        <ListItem>use the menu to adjust volume</ListItem>
                     </UnorderedList>
                 </Box>
             </Stack>
 
             <Box id={"leaderboard-box"} className={"box side-box"}>
-                <Tooltip label={"Games must be normal mode. Player must not have earned more than $2000 from decision reversals"} placement={"top"}>
+                <Tooltip placement={"top"}>
                     <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>leaderboard</Heading>
                 </Tooltip>
 

@@ -1,11 +1,19 @@
 
 import { Box, Button, Heading, Input, Text } from "@chakra-ui/react";
-import { Player, PlayerResponseType, PlayerSocket, SessionState } from "jparty-shared";
-import { useContext, useEffect, useState } from "react";
+import { Player, PlayerResponseType, PlayerSocket, ServerSocket, SessionState, SessionTimeoutType } from "jparty-shared";
+import { useContext, useEffect, useRef, useState } from "react";
 
 import { LayoutContext } from "../common/Layout";
 import { formatDollarValue } from "../../misc/client-utils";
-import { socket } from "../../misc/socket";
+import { estimateLocalTimeMs, socket } from "../../misc/socket";
+
+let responseWindowOpenLocalTimeMs = 0;
+
+socket.on(ServerSocket.StartTimeout, (timeoutType: SessionTimeoutType, openTimeMs: number, _closeTimeMs: number) => {
+    if (timeoutType === SessionTimeoutType.ResponseWindow) {
+        responseWindowOpenLocalTimeMs = estimateLocalTimeMs(openTimeMs);
+    }
+});
 
 interface PlayerResponseProps {
     player: Player,
@@ -15,6 +23,8 @@ interface PlayerResponseProps {
 export default function PlayerResponse({ player, responseType }: PlayerResponseProps) {
     const context = useContext(LayoutContext);
     const [response, setResponse] = useState("");
+    const [windowOpen, setWindowOpen] = useState(Date.now() >= responseWindowOpenLocalTimeMs);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     // if we re-connect, this will restore whatever our response was
     useEffect(() => {
@@ -32,12 +42,35 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
         }
     }, [context.sessionState]);
 
+    useEffect(() => {
+        if (windowOpen) {
+            inputRef.current?.focus();
+            return;
+        }
+
+        const interval = setInterval(() => {
+            if (Date.now() >= responseWindowOpenLocalTimeMs) {
+                setWindowOpen(true);
+            }
+        }, 50);
+
+        return () => clearInterval(interval);
+    }, [windowOpen]);
+
     const emitUpdateResponse = (response: string) => {
+        if (Date.now() < responseWindowOpenLocalTimeMs) {
+            return;
+        }
+
         setResponse(response);
         socket.emit(PlayerSocket.UpdateResponse, response);
     }
 
     const emitSubmitResponse = () => {
+        if (Date.now() < responseWindowOpenLocalTimeMs) {
+            return;
+        }
+
         socket.emit(PlayerSocket.SubmitResponse);
     }
 
@@ -67,12 +100,13 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
                     <Box className={"mobile-box"} padding={"2em"}>
                         <Heading size={"sm"} fontFamily={"logo"}>you may wager up to {formatDollarValue(player.maxWager)}</Heading>
                         <Input
+                            ref={inputRef}
                             onChange={(e) => emitUpdateResponse(e.target.value)}
                             value={response} min={player.minWager} max={player.maxWager}
-                            isInvalid={isWagerInvalid()}
+                            isInvalid={isWagerInvalid()} isDisabled={!windowOpen}
                             marginTop={"0.5em"} marginBottom={"1em"} type={"tel"} />
 
-                        <Button onClick={emitSubmitResponse} isDisabled={!response} colorScheme={"blue"}>submit wager</Button>
+                        <Button onClick={emitSubmitResponse} isDisabled={!windowOpen || !response} colorScheme={"blue"}>submit wager</Button>
                         {isWagerInvalid() && <Text marginTop={"0.5em"}>Wager will be clamped to {formatDollarValue(getClampedWager())}</Text>}
                     </Box>
                 );
@@ -82,8 +116,8 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
                 return (
                     <Box className={"mobile-box"} padding={"2em"}>
                         <Heading size={"sm"} fontFamily={"logo"}>enter your response</Heading>
-                        <Input marginTop={"0.5em"} value={response} onChange={(e) => emitUpdateResponse(e.target.value)} autoFocus />
-                        <Button onClick={emitSubmitResponse} isDisabled={!response} colorScheme={"blue"} marginTop={"1em"}>submit response</Button>
+                        <Input ref={inputRef} marginTop={"0.5em"} value={response} onChange={(e) => emitUpdateResponse(e.target.value)} isDisabled={!windowOpen} />
+                        <Button onClick={emitSubmitResponse} isDisabled={!windowOpen || !response} colorScheme={"blue"} marginTop={"1em"}>submit response</Button>
                     </Box>
                 );
             }

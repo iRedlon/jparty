@@ -14,7 +14,6 @@ import { formatClueResponse } from "../misc/text-utils.js";
 export class TimeoutInfo {
     type: SessionTimeoutType;
     id: string;
-    queued: boolean;
     timeout: NodeJS.Timeout;
     callback: Function;
     durationMs: number;
@@ -28,8 +27,7 @@ export class TimeoutInfo {
 
         debugLog(DebugLogType.Timeout, `(${this.getDisplayName()}) was constructed`);
 
-        this.resetEndTimeMs();
-        this.queueStartTimeout();
+        this.startTimeout();
     }
 
     getDisplayName() {
@@ -44,20 +42,10 @@ export class TimeoutInfo {
         this.endTimeMs = Date.now() + this.durationMs;
     }
 
-    queueStartTimeout() {
-        debugLog(DebugLogType.Timeout, `(${this.getDisplayName()}) was queued to start`);
-        this.queued = true;
-    }
-
     startTimeout() {
-        if (!this.queued) {
-            return;
-        }
-
         debugLog(DebugLogType.Timeout, `(${this.getDisplayName()}) has started`);
         debugLog(DebugLogType.Timeout, `--------------------------------------`);
 
-        this.queued = false;
         this.timeout = setTimeout(() => this.callback(), this.durationMs);
         this.resetEndTimeMs();
     }
@@ -84,6 +72,8 @@ export class Session {
     readingCategoryIndex: number;
     currentAnnouncement: SessionAnnouncement | undefined;
     buzzPlayerIDs: SocketID[];
+    buzzWindowOpenTimeMs: number;
+    responseWindowOpenTimeMs: number;
     displayingCorrectAnswer: boolean;
     voiceType: VoiceType;
     currentVoiceLine: string;
@@ -120,6 +110,8 @@ export class Session {
         this.readingCategoryIndex = 0;
         this.currentAnnouncement = undefined;
         this.buzzPlayerIDs = [];
+        this.buzzWindowOpenTimeMs = 0;
+        this.responseWindowOpenTimeMs = 0;
         this.displayingCorrectAnswer = false;
         this.currentVoiceLine = "";
 
@@ -460,6 +452,27 @@ export class Session {
 
     static TOSSUP_WINDOW_DURATION_MS = 750;
 
+    // action windows open slightly in the future so every client can reveal them at the same real-world instant, regardless of latency
+    static WINDOW_OPEN_LEAD_MS = 500;
+
+    // keep accepting actions briefly after the displayed close, so a last-instant action isn't dropped because of network latency
+    static WINDOW_CLOSE_GRACE_MS = 500;
+
+    getResponseWindowDurationMs() {
+        if (!this.triviaGame) {
+            return 0;
+        }
+
+        let durationMs = this.triviaGame.settings.responseDurationSec * 1000;
+
+        // double the response duration for "all wager" clues. this applies to both the wager and clue response periods
+        if (this.getCurrentClue()?.bonus === TriviaClueBonus.AllWager) {
+            durationMs *= 2;
+        }
+
+        return durationMs;
+    }
+
     getTimeoutDurationMs(timeoutType: SessionTimeoutType) {
         let durationMs = 0;
 
@@ -484,7 +497,7 @@ export class Session {
                 break;
             case SessionTimeoutType.BuzzWindow:
                 {
-                    durationMs = this.triviaGame.settings.buzzWindowDurationSec * 1000;
+                    durationMs = Session.WINDOW_OPEN_LEAD_MS + (this.triviaGame.settings.buzzWindowDurationSec * 1000) + Session.WINDOW_CLOSE_GRACE_MS;
                 }
                 break;
             case SessionTimeoutType.TossupWindow:
@@ -501,12 +514,7 @@ export class Session {
                 break;
             case SessionTimeoutType.ResponseWindow:
                 {
-                    durationMs = this.triviaGame.settings.responseDurationSec * 1000;
-
-                    // double the response duration for "all wager" clues. this applies to both the wager and clue response periods
-                    if (this.getCurrentClue()?.bonus === TriviaClueBonus.AllWager) {
-                        durationMs *= 2;
-                    }
+                    durationMs = Session.WINDOW_OPEN_LEAD_MS + this.getResponseWindowDurationMs() + Session.WINDOW_CLOSE_GRACE_MS;
                 }
                 break;
             case SessionTimeoutType.ReadingClueDecision:
@@ -521,6 +529,23 @@ export class Session {
         }
 
         return durationMs;
+    }
+
+    getTimeoutDisplayWindowMs(timeoutType: SessionTimeoutType) {
+        const timeoutInfo = this.timeoutInfo[timeoutType];
+        if (!timeoutInfo) {
+            return;
+        }
+
+        if ((timeoutType === SessionTimeoutType.BuzzWindow) && this.triviaGame) {
+            return { openTimeMs: this.buzzWindowOpenTimeMs, closeTimeMs: this.buzzWindowOpenTimeMs + (this.triviaGame.settings.buzzWindowDurationSec * 1000) };
+        }
+
+        if ((timeoutType === SessionTimeoutType.ResponseWindow) && this.triviaGame) {
+            return { openTimeMs: this.responseWindowOpenTimeMs, closeTimeMs: this.responseWindowOpenTimeMs + this.getResponseWindowDurationMs() };
+        }
+
+        return { openTimeMs: Date.now(), closeTimeMs: timeoutInfo.endTimeMs };
     }
 
     startTimeout(timeoutType: SessionTimeoutType, callback: Function) {
@@ -796,6 +821,7 @@ export class Session {
         this.state = SessionState.ClueTossup;
         this.buzzPlayerIDs = [];
         this.spotlightResponderID = "";
+        this.buzzWindowOpenTimeMs = Date.now() + Session.WINDOW_OPEN_LEAD_MS;
 
         for (const playerID in this.players) {
             // players may only respond to each clue once
@@ -884,6 +910,8 @@ export class Session {
     // player response is a generic system. it can prompt any number of players for any of the different response types (i.e. clue, wager)
     // note that we pass in all responders who need to be prompted in one function call instead of individually for each responder
     promptResponse(responseType: PlayerResponseType, ...responderIDs: SocketID[]) {
+        this.responseWindowOpenTimeMs = Date.now() + Session.WINDOW_OPEN_LEAD_MS;
+
         switch (responseType) {
             case PlayerResponseType.Clue:
                 {

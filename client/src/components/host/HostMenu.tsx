@@ -48,7 +48,7 @@ export default function HostMenu() {
 
   const menuTabs = [
     <Tab key={"settings-tab"}>Settings</Tab>,
-    <Tab key={"game-settings-tab"}>Custom Game</Tab>,
+    // <Tab key={"game-settings-tab"}>Custom Game</Tab>,
     <Tab key={"feedback-tab"}>Feedback</Tab>,
     <Tab key={"credits-tab"}>Credits</Tab>,
     context.debugMode && <Tab key={"debug-tab"}>Debug</Tab>,
@@ -60,9 +60,9 @@ export default function HostMenu() {
       voiceType={voiceType}
       modernVoicesDisabled={modernVoicesDisabled}
     />,
-    <TabPanel key={"game-settings-tab-panel"}>
-      <GameSettings onCloseHostMenu={onClose} />
-    </TabPanel>,
+    // <TabPanel key={"game-settings-tab-panel"}>
+    //   <GameSettings onCloseHostMenu={onClose} />
+    // </TabPanel>,
     <MenuPanel_Feedback key={"feedback-tab-panel"} />,
     <MenuPanel_Credits key={"credits-tab-panel"} />,
     context.debugMode && <MenuPanel_Debug key={"debug-tab-panel"} />,
