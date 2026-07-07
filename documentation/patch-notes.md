@@ -36,3 +36,38 @@ Using the aforementioned game settings; there is a new preset game mode intended
 - New "volume" menu tab to change/mute the volume of music/host voice/sound FX seperately
 - New "feedback" menu tab to report bugs, report bad trivia data, and make development suggestions
 - After completing a game, you have the option of returning to the lobby with the same players
+
+### _Version 1.1, improvements by @snzow
+## Summary
+
+### Player UX improvements
+
+**Single tap to select a clue** (`PlayerClueSelection.tsx`)
+Replaced the `useDoubleTap` hook with a direct `onClick` handler on each clue value box. Removes the dependency on the `use-double-tap` package. Updated hint text from "double tap" to "tap".
+
+**Auto-focus response input after buzzing in** (`PlayerResponse.tsx`)
+Added `autoFocus` to the clue response input so the keyboard opens automatically when a player is selected to respond. (Might not always work on mobile but it's better than nothing)
+
+---
+
+### Trivia game generation improvements (`generate-trivia-game.ts`)
+
+- Prevents a category from containing two clues with the same answer by tracking answers in a `Map` and re-rolling on duplicates (up to 10 retries per slot).
+- Adds a naive filter to skip likely image-dependent clues by checking for keywords like "seen here" and "pictured here" in the answer text.
+- Swapped `usedClueIDs` from an array to a `Set` for O(1) lookups even though it doesn't really matter
+
+---
+
+### Clue decision short-circuit (`clue-decision.ts`)
+
+Added an exact-match check before making an OpenAI API call: if the player's response (lowercased, trimmed) exactly matches the correct answer, the decision is immediately returned as `Correct`. This avoids an unnecessary API round-trip for the common case.
+
+---
+
+### Accurate TTS timeout durations (`tts.ts`, `audio.ts`, `session-utils.ts`, `handle-host-event.ts`)
+
+Previously, TTS-driven timeouts started with a rough estimate of 200ms per character and relied on the host client to report back the actual audio duration after `onloadedmetadata` fired,  a round-trip that was also broken for the OpenAI TTS path (the client emitted `UpdateVoiceDuration` without the required `voiceLine` argument, so the server silently ignored it).
+
+Instead, compute duration directly from the MP3 binary on the server: OpenAI `tts-1` outputs at 24 kbps CBR, so `duration_ms = ceil(bytes / 3000) * 1000`. This value (plus a 300ms network latency buffer) is used to restart the timeout immediately after the API responds, before the audio is even sent to the client. 
+
+extracted timeout-restart logic from `handleUpdateVoiceDuration` into a shared `updateVoiceDuration` helper in `session-utils.ts`, fixing a missing `break` in the `ReadingCategoryNames` switch case. 

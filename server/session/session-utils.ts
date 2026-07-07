@@ -4,6 +4,7 @@ import {
     ServerSocket, ServerSocketMessage, SessionAnnouncement, SessionState, SessionTimeoutType, TriviaGameSettingsPreset, VoiceLineType,
     VoiceType
 } from "jparty-shared";
+
 import { Socket } from "socket.io";
 
 import { playVoiceLine } from "./audio.js";
@@ -255,6 +256,29 @@ export async function updateLeaderboard(sessionName: string) {
         }
 
         await addNewLeaderboardPlayer(player);
+    }
+}
+
+export function updateVoiceDuration(sessionName: string, voiceLine: string, durationMs: number) {
+    let session = getSession(sessionName);
+    if (!session || voiceLine !== session.currentVoiceLine) {
+        return;
+    }
+
+    if (session.currentAnnouncement !== undefined) {
+        restartTimeout(sessionName, SessionTimeoutType.Announcement, durationMs);
+    }
+
+    switch (session.state) {
+        case SessionState.ReadingCategoryNames:
+            restartTimeout(sessionName, SessionTimeoutType.ReadingCategoryName, durationMs);
+            break;
+        case SessionState.ReadingClueSelection:
+            restartTimeout(sessionName, SessionTimeoutType.ReadingClueSelection, durationMs);
+            break;
+        case SessionState.ReadingClue:
+            restartTimeout(sessionName, SessionTimeoutType.ReadingClue, durationMs);
+            break;
     }
 }
 

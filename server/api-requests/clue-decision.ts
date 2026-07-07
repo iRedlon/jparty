@@ -40,7 +40,11 @@ export async function getClueDecision(clue: TriviaClue, response: string) {
                 throw new Error(formatDebugLog("triggered intentionally for testing. simulated an unexpected error"));
             }
         }
-
+        
+        //short circuit if the response is clearly the correct answer
+        if (response.toLowerCase().trim() === clue.answer.toLowerCase().trim()) {
+            return TriviaClueDecision.Correct;
+        }
         // terminate this clue decision request if it takes too long
         let timeout = false;
         setTimeout(() => {

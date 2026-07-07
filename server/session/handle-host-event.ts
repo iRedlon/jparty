@@ -1,12 +1,12 @@
 
 import {
-    HostServerSocket, HostSocket, HostSocketCallback, ServerSocket, ServerSocketMessage, SessionState, SessionTimeoutType,
+    HostServerSocket, HostSocket, HostSocketCallback, ServerSocket, ServerSocketMessage, SessionState,
     TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
 } from "jparty-shared";
 import { generate as generateRandomWord } from "random-words";
 import { Socket } from "socket.io";
 
-import { createSession, deleteSession, emitLeaderboardUpdate, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost, restartTimeout } from "./session-utils.js";
+import { createSession, deleteSession, emitLeaderboardUpdate, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost, updateVoiceDuration } from "./session-utils.js";
 import { io } from "../controller.js";
 import { debugLog, DebugLogType } from "../misc/log.js";
 
@@ -50,44 +50,13 @@ function handleUpdateVoiceType(socket: Socket, sessionName: string, voiceType: V
 
 function handleUpdateVoiceDuration(socket: Socket, sessionName: string, voiceLine: string, durationSec: number) {
     let session = getSession(sessionName);
-    if (!session) {
+    if (!session || socket.id !== session.creatorSocketID) {
         return;
     }
 
-    if (socket.id !== session.creatorSocketID) {
-        return;
-    }
-
-    if (voiceLine !== session.currentVoiceLine) {
-        return;
-    }
-
-    // an estimated voice duration timeout will have already started, but now that we know exactly how long it will take...
-    // we can restart the timeout with a much more accurate duration
     debugLog(DebugLogType.Voice, `got a new duration of ${durationSec} seconds for current voice line: "${session.currentVoiceLine}"`);
 
-    const durationMs = durationSec * 1000;
-
-    if (session.currentAnnouncement) {
-        restartTimeout(sessionName, SessionTimeoutType.Announcement, durationMs);
-    }
-
-    switch (session.state) {
-        case SessionState.ReadingCategoryNames:
-            {
-                restartTimeout(sessionName, SessionTimeoutType.ReadingCategoryName, durationMs);
-            }
-        case SessionState.ReadingClueSelection:
-            {
-                restartTimeout(sessionName, SessionTimeoutType.ReadingClueSelection, durationMs);
-            }
-            break;
-        case SessionState.ReadingClue:
-            {
-                restartTimeout(sessionName, SessionTimeoutType.ReadingClue, durationMs);
-            }
-            break;
-    }
+    updateVoiceDuration(sessionName, voiceLine, durationSec * 1000);
 }
 
 function handleAttemptSpectate(socket: Socket, sessionName: string, clientID: string) {

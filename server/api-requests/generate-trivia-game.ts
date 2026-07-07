@@ -2,7 +2,7 @@
 import {
     CLUE_DIFFICULTY_DISTRIBUTIONS, DEFAULT_CATEGORY_TYPE_DISTRIBUTION,
     getEnumSize, getRandomChoice, getRandomNum, getWeightedRandomNum,
-    RATED_CLUE_BONUS_POSITION_DISTRIBUTION, RATED_CLUE_DIFFICULTY_ORDER, TriviaCategory, TriviaCategorySettings, TriviaCategoryType, 
+    RATED_CLUE_BONUS_POSITION_DISTRIBUTION, RATED_CLUE_DIFFICULTY_ORDER, TriviaCategory, TriviaCategorySettings, TriviaCategoryType,
     TriviaClueBonus, TriviaClue, TriviaClueDifficulty, TriviaCluePosition, TriviaClueSchema, TriviaGame, TriviaGameSettings, TriviaRoundSettings, TriviaRound,
 } from "jparty-shared";
 
@@ -62,20 +62,33 @@ async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSet
 
     // generate a clue for each difficulty in the rolled order
     let clueIndex = 0;
-    let usedClueIDs: number[] = [];
+    let usedClueIDs: Set<number> = new Set();
+    const sectionAnswerMap = new Map<string, string>();
+
+    const likelyToBeImageClue = (clue: string) => {
+        const imageClueKeywords = ["seen here", "pictured here", "featured here", "shown here"];
+        return imageClueKeywords.some(keyword => clue.toLowerCase().includes(keyword));
+    }
 
     while (triviaCategory.clues.length < roundSettings.numClues) {
         const clueDifficulty = clueDifficultyOrder[clueIndex];
-        const clueSchema = getRandomChoice<TriviaClueSchema>(categorySchema.clues[clueDifficulty]);
-
-        if (usedClueIDs.includes(clueSchema.id)) {
+        let clueSchema: TriviaClueSchema = getRandomChoice<TriviaClueSchema>(categorySchema.clues[clueDifficulty]);
+        //ensure category doesn't have two clues with the same answer
+        //also do a naive check to try to make sure it's not an image clue
+        let ctr = 0;
+        while ((sectionAnswerMap.has(clueSchema.answer) || likelyToBeImageClue(clueSchema.question)) && ctr < 10) {
+            clueSchema = getRandomChoice<TriviaClueSchema>(categorySchema.clues[clueDifficulty]);
+            ctr++;
+        }
+        sectionAnswerMap.set(clueSchema.answer, clueSchema.answer);
+        if (usedClueIDs.has(clueSchema.id)) {
             continue;
         }
 
         const triviaClue = generateTriviaClue(roundSettings, clueSchema, clueIndex);
 
         triviaCategory.clues.push(triviaClue);
-        usedClueIDs.push(clueSchema.id);
+        usedClueIDs.add(clueSchema.id);
         clueIndex++;
     }
 

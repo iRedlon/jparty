@@ -6,7 +6,7 @@ import {
     SESSION_ANNOUNCEMENT_VOICE_LINES, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable, WELCOME_VOICE_LINES,
 } from "jparty-shared";
 
-import { getSession } from "./session-utils.js";
+import { getSession, updateVoiceDuration } from "./session-utils.js";
 import { getVoiceAudioBase64 } from "../api-requests/tts.js";
 import { io } from "../controller.js";
 import { debugLog, DebugLogType } from "../misc/log.js";
@@ -170,10 +170,17 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
 
     debugLog(DebugLogType.Voice, `final spoken voice line: \"${voiceLine}\"`);
 
-    let voiceAudioBase64 = undefined;
+    // buffer to account for network latency between the server restarting the timeout and the client starting playback
+    const NETWORK_LATENCY_BUFFER_MS = 300;
+
+    let voiceAudioBase64: string | undefined = undefined;
 
     try {
-        voiceAudioBase64 = await getVoiceAudioBase64(session.voiceType, voiceLine);
+        const voiceAudio = await getVoiceAudioBase64(session.voiceType, voiceLine);
+        if (voiceAudio) {
+            voiceAudioBase64 = voiceAudio.base64;
+            updateVoiceDuration(sessionName, voiceLine, voiceAudio.durationMs + NETWORK_LATENCY_BUFFER_MS);
+        }
     }
     catch (e) {
         // normally we'd go through handleServerError, but if our external TTS request fails we can just fall back on the speech synthesis voice instead

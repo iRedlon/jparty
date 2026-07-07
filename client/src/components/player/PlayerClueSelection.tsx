@@ -3,8 +3,6 @@ import { Box, Heading, Stack } from "@chakra-ui/react";
 import { PlayerSocket, TriviaClue } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
-import { useDoubleTap } from "use-double-tap";
-
 import { LayoutContext } from "../common/Layout";
 import { formatDollarValue } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
@@ -83,14 +81,9 @@ export default function PlayerClueSelection() {
     const canGoLeft = nextLeftCategoryIndex !== undefined;
     const canGoRight = nextRightCategoryIndex !== undefined;
 
-    const doubleTapBind = useDoubleTap((event) => {
-        // clue index is stored with the ID of the clue value div... a little bit scuffed but oh well
-        emitSelectClue(parseInt(event.currentTarget.id));
-    });
-
     return (
         <Box className={"mobile-box"} padding={"1em"}>
-            <Heading size={"sm"} fontFamily={"logo"}>double tap to select a clue</Heading>
+            <Heading size={"sm"} fontFamily={"logo"}>tap to select a clue</Heading>
 
             <Stack direction={"column"} marginTop={"1em"} gap={"1em"} fontFamily={"board"}>
                 <Stack direction={"row"} justifyContent={"center"} alignItems={"center"}>
@@ -110,7 +103,7 @@ export default function PlayerClueSelection() {
                 {context.triviaRound?.categories[categoryIndex]?.clues.map((clue: TriviaClue, index: number) => {
                     if (!clue.completed) {
                         return (
-                            <Box key={index} id={`${index}`} className={"child-box"} fontSize={"2em"} display={"flex"} justifyContent={"center"} alignItems={"center"} {...doubleTapBind}>
+                            <Box key={index} className={"child-box"} fontSize={"2em"} display={"flex"} justifyContent={"center"} alignItems={"center"} onClick={() => emitSelectClue(index)}>
                                 {formatDollarValue(clue.value)}
                             </Box>
                         );

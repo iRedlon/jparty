@@ -24,9 +24,7 @@
 - Audio cues for someone buzzing in and when submitting an answer
 - More sound FX, maybe bring back the crowd noises (awwww/applause/etc.)
 - After hitting the buzzer, it switches to the scoreboard so you can accidentally click "edit signature" while spamming
-- Automatically opening the keyboard after a buzzer click would be nice
 - Answer check delay is a neccessary evil because it's a network request but maybe some audio would help smooth it out
 - Opinion: all play answers should be penalized if you attempt an answer (but not if you don't even try)
-- Don't bother waiting for network request if answer is obviously correct (use the old answer checking basically to save some time and API money)
 - Add support for anki flashcards
 - Add experimental support for locales by using OpenAI translate for a few popular languages (and maybe excluding America-specific trivia if possible)

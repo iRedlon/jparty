@@ -82,7 +82,7 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
                 return (
                     <Box className={"mobile-box"} padding={"2em"}>
                         <Heading size={"sm"} fontFamily={"logo"}>enter your response</Heading>
-                        <Input marginTop={"0.5em"} value={response} onChange={(e) => emitUpdateResponse(e.target.value)} />
+                        <Input marginTop={"0.5em"} value={response} onChange={(e) => emitUpdateResponse(e.target.value)} autoFocus />
                         <Button onClick={emitSubmitResponse} isDisabled={!response} colorScheme={"blue"} marginTop={"1em"}>submit response</Button>
                     </Box>
                 );
