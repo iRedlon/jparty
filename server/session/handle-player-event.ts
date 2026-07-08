@@ -6,6 +6,7 @@ import {
 import { Socket } from "socket.io";
 
 import { playAudio, playVoiceLine } from "./audio.js";
+import { AnalyticsEvent, sendAnalyticsEvent } from "../misc/analytics.js";
 import {
     emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, handleDisconnect, joinSession,
     restartTimeout, showAnnouncement, startPositionChangeAnimation, startTimeout, stopTimeout, updateLeaderboard
@@ -40,6 +41,8 @@ function handleConnect(socket: Socket, sessionName: string, clientID: string, pl
     session.connectPlayer(socket.id, clientID, playerName);
     joinSession(socket, sessionName);
 
+    sendAnalyticsEvent(AnalyticsEvent.PlayerJoined, sessionName, { player_name: playerName });
+
     // reset both session and player name
     callback(true, true);
 }
@@ -48,6 +51,11 @@ function handleLeaveSession(socket: Socket, sessionName: string) {
     let session = getSession(sessionName);
     if (!session) {
         return;
+    }
+
+    const player = session.players[socket.id];
+    if (player) {
+        sendAnalyticsEvent(AnalyticsEvent.PlayerLeft, sessionName, { player_name: player.name });
     }
 
     handleDisconnect(socket);
@@ -89,6 +97,15 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
 
         emitTriviaRoundUpdate(sessionName);
     }
+
+    session.gameStartTimeMs = Date.now();
+    session.gameCount++;
+
+    sendAnalyticsEvent(AnalyticsEvent.GameStarted, sessionName, {
+        num_players: session.getConnectedPlayerIDs().length,
+        session_duration_sec: session.getSessionDurationSec(),
+        session_game_count: session.gameCount
+    });
 
     session.readCategoryNames();
     emitStateUpdate(sessionName);
@@ -516,6 +533,20 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
         return;
     }
 
+    const responder = session.players[responderID];
+    const decisionInfo = responder?.clueDecisionInfo;
+
+    // "needs more detail" isn't a final decision. this responder is about to respond again and will get a real decision then
+    if (responder && decisionInfo && (decision !== TriviaClueDecision.NeedsMoreDetail)) {
+        sendAnalyticsEvent(AnalyticsEvent.ClueDecision, sessionName, {
+            player_name: responder.name,
+            player_answer: decisionInfo.response,
+            clue: decisionInfo.clue.question,
+            answer: decisionInfo.clue.answer,
+            clue_value: decisionInfo.clueValue * ((decision === TriviaClueDecision.Correct) ? 1 : -1)
+        });
+    }
+
     // if the decision was "needs more detail" this responder is technically still eligible (in fact, they're about to be prompted to respond again)
     let noEligibleRespondersRemaining = (decision !== TriviaClueDecision.NeedsMoreDetail) && !session.getNumEligibleResponders();
 
@@ -621,6 +652,12 @@ function finishRound(sessionName: string) {
     if (session.state === SessionState.GameOver) {
         announcement = SessionAnnouncement.GameOver;
         playAudio(sessionName, AudioType.LongApplause);
+
+        sendAnalyticsEvent(AnalyticsEvent.GameFinished, sessionName, {
+            num_players: session.getConnectedPlayerIDs().length,
+            game_duration_sec: session.getGameDurationSec(),
+            session_duration_sec: session.getSessionDurationSec()
+        });
     }
 
     showAnnouncement(sessionName, announcement, () => {

@@ -57,6 +57,11 @@ export class Session {
     // keep this in memory so we can clear out sessions that have been idle for too long
     lastUpdatedTimeMs: number;
 
+    // analytics bookkeeping
+    creationTimeMs: number;
+    gameStartTimeMs: number;
+    gameCount: number;
+
     // this game can be spectated by any number of hosts simultaneously, but only the creator of the session has certain privileges
     creatorSocketID: SocketID;
     hosts: SessionHosts;
@@ -96,6 +101,9 @@ export class Session {
         this.creatorSocketID = creatorSocketID;
         this.connectHost(creatorSocketID, creatorClientID);
         this.name = name;
+        this.creationTimeMs = Date.now();
+        this.gameStartTimeMs = 0;
+        this.gameCount = 0;
         this.resetGame();
         this.voiceType = VoiceType.ModernMasculine;
     }
@@ -707,6 +715,14 @@ export class Session {
         }
 
         return "";
+    }
+
+    getSessionDurationSec() {
+        return Math.round((Date.now() - this.creationTimeMs) / 1000);
+    }
+
+    getGameDurationSec() {
+        return Math.round((Date.now() - this.gameStartTimeMs) / 1000);
     }
 
     endGame() {

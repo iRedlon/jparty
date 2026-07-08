@@ -255,7 +255,7 @@ export async function updateLeaderboard(sessionName: string) {
             continue;
         }
 
-        await addNewLeaderboardPlayer(player);
+        await addNewLeaderboardPlayer(player, sessionName);
     }
 }
 

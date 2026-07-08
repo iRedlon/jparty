@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { LeaderboardPlayerSchema, LeaderboardType, NUM_LEADERBOARD_SPOTS, PLACEHOLDER_LEADERBOARD_PLAYERS, Player } from "jparty-shared";
 import { MongoClient } from "mongodb";
 
+import { AnalyticsEvent, sendAnalyticsEvent } from "../misc/analytics";
 import { debugLog, DebugLogType, formatDebugLog } from "../misc/log";
 
 const MONGO_LEADERBOARD_DB_NAME = "leaderboard";
@@ -28,25 +29,25 @@ export async function getLeaderboardPlayers(type: LeaderboardType) {
     }
 }
 
-export async function addNewLeaderboardPlayer(player: Player) {
+export async function addNewLeaderboardPlayer(player: Player, sessionName?: string) {
     const newLeaderboardPlayer = {
         name: player.name,
         score: player.score,
         timestampMs: Date.now()
     } as LeaderboardPlayerSchema;
 
-    await updateLeaderboard(LeaderboardType.AllTime, newLeaderboardPlayer);
-    await updateLeaderboard(LeaderboardType.Monthly, newLeaderboardPlayer);
-    await updateLeaderboard(LeaderboardType.Weekly, newLeaderboardPlayer);
+    await updateLeaderboard(LeaderboardType.AllTime, newLeaderboardPlayer, sessionName);
+    await updateLeaderboard(LeaderboardType.Monthly, newLeaderboardPlayer, sessionName);
+    await updateLeaderboard(LeaderboardType.Weekly, newLeaderboardPlayer, sessionName);
 }
 
-async function updateLeaderboard(type: LeaderboardType, newLeaderboardPlayer: LeaderboardPlayerSchema) {
+async function updateLeaderboard(type: LeaderboardType, newLeaderboardPlayer: LeaderboardPlayerSchema, sessionName?: string) {
     try {
         const db = client.db(MONGO_LEADERBOARD_DB_NAME);
         const leaderboard = db.collection(type);
 
         // add the new player to the leaderboard optimistically
-        await leaderboard.insertOne(newLeaderboardPlayer);
+        const insertResult = await leaderboard.insertOne(newLeaderboardPlayer);
         const leaderboardPlayerSchemas = await leaderboard.find().sort({ score: 1 }).toArray();
 
         if (!leaderboardPlayerSchemas.length) {
@@ -61,6 +62,22 @@ async function updateLeaderboard(type: LeaderboardType, newLeaderboardPlayer: Le
         for (let i = 0; i < numEliminatedLeaderboardPlayers; i++) {
             await leaderboard.deleteOne({ _id: leaderboardPlayerSchemas[i]._id });
         }
+
+        if (!sessionName) {
+            return;
+        }
+
+        const newPlayerIndex = leaderboardPlayerSchemas.findIndex(schema => schema._id.equals(insertResult.insertedId));
+        if (newPlayerIndex < numEliminatedLeaderboardPlayers) {
+            return;
+        }
+
+        sendAnalyticsEvent(AnalyticsEvent.LeaderboardChange, sessionName, {
+            player_name: newLeaderboardPlayer.name,
+            leaderboard_type: type,
+            leaderboard_spot: leaderboardPlayerSchemas.length - newPlayerIndex,
+            leaderboard_score: newLeaderboardPlayer.score
+        });
     } catch (e) {
         console.error(e);
     }

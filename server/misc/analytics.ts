@@ -1,0 +1,46 @@
+
+import { debugLog, DebugLogType } from "./log.js";
+
+export enum AnalyticsEvent {
+    GameStarted = "game_started",
+    GameFinished = "game_finished",
+    PlayerJoined = "player_joined",
+    PlayerLeft = "player_left",
+    ClueDecision = "clue_decision",
+    LeaderboardChange = "leaderboard_change"
+}
+
+const GA_ENDPOINT = "https://www.google-analytics.com/mp/collect";
+
+const MAX_PARAM_VALUE_LENGTH = 100;
+
+export function sendAnalyticsEvent(event: AnalyticsEvent, sessionName: string, params: Record<string, string | number> = {}) {
+    const measurementID = process.env.GA_MEASUREMENT_ID;
+    const apiSecret = process.env.GA_API_SECRET;
+
+    // leaving these unset disables analytics entirely
+    if (!measurementID || !apiSecret) {
+        return;
+    }
+
+    for (const key in params) {
+        const value = params[key];
+        if ((typeof value === "string") && (value.length > MAX_PARAM_VALUE_LENGTH)) {
+            params[key] = value.slice(0, MAX_PARAM_VALUE_LENGTH);
+        }
+    }
+
+    const body = JSON.stringify({
+        // treat each session as a distinct GA user so that "active users" really means "active sessions"
+        client_id: sessionName,
+        events: [{
+            name: event,
+            params: { session_name: sessionName, ...params }
+        }]
+    });
+
+    debugLog(DebugLogType.Analytics, `sending analytics event: ${event}`);
+    debugLog(DebugLogType.Analytics, body, true);
+
+    fetch(`${GA_ENDPOINT}?measurement_id=${measurementID}&api_secret=${apiSecret}`, { method: "POST", body }).catch(e => console.error(e));
+}

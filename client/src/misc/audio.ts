@@ -198,7 +198,7 @@ export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string
 
     utterance.volume = getModVolume(VolumeType.Voice);
     utterance.voice = voice;
-    utterance.rate = 1.2;
+    utterance.rate = 1.5;
     utterance.onstart = () => {
         utteranceStarted = true;
         clearInterval(utteranceStartedInterval);

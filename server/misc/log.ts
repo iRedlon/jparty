@@ -7,6 +7,7 @@ dotenv.config();
 export enum DebugLogType {
     Server,
     ClientConnection,
+    Analytics,
     TriviaDatabase,
     Buzz,
     ClueDecision,
@@ -27,6 +28,7 @@ const NORMAL_LOG_LEVEL_TYPES = [
 ];
 
 const DEBUG_LOG_LEVEL_TYPES = NORMAL_LOG_LEVEL_TYPES.concat([
+    DebugLogType.Analytics,
     DebugLogType.Buzz,
     DebugLogType.TriviaDatabase,
     DebugLogType.ClueDecision,
