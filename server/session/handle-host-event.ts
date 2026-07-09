@@ -10,6 +10,7 @@ import { createSession, deleteSession, emitGamePreviewUpdate, emitLeaderboardUpd
 import { generateTriviaGame } from "../api-requests/generate-trivia-game.js";
 import { io } from "../controller.js";
 import { debugLog, LogCategory, LogVerbosity } from "../misc/log.js";
+import { formatText } from "../misc/text-utils.js";
 
 function handleConnect(socket: Socket, clientID: string) {
     let sessionName = "";
@@ -81,6 +82,10 @@ function handleUpdateGameSettingsPreset(socket: Socket, sessionName: string, gam
         return;
     }
 
+    if ((gameSettingsPreset !== TriviaGameSettingsPreset.Normal) && (gameSettingsPreset !== TriviaGameSettingsPreset.Party)) {
+        return;
+    }
+
     session.triviaGameSettingsPreset = gameSettingsPreset;
 
     io.to(Object.keys(session.hosts)).except(socket.id).emit(HostServerSocket.UpdateGameSettingsPreset, gameSettingsPreset, true /* fromServer */);
@@ -114,9 +119,11 @@ function handleUpdateVoiceDuration(socket: Socket, sessionName: string, voiceLin
 }
 
 function handleAttemptSpectate(socket: Socket, sessionName: string, clientID: string) {
+    sessionName = formatText(`${sessionName}`.toLowerCase());
+
     let session = getSession(sessionName);
     if (!session) {
-        socket.emit(ServerSocket.Message, new ServerSocketMessage(`Couldn't find session a session named: ${sessionName}`, true));
+        socket.emit(ServerSocket.Message, new ServerSocketMessage(`Couldn't find a session named: ${sessionName}`, true));
         return;
     }
 
@@ -125,13 +132,17 @@ function handleAttemptSpectate(socket: Socket, sessionName: string, clientID: st
         return;
     }
 
+    // we're moving to a new session. make sure our current session knows we're leaving
+    const previousSessionName = (socket as any).sessionName;
+    if (previousSessionName && (previousSessionName !== sessionName)) {
+        handleLeaveSession(socket, previousSessionName);
+        socket.leave(previousSessionName);
+    }
+
     session.connectHost(socket.id, clientID);
     joinSessionAsHost(socket, sessionName);
 
     socket.emit(ServerSocket.Message, new ServerSocketMessage(`Joined session: ${sessionName} as spectator`));
-
-    // we're moving to a new session. make sure our current session knows we're leaving
-    handleLeaveSession(socket, (socket as any).sessionName);
 }
 
 function handleLeaveSession(socket: Socket, sessionName: string) {
@@ -160,14 +171,33 @@ async function handleGenerateCustomGame(socket: Socket, sessionName: string, gam
         return;
     }
 
+    // gameSettings arrives as a plain object from a client we can't trust. rebuild it as a real
+    // TriviaGameSettings and validate it server-side before generating anything with it
+    let cleanGameSettings: TriviaGameSettings;
+
     try {
-        await session.generateTriviaGame(gameSettings);
+        cleanGameSettings = TriviaGameSettings.clone(gameSettings);
+
+        if (cleanGameSettings.isInvalid()) {
+            throw new Error("invalid custom game settings");
+        }
+    }
+    catch (e) {
+        socket.emit(ServerSocket.Message, new ServerSocketMessage("Those custom game settings are invalid", true));
+        callback(false);
+        return;
+    }
+
+    try {
+        await session.generateTriviaGame(cleanGameSettings);
     }
     catch (e) {
         emitServerError(e, socket);
         callback(false);
         return;
     }
+
+    session.triviaGameSettingsPreset = TriviaGameSettingsPreset.Custom;
 
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateGameSettingsPreset, TriviaGameSettingsPreset.Custom);
     socket.emit(ServerSocket.Message, new ServerSocketMessage("Custom settings were saved successfully"));

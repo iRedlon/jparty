@@ -122,19 +122,25 @@ async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSet
 function rollCategoryTypeOrder(roundSettings: TriviaRoundSettings) {
     // the combined probability of all banned category types should be redistributed evenly across the remaining types
     // i.e. if we have { 0: 0.25, 1: 0.25, 2: 0.25, 3: 0.25 }, banning 0 and 1 would yield { 0: 0, 1: 0, 2: 0.5, 3: 0.5 }
-    let categoryTypeDistribution = DEFAULT_CATEGORY_TYPE_DISTRIBUTION;
+    let categoryTypeDistribution = { ...DEFAULT_CATEGORY_TYPE_DISTRIBUTION };
     let totalBannedProbability = 0;
 
     for (const categoryType of roundSettings.bannedCategoryTypes) {
         // we prevent a banned type from being selected by settings its probability to 0
         categoryTypeDistribution[categoryType] = 0;
-        totalBannedProbability += DEFAULT_CATEGORY_TYPE_DISTRIBUTION[categoryType];
+        totalBannedProbability += DEFAULT_CATEGORY_TYPE_DISTRIBUTION[categoryType] || 0;
     }
 
     const redistributedProbability = totalBannedProbability / (getEnumSize(TriviaCategoryType) - roundSettings.bannedCategoryTypes.length);
 
     for (const categoryType in categoryTypeDistribution) {
-        categoryTypeDistribution[parseInt(categoryType) as TriviaCategoryType] += redistributedProbability;
+        const type = parseInt(categoryType) as TriviaCategoryType;
+
+        if (roundSettings.bannedCategoryTypes.includes(type)) {
+            continue;
+        }
+
+        categoryTypeDistribution[type] += redistributedProbability;
     }
 
     let categoryTypeOrder: TriviaCategoryType[] = [];

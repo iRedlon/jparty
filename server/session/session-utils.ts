@@ -25,9 +25,20 @@ export let sessions: Sessions = {};
 // every once in a while, check our sessions and delete any stale ones
 setInterval(() => {
     for (const sessionName in sessions) {
-        if ((Date.now() - sessions[sessionName].lastUpdatedTimeMs) > SESSION_EXPIRATION_PERIOD_MS) {
-            deleteSession(sessionName);
+        const session = sessions[sessionName];
+
+        if ((Date.now() - session.lastUpdatedTimeMs) <= SESSION_EXPIRATION_PERIOD_MS) {
+            continue;
         }
+
+        const hasConnectedHost = Object.values(session.hosts).some(host => host.connected);
+        if (hasConnectedHost || session.getConnectedPlayerIDs().length) {
+            session.lastUpdatedTimeMs = Date.now();
+            continue;
+        }
+
+        io.in(sessionName).emit(ServerSocket.CancelGame);
+        deleteSession(sessionName);
     }
 }, SESSION_EXPIRATION_CHECK_INTERVAL_MS);
 

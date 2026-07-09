@@ -16,17 +16,35 @@ let mailConfig = {
 
 const transporter = nodemailer.createTransport(mailConfig);
 
+const MAX_FEEDBACK_MESSAGE_LENGTH = 2000;
+const FEEDBACK_COOLDOWN_MS = 30 * 1000;
+
 export function handleSubmitFeedback(socket: Socket, feedback: Feedback) {
+    if (!feedback || (typeof feedback.message !== "string") || !feedback.message.trim()) {
+        return;
+    }
+
+    const lastFeedbackTimeMs = (socket as any).lastFeedbackTimeMs || 0;
+    if ((Date.now() - lastFeedbackTimeMs) < FEEDBACK_COOLDOWN_MS) {
+        socket.emit(ServerSocket.Message, new ServerSocketMessage("Please wait a moment before submitting more feedback.", true));
+        return;
+    }
+
+    (socket as any).lastFeedbackTimeMs = Date.now();
+
+    const feedbackMessage = feedback.message.slice(0, MAX_FEEDBACK_MESSAGE_LENGTH);
+
     debugLog(LogCategory.Email, `heard feedback submission. attempting to send it as an email`, LogVerbosity.Normal);
-    debugLog(LogCategory.Email, JSON.stringify(feedback), LogVerbosity.Verbose);
+    debugLog(LogCategory.Email, feedbackMessage, LogVerbosity.Verbose);
 
     const escapeHtml = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-    let message = `<b>FEEDBACK</b><br><br>${escapeHtml(feedback.message).replace(/\n/g, "<br>")}`;
+    let message = `<b>FEEDBACK</b><br><br>${escapeHtml(feedbackMessage).replace(/\n/g, "<br>")}`;
 
     const session = getSession((socket as any).sessionName);
     if (session) {
-        message += `<br><br><b>SESSION DUMP</b><br><br>${escapeHtml(JSON.stringify(session))}`;
+        const sessionDump = JSON.stringify(session, (key, value) => (key === "timeoutInfo") ? undefined : value);
+        message += `<br><br><b>SESSION DUMP</b><br><br>${escapeHtml(sessionDump)}`;
     }
 
     const mailOptions = {

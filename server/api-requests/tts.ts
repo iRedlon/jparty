@@ -2,7 +2,7 @@
 import dotenv from "dotenv";
 import type { Request, Response } from "express";
 import { VoiceType } from "jparty-shared";
-import { Readable } from "stream";
+import { pipeline, Readable } from "stream";
 
 import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 import { getSession } from "../session/session-utils.js";
@@ -66,7 +66,12 @@ export async function streamVoiceAudio(req: Request, res: Response) {
         res.setHeader("Content-Type", "audio/mpeg");
 
         const audioStream = Readable.fromWeb(response.body as any);
-        audioStream.pipe(res);
+
+        pipeline(audioStream, res, (e) => {
+            if (e) {
+                debugLog(LogCategory.Voice, `TTS audio stream ended early: ${e.message}`, LogVerbosity.Normal);
+            }
+        });
     }
     catch (e) {
         console.error(e);

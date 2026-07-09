@@ -55,11 +55,18 @@ io.on(ReservedEvent.Connection, (socket: Socket) => {
     });
 
     socket.on(ClientSocket.SubmitFeedback, (feedback: Feedback) => {
-        handleSubmitFeedback(socket, feedback);
+        try {
+            handleSubmitFeedback(socket, feedback);
+        }
+        catch (e) {
+            console.error(e);
+        }
     });
 
     socket.on(ClientSocket.SyncClock, (callback: ClientSocketCallback[ClientSocket.SyncClock]) => {
-        callback(Date.now());
+        if (typeof callback === "function") {
+            callback(Date.now());
+        }
     });
 
     socket.onAny((event: string, ...args: any[]) => {
