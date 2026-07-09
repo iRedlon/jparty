@@ -259,9 +259,9 @@ export const NORMAL_ROUND_SETTINGS = [NORMAL_SINGLE_ROUND_SETTINGS, NORMAL_DOUBL
 export const NORMAL_GAME_SETTINGS = new TriviaGameSettings(2000, TriviaGameDifficulty.Normal, 5, 15, 3, NORMAL_ROUND_SETTINGS);
 
 // party game settings
-export const PARTY_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 3, 4, 250,
+export const PARTY_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 5, 3, 200,
     { [TriviaClueBonus.Wager]: 1, [TriviaClueBonus.AllPlay]: 4 });
-export const PARTY_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 3, 4, 500,
+export const PARTY_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 5, 3, 400,
     { [TriviaClueBonus.Wager]: 2, [TriviaClueBonus.AllPlay]: 4 });
 export const PARTY_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 1, 1, 0,
     { [TriviaClueBonus.AllWager]: 1 });

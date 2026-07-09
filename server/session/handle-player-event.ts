@@ -613,7 +613,7 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
         playAudio(sessionName, AudioType.CorrectDecision);
     }
     else if (decision === TriviaClueDecision.Incorrect) {
-        playAudio(sessionName, AudioType.IncorrectDecision);
+        //playAudio(sessionName, AudioType.IncorrectDecision);
     }
 
     if (!session.getCurrentClue()?.isAllPlayClue() && noEligibleRespondersRemaining && decision === TriviaClueDecision.Incorrect) {

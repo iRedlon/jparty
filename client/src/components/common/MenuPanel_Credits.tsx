@@ -59,7 +59,6 @@ export default function MenuPanel_Credits() {
       <Flex justify="center">
         <Box w="full" maxW="2xl">
           <Stack spacing={3}>
-            {/* Header */}
             <Stack spacing={1} align="center" textAlign="center">
               <Heading size="md" letterSpacing="tight">
                 Credits
@@ -80,7 +79,6 @@ export default function MenuPanel_Credits() {
               </Link>
             </Stack>
 
-            {/* Card */}
             <Box
               bg={cardBg}
               borderWidth="1px"
@@ -107,6 +105,10 @@ export default function MenuPanel_Credits() {
               </CreditRow>
 
               <CreditRow label="Music">
+                <Text>
+                  Jeopardy Theme Song Remix - Attic Stein
+                </Text>
+
                 <Text>
                   Data Stream of Consciousness - Aldous Ichnite
                   <br />

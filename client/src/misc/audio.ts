@@ -15,7 +15,7 @@ import BuzzMP3 from "../assets/buzz.mp3";
 import ClueResponseSubmittedMP3 from "../assets/clue-response-submitted.mp3";
 import WagerResponseSubmittedMP3 from "../assets/wager-response-submitted.mp3";
 import CorrectDecisionMP3 from "../assets/correct-decision.mp3";
-import IncorrectDecisionMP3 from "../assets/incorrect-decision.mp3";
+//import IncorrectDecisionMP3 from "../assets/incorrect-decision.mp3";
 
 const musicAudios: { [key in AudioType]?: HTMLAudioElement } = {
     [AudioType.LobbyMusic]: new Audio(LobbyMusicMP3),
@@ -45,7 +45,7 @@ const soundEffectAudios: { [key in AudioType]?: HTMLAudioElement } = {
     [AudioType.ClueResponseSubmitted]: new Audio(ClueResponseSubmittedMP3),
     [AudioType.WagerResponseSubmitted]: new Audio(WagerResponseSubmittedMP3),
     [AudioType.CorrectDecision]: new Audio(CorrectDecisionMP3),
-    [AudioType.IncorrectDecision]: new Audio(IncorrectDecisionMP3)
+    //[AudioType.IncorrectDecision]: new Audio(IncorrectDecisionMP3)
 };
 
 const DEFAULT_VOLUME = 1;

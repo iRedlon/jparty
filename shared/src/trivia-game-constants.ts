@@ -79,14 +79,14 @@ export const CLUE_DIFFICULTY_DISTRIBUTIONS = {
 }
 
 export enum TriviaClueBonus {
-    None, // it's important that None is the first value because it's zero and thus falsey
+    None,
     Wager,
     AllWager,
     AllPlay
 }
 
 // rated games only use wager bonuses, which we prefer to have on more difficult clues
-// for custom games, we choose clue bonus positions totally randomly
+// for custom games, we choose clue bonus positions randomly
 export const RATED_CLUE_BONUS_POSITION_DISTRIBUTION = {
     0: 0.05,
     1: 0.2,
