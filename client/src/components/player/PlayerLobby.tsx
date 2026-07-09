@@ -6,14 +6,14 @@ import { isMobile } from "react-device-detect";
 
 import { LayoutContext } from "../common/Layout";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
-import { getClientID } from "../../misc/client-utils";
+import { getClientID, joinSessionName } from "../../misc/client-utils";
 import { isQAPlayer, qaPlayerName, qaSessionName } from "../../misc/qa-mode";
 import { socket } from "../../misc/socket";
 import { LocalStorageKey } from "../../misc/ui-constants";
 
 export default function PlayerLobby() {
     const context = useContext(LayoutContext);
-    const [sessionName, setSessionName] = useState("");
+    const [sessionName, setSessionName] = useState(joinSessionName);
     const [playerName, setPlayerName] = useState("");
     const didQAAutoJoinRef = useRef(false);
 

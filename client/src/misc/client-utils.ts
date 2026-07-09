@@ -28,3 +28,6 @@ export function getClientID() {
 
     return localStorage[LocalStorageKey.ClientID];
 }
+
+// session name prefilled by scanning the host lobby QR code (e.g. jparty.io/?join=abcde)
+export const joinSessionName = new URLSearchParams(window.location.search).get("join") || "";

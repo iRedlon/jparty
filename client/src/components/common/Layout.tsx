@@ -8,7 +8,7 @@ import { isMobile } from "react-device-detect";
 
 import HostLayout from "../host/HostLayout";
 import PlayerLayout from "../player/PlayerLayout";
-import { getClientID } from "../../misc/client-utils";
+import { getClientID, joinSessionName } from "../../misc/client-utils";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { isQAPlayer, updateQASessionName } from "../../misc/qa-mode";
 import { socket } from "../../misc/socket";
@@ -34,7 +34,7 @@ export const LayoutContext = createContext<LayoutContextData>({} as any);
 export default function Layout() {
     const [debugMode, setDebugMode] = useState(process.env.NODE_ENV === "development");
     const [isSpectator, setIsSpectator] = useState(false);
-    const [isPlayer, setIsPlayer] = useState(isQAPlayer || isMobile || localStorage[LocalStorageKey.IsPlayer]);
+    const [isPlayer, setIsPlayer] = useState(isQAPlayer || isMobile || !!joinSessionName || localStorage[LocalStorageKey.IsPlayer]);
     const [sessionName, setSessionName] = useState("");
     const [sessionState, setSessionState] = useState(SessionState.Lobby);
     const [sessionPlayers, setSessionPlayers] = useState<SessionPlayers>({});

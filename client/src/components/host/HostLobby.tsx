@@ -5,6 +5,7 @@ import {
     getSortedSessionPlayerIDs, HostServerSocket, HostSocket, LeaderboardPlayers, LeaderboardPlayerSchema, LeaderboardStatsSchema, LeaderboardType,
     Player, SocketID, TriviaGameSettingsPreset
 } from "jparty-shared";
+import { QRCodeSVG } from "qrcode.react";
 import { useContext, useEffect, useRef, useState } from "react";
 
 import { LayoutContext } from "../common/Layout";
@@ -156,7 +157,13 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
 
                     <Box>
                         join on your phone with session name:
-                        <Heading fontFamily={"logo"} fontSize={"3em"}>{context.sessionName}</Heading>
+                        <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} gap={"1em"}>
+                            <Heading fontFamily={"logo"} fontSize={"3em"}>{context.sessionName}</Heading>
+                            <Divider orientation={"vertical"} height={"2.5em"} />
+                            {context.sessionName && (
+                                <QRCodeSVG value={`${window.location.origin}/?join=${context.sessionName}`} marginSize={1} style={{ width: "2.5em", height: "2.5em" }} />
+                            )}
+                        </Stack>
                     </Box>
 
                     <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
