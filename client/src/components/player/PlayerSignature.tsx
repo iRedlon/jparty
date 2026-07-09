@@ -1,7 +1,7 @@
 
 import { Box, Button, Heading, Stack } from "@chakra-ui/react";
 import { Player, PlayerSocket } from "jparty-shared";
-import { createRef, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import { FaBomb, FaRedo, FaUndo } from "react-icons/fa";
 import { CanvasPath, ReactSketchCanvas, ReactSketchCanvasRef } from "react-sketch-canvas";
@@ -18,8 +18,9 @@ interface PlayerSignatureProps {
 }
 
 export default function PlayerSignature({ player, setIsEditingSignature }: PlayerSignatureProps) {
-    const canvasRef = createRef<ReactSketchCanvasRef>();
+    const canvasRef = useRef<ReactSketchCanvasRef>(null);
     const colorPickerRef = useRef(null);
+    const didLoadSignatureRef = useRef(false);
 
     const [color, setColor] = useState("black");
     const [canUpdate, setCanUpdate] = useState(false);
@@ -29,6 +30,11 @@ export default function PlayerSignature({ player, setIsEditingSignature }: Playe
     useClickOutside(colorPickerRef, close);
 
     useEffect(() => {
+        if (didLoadSignatureRef.current) {
+            return;
+        }
+
+        didLoadSignatureRef.current = true;
         canvasRef.current?.loadPaths(player.signatureCanvasPath);
     }, []);
 
@@ -56,7 +62,7 @@ export default function PlayerSignature({ player, setIsEditingSignature }: Playe
     }
 
     const clearCanvas = () => {
-        canvasRef.current?.clearCanvas();
+        canvasRef.current?.resetCanvas();
         onStroke();
     }
 

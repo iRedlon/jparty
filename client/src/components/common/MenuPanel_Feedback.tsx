@@ -55,7 +55,6 @@ export default function MenuPanel_Feedback() {
   const cardBg = useColorModeValue("white", "gray.900");
   const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
   const muted = useColorModeValue("gray.600", "gray.300");
-
   const inputBg = useColorModeValue("gray.50", "whiteAlpha.100");
 
   return (
@@ -70,7 +69,6 @@ export default function MenuPanel_Feedback() {
             boxShadow="md"
             overflow="hidden"
           >
-            {/* Header */}
             <Box
               px={{ base: 4, md: 5 }}
               py={{ base: 3, md: 4 }}
@@ -104,7 +102,6 @@ export default function MenuPanel_Feedback() {
               </Stack>
             </Box>
 
-            {/* Body */}
             <Box px={{ base: 4, md: 5 }} py={{ base: 4, md: 5 }}>
               <Stack spacing={4}>
                 {/* <Select
@@ -164,7 +161,6 @@ export default function MenuPanel_Feedback() {
               </Stack>
             </Box>
 
-            {/* Footer */}
             <Box
               px={{ base: 4, md: 5 }}
               py={{ base: 3, md: 4 }}

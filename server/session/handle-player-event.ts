@@ -12,7 +12,7 @@ import {
     restartTimeout, showAnnouncement, startPositionChangeAnimation, startTimeout, stopTimeout, updateLeaderboard
 } from "./session-utils.js";
 import { io } from "../controller.js";
-import { DebugLogType, debugLog, formatDebugLog } from "../misc/log.js";
+import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 import { formatText, validatePlayerName } from "../misc/text-utils.js";
 
 function handleConnect(socket: Socket, sessionName: string, clientID: string, playerName: string, callback: PlayerSocketCallback[PlayerSocket.Connect]) {
@@ -79,7 +79,7 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
         return;
     }
 
-    if (!session.triviaGame || (session.triviaGameSettingsPreset !== TriviaGameSettingsPreset.Custom)) {
+    if (!session.triviaGame) {
         let gameSettings = NORMAL_GAME_SETTINGS;
 
         if (session.triviaGameSettingsPreset === TriviaGameSettingsPreset.Party) {
@@ -94,9 +94,9 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
             callback(false);
             return;
         }
-
-        emitTriviaRoundUpdate(sessionName);
     }
+
+    emitTriviaRoundUpdate(sessionName);
 
     session.gameStartTimeMs = Date.now();
     session.gameCount++;
@@ -379,6 +379,8 @@ function handleBuzz(socket: Socket, sessionName: string) {
 
     // this must be the first buzz attempt!
     if (!session.buzzPlayerIDs.length) {
+        playAudio(sessionName, AudioType.Buzz);
+
         startTimeout(sessionName, SessionTimeoutType.TossupWindow, () => {
             stopTimeout(sessionName, SessionTimeoutType.TossupWindow);
 
@@ -447,6 +449,7 @@ function handleSubmitResponse(socket: Socket, sessionName: string) {
 
     // finish the response window early if we aren't waiting for any more submissions
     if (numSubmittedResponders >= numResponders) {
+        playAudio(sessionName, (session.state === SessionState.WagerResponse) ? AudioType.WagerResponseSubmitted : AudioType.ClueResponseSubmitted);
         finishResponseWindow(sessionName);
     }
 }
@@ -473,11 +476,15 @@ async function finishResponseWindow(sessionName: string) {
                 // there's only one response window for an all play/wager, so we can safely announce the correct answer to begin with
                 // before finding any of the decisions
                 if (session.getCurrentClue()?.isAllPlayClue()) {
+                    // request every responder's decision at once, in parallel with the correct answer announcement
+                    const decisionsPromise = Promise.all(session.currentResponderIDs.map(responderID => session!.getClueDecision(responderID)))
+                        .catch((e) => { emitServerError(e, undefined, sessionName); return undefined; });
+
                     const showCorrectAnswer = true;
                     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
                     playVoiceLine(sessionName, VoiceLineType.ShowCorrectAnswer);
 
-                    startTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, () => recursiveRevealClueDecision(sessionName, true));
+                    startTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, () => batchRevealClueDecision(sessionName, decisionsPromise));
                 }
                 else {
                     recursiveRevealClueDecision(sessionName);
@@ -491,6 +498,44 @@ async function finishResponseWindow(sessionName: string) {
             }
             break;
     }
+}
+
+async function batchRevealClueDecision(sessionName: string, decisionsPromise: Promise<TriviaClueDecision[] | undefined>) {
+    stopTimeout(sessionName, SessionTimeoutType.ReadingClueDecision);
+
+    io.in(sessionName).emit(ServerSocket.StopTimeout);
+
+    const decisions = await decisionsPromise;
+    if (!decisions) {
+        return;
+    }
+
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    for (const responderID of session.currentResponderIDs) {
+        const responder = session.players[responderID];
+        const decisionInfo = responder?.clueDecisionInfo;
+
+        if (responder && decisionInfo) {
+            sendAnalyticsEvent(AnalyticsEvent.ClueDecision, sessionName, {
+                player_name: responder.name,
+                player_answer: decisionInfo.response,
+                clue: decisionInfo.clue.question,
+                answer: decisionInfo.clue.answer,
+                clue_value: decisionInfo.clueValue * ((decisionInfo.decision === TriviaClueDecision.Correct) ? 1 : -1)
+            });
+        }
+    }
+
+    session.displayingCorrectAnswer = true;
+
+    // this emits a state update, revealing every decision and score change at once
+    startPositionChangeAnimation(sessionName);
+
+    startTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, () => finishRevealClueDecision(sessionName, true));
 }
 
 // make a series of recursive calls to get a clue decision for each responder
@@ -507,10 +552,10 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
 
     const responderID = session.findUndecidedResponderID();
 
-    debugLog(DebugLogType.ClueDecision, `found undecided responder ID: ${responderID}`);
+    debugLog(LogCategory.ClueDecision, `found undecided responder ID: ${responderID}`, LogVerbosity.Verbose);
 
     if (!responderID) {
-        debugLog(DebugLogType.ClueDecision, `done revealing clue decisions`);
+        debugLog(LogCategory.ClueDecision, `done revealing clue decisions`, LogVerbosity.Verbose);
 
         if (session.currentResponderIDs.length || session.getCurrentClue()?.isAllPlayClue()) {
             finishRevealClueDecision(sessionName, showCorrectAnswer);
@@ -564,6 +609,13 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
 
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
 
+    if (decision === TriviaClueDecision.Correct) {
+        playAudio(sessionName, AudioType.CorrectDecision);
+    }
+    else if (decision === TriviaClueDecision.Incorrect) {
+        playAudio(sessionName, AudioType.IncorrectDecision);
+    }
+
     if (!session.getCurrentClue()?.isAllPlayClue() && noEligibleRespondersRemaining && decision === TriviaClueDecision.Incorrect) {
         playVoiceLine(sessionName, VoiceLineType.ShowCorrectAnswer);
     }
@@ -575,7 +627,7 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
         }
     }
 
-    debugLog(DebugLogType.ClueDecision, `got clue decision: ${decision}. display correct answer?: ${showCorrectAnswer}`);
+    debugLog(LogCategory.ClueDecision, `got clue decision: ${decision}. display correct answer?: ${showCorrectAnswer}`, LogVerbosity.Verbose);
 
     startTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, () => {
         recursiveRevealClueDecision(sessionName, showCorrectAnswer);
@@ -698,6 +750,28 @@ function handleVoteToReverseDecision(socket: Socket, sessionName: string, respon
     emitStateUpdate(sessionName);
 }
 
+function handleResponseWindowArrived(socket: Socket, sessionName: string, timeoutType: SessionTimeoutType, slackMs: number) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    const player = session.players[socket.id];
+    if (!player || !Number.isFinite(slackMs)) {
+        return;
+    }
+
+    slackMs = Math.round(Math.min(Math.max(slackMs, -60000), 60000));
+
+    debugLog(LogCategory.Timeout, `(${player.name}) received ${SessionTimeoutType[timeoutType]} with ${slackMs}ms of slack time remaining`, LogVerbosity.VeryVerbose);
+
+    sendAnalyticsEvent(AnalyticsEvent.ResponseWindowArrived, sessionName, {
+        player_name: player.name,
+        timeout_type: SessionTimeoutType[timeoutType],
+        response_window_arrival_slack_ms: slackMs
+    });
+}
+
 const handlers: Record<PlayerSocket, Function> = {
     [PlayerSocket.Connect]: handleConnect,
     [PlayerSocket.LeaveSession]: handleLeaveSession,
@@ -707,7 +781,8 @@ const handlers: Record<PlayerSocket, Function> = {
     [PlayerSocket.Buzz]: handleBuzz,
     [PlayerSocket.UpdateResponse]: handleUpdateResponse,
     [PlayerSocket.SubmitResponse]: handleSubmitResponse,
-    [PlayerSocket.VoteToReverseDecision]: handleVoteToReverseDecision
+    [PlayerSocket.VoteToReverseDecision]: handleVoteToReverseDecision,
+    [PlayerSocket.ResponseWindowArrived]: handleResponseWindowArrived
 }
 
 export default function handlePlayerEvent(socket: Socket, event: PlayerSocket, ...args: any[]) {

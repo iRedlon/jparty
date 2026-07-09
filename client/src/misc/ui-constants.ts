@@ -7,10 +7,8 @@ export enum LocalStorageKey {
     IsPlayer = "isPlayer",
     SessionName = "sessionName",
     CategoryIndex = "categoryIndex", // this was the last category index selected by this player
+    BackgroundTheme = "backgroundTheme", // the background color theme chosen from the appearance menu
 }
-
-export const BACKGROUND_COLOR = "#0d47a1";
-export const BACKGROUND_ACCENT_COLOR = "#00008b";
 
 // z-index values for UI components
 export enum Layer {
@@ -22,6 +20,7 @@ export enum Layer {
 }
 
 export const SOURCE_CODE_LINK = "https://github.com/iRedlon/jparty";
+export const BUY_ME_A_COFFEE_LINK = "https://buymeacoffee.com/YOUR_USERNAME";
 export const PATCH_NOTES_LINK = "https://github.com/iRedlon/jparty/blob/main/documentation/patch-notes.md";
 export const KNOWN_ISSUES_LINK = "https://github.com/iRedlon/jparty/blob/main/documentation/known-issues.md";
 

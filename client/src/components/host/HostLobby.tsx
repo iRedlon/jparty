@@ -1,8 +1,8 @@
 
-import { ExternalLinkIcon } from "@chakra-ui/icons";
+import { ExternalLinkIcon, RepeatIcon } from "@chakra-ui/icons";
 import { Box, Button, Divider, Heading, Input, Link, ListItem, Stack, Text, Tooltip, UnorderedList } from "@chakra-ui/react";
 import {
-    getSortedSessionPlayerIDs, HostServerSocket, HostSocket, LeaderboardPlayers, LeaderboardPlayerSchema, LeaderboardType,
+    getSortedSessionPlayerIDs, HostServerSocket, HostSocket, LeaderboardPlayers, LeaderboardPlayerSchema, LeaderboardStatsSchema, LeaderboardType,
     Player, SocketID, TriviaGameSettingsPreset
 } from "jparty-shared";
 import { useContext, useEffect, useRef, useState } from "react";
@@ -53,21 +53,28 @@ interface HostLobbyProps {
     allTimeLeaderboardPlayers: LeaderboardPlayers | undefined;
     monthlyLeaderboardPlayers: LeaderboardPlayers | undefined;
     weeklyLeaderboardPlayers: LeaderboardPlayers | undefined;
+    allTimeLeaderboardStats: LeaderboardStatsSchema | undefined;
+    monthlyLeaderboardStats: LeaderboardStatsSchema | undefined;
+    weeklyLeaderboardStats: LeaderboardStatsSchema | undefined;
 }
 
-export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboardPlayers, weeklyLeaderboardPlayers }: HostLobbyProps) {
+export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboardPlayers, weeklyLeaderboardPlayers,
+    allTimeLeaderboardStats, monthlyLeaderboardStats, weeklyLeaderboardStats }: HostLobbyProps) {
     const joinedPlayersBoxRef = useRef(null);
 
     const context = useContext(LayoutContext);
     const [spectateSessionName, setSpectateSessionName] = useState("");
     const [gameSettingsPreset, setGameSettingsPreset] = useState(TriviaGameSettingsPreset.Normal);
+    const [gamePreviewCategoryNames, setGamePreviewCategoryNames] = useState<string[] | undefined>(undefined);
     const [currentLeaderboardType, setCurrentLeaderboardType] = useState(LeaderboardType.AllTime);
 
     useEffect(() => {
         socket.on(HostServerSocket.UpdateGameSettingsPreset, handleUpdateGameSettingsPreset);
+        socket.on(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
 
         return () => {
             socket.off(HostServerSocket.UpdateGameSettingsPreset, handleUpdateGameSettingsPreset);
+            socket.off(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
         }
     }, []);
 
@@ -81,6 +88,16 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
         }
 
         setGameSettingsPreset(preset);
+        setGamePreviewCategoryNames(undefined);
+    }
+
+    const handleUpdateGamePreview = (categoryNames: string[]) => {
+        setGamePreviewCategoryNames(categoryNames);
+    }
+
+    const emitGenerateGamePreview = () => {
+        setGamePreviewCategoryNames(undefined);
+        socket.emit(HostSocket.GenerateGamePreview);
     }
 
     const emitAttemptSpectate = () => {
@@ -97,20 +114,24 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
     const sortedSessionPlayerIDs = getSortedSessionPlayerIDs(context.sessionPlayers);
 
     let leaderboardPlayers = undefined;
+    let currentLeaderboardStats = undefined;
     switch (currentLeaderboardType) {
         case LeaderboardType.AllTime:
             {
                 leaderboardPlayers = allTimeLeaderboardPlayers;
+                currentLeaderboardStats = allTimeLeaderboardStats;
             }
             break;
         case LeaderboardType.Monthly:
             {
                 leaderboardPlayers = monthlyLeaderboardPlayers;
+                currentLeaderboardStats = monthlyLeaderboardStats;
             }
             break;
         case LeaderboardType.Weekly:
             {
                 leaderboardPlayers = weeklyLeaderboardPlayers;
+                currentLeaderboardStats = weeklyLeaderboardStats;
             }
             break;
     }
@@ -196,12 +217,23 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
 
                     <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
 
-                    <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>tips</Heading>
-                    <UnorderedList justifyContent={"center"} listStyleType={"none"} margin={0}>
-                        <ListItem>go fullscreen with F11</ListItem>
-                        <ListItem>change text size with Ctrl-/Ctrl+</ListItem>
-                        <ListItem>use the menu to adjust volume</ListItem>
-                    </UnorderedList>
+                    <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>round 1 categories</Heading>
+                    {gamePreviewCategoryNames ? (
+                        <UnorderedList justifyContent={"center"} listStyleType={"none"} margin={0}>
+                            {gamePreviewCategoryNames.map((categoryName, index) => (
+                                <ListItem key={`game-preview-category-${index}`}>{categoryName}</ListItem>
+                            ))}
+                        </UnorderedList>
+                    ) : (
+                        <Text><i>generating trivia...</i></Text>
+                    )}
+
+                    <Button
+                        isDisabled={context.isSpectator || !gamePreviewCategoryNames}
+                        onClick={emitGenerateGamePreview}
+                        leftIcon={<RepeatIcon />} colorScheme={"blue"} size={"sm"} marginTop={"0.5em"}>
+                        re-roll
+                    </Button>
                 </Box>
             </Stack>
 
@@ -232,6 +264,13 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                         weekly
                     </Button>
                 </Stack>
+
+                {currentLeaderboardStats && (
+                    <Box marginTop={"0.5em"}>
+                        <Text><i>games played: {currentLeaderboardStats.gamesPlayed}</i></Text>
+                        <Text><i>money earned: {formatDollarValue(currentLeaderboardStats.moneyEarned)}</i></Text>
+                    </Box>
+                )}
 
                 {leaderboardPlayers?.map((leaderboardPlayer, index) => LeaderboardPlayerBox(currentLeaderboardType, leaderboardPlayer, index))}
             </Box>

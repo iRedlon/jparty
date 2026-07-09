@@ -5,13 +5,16 @@ import { useContext, useEffect, useRef, useState } from "react";
 
 import { LayoutContext } from "../common/Layout";
 import { formatDollarValue } from "../../misc/client-utils";
-import { estimateLocalTimeMs, socket } from "../../misc/socket";
+import { estimateClientTimeMs, socket } from "../../misc/socket";
 
-let responseWindowOpenLocalTimeMs = 0;
+let responseWindowOpenClientTimeMs = 0;
 
 socket.on(ServerSocket.StartTimeout, (timeoutType: SessionTimeoutType, openTimeMs: number, _closeTimeMs: number) => {
     if (timeoutType === SessionTimeoutType.ResponseWindow) {
-        responseWindowOpenLocalTimeMs = estimateLocalTimeMs(openTimeMs);
+        responseWindowOpenClientTimeMs = estimateClientTimeMs(openTimeMs);
+
+        const responseWindowArrivalSlackMs = Math.round(responseWindowOpenClientTimeMs - Date.now());
+        socket.emit(PlayerSocket.ResponseWindowArrived, timeoutType, responseWindowArrivalSlackMs);
     }
 });
 
@@ -23,7 +26,7 @@ interface PlayerResponseProps {
 export default function PlayerResponse({ player, responseType }: PlayerResponseProps) {
     const context = useContext(LayoutContext);
     const [response, setResponse] = useState("");
-    const [windowOpen, setWindowOpen] = useState(Date.now() >= responseWindowOpenLocalTimeMs);
+    const [windowOpen, setWindowOpen] = useState(Date.now() >= responseWindowOpenClientTimeMs);
     const inputRef = useRef<HTMLInputElement>(null);
 
     // if we re-connect, this will restore whatever our response was
@@ -49,7 +52,7 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
         }
 
         const interval = setInterval(() => {
-            if (Date.now() >= responseWindowOpenLocalTimeMs) {
+            if (Date.now() >= responseWindowOpenClientTimeMs) {
                 setWindowOpen(true);
             }
         }, 50);
@@ -58,7 +61,7 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
     }, [windowOpen]);
 
     const emitUpdateResponse = (response: string) => {
-        if (Date.now() < responseWindowOpenLocalTimeMs) {
+        if (Date.now() < responseWindowOpenClientTimeMs) {
             return;
         }
 
@@ -67,7 +70,7 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
     }
 
     const emitSubmitResponse = () => {
-        if (Date.now() < responseWindowOpenLocalTimeMs) {
+        if (Date.now() < responseWindowOpenClientTimeMs) {
             return;
         }
 

@@ -6,10 +6,10 @@ import {
     SESSION_ANNOUNCEMENT_VOICE_LINES, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable, WELCOME_VOICE_LINES,
 } from "jparty-shared";
 
-import { getSession, updateVoiceDuration } from "./session-utils.js";
-import { getVoiceAudioBase64 } from "../api-requests/tts.js";
+import { getSession } from "./session-utils.js";
+import { shouldStreamVoiceAudio } from "../api-requests/tts.js";
 import { io } from "../controller.js";
-import { debugLog, DebugLogType } from "../misc/log.js";
+import { debugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 import { formatSpokenVoiceLine } from "../misc/text-utils.js";
 
 export function playAudio(sessionName: string, audioType: AudioType) {
@@ -27,7 +27,7 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
         return;
     }
 
-    debugLog(DebugLogType.Voice, `playing voice line of type: ${VoiceLineType[type]}`);
+    debugLog(LogCategory.Voice, `playing voice line of type: ${VoiceLineType[type]}`, LogVerbosity.Verbose);
 
     let voiceLine: string = "";
 
@@ -58,7 +58,7 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
         case VoiceLineType.Announcement:
             {
                 if (session.currentAnnouncement === undefined) {
-                    debugLog(DebugLogType.Voice, "early out. session didn't have a current announcement");
+                    debugLog(LogCategory.Voice, "early out. session didn't have a current announcement", LogVerbosity.Verbose);
                     break;
                 }
 
@@ -69,13 +69,13 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
             {
                 const clueSelector = session.players[session.clueSelectorID];
                 if (!clueSelector) {
-                    debugLog(DebugLogType.Voice, "early out. session didn't have a clue selector");
+                    debugLog(LogCategory.Voice, "early out. session didn't have a clue selector", LogVerbosity.Verbose);
                     break;
                 }
 
                 const finalCluePosition = session.getCurrentRound()?.getFinalCluePosition();
                 if (finalCluePosition) {
-                    debugLog(DebugLogType.Voice, "early out. trying to prompt clue selection on the final clue");
+                    debugLog(LogCategory.Voice, "early out. trying to prompt clue selection on the final clue", LogVerbosity.Verbose);
                     return;
                 }
 
@@ -107,7 +107,7 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
             {
                 const spotlightResponder = session.players[session.spotlightResponderID];
                 if (!spotlightResponder || !spotlightResponder.clueDecisionInfo) {
-                    debugLog(DebugLogType.Voice, "early out. session didn't have a valid spotlight responder");
+                    debugLog(LogCategory.Voice, "early out. session didn't have a valid spotlight responder", LogVerbosity.Verbose);
                     break;
                 }
 
@@ -127,7 +127,7 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
     }
 
     if (!voiceLine) {
-        debugLog(DebugLogType.Voice, "early out. no valid voice line");
+        debugLog(LogCategory.Voice, "early out. no valid voice line", LogVerbosity.Verbose);
         return;
     }
 
@@ -168,25 +168,9 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
     voiceLine = formatSpokenVoiceLine(voiceLine, type);
     session.setCurrentVoiceLine(voiceLine);
 
-    debugLog(DebugLogType.Voice, `final spoken voice line: \"${voiceLine}\"`);
+    debugLog(LogCategory.Voice, `final spoken voice line: \"${voiceLine}\"`, LogVerbosity.Verbose);
 
-    // buffer to account for network latency between the server restarting the timeout and the client starting playback
-    const NETWORK_LATENCY_BUFFER_MS = 300;
-
-    let voiceAudioBase64: string | undefined = undefined;
-
-    try {
-        const voiceAudio = await getVoiceAudioBase64(session.voiceType, voiceLine);
-        if (voiceAudio) {
-            voiceAudioBase64 = voiceAudio.base64;
-            updateVoiceDuration(sessionName, voiceLine, voiceAudio.durationMs + NETWORK_LATENCY_BUFFER_MS);
-        }
-    }
-    catch (e) {
-        // normally we'd go through handleServerError, but if our external TTS request fails we can just fall back on the speech synthesis voice instead
-        // no need to recover the session; nothing's broken. but the TTS request failed so we should still log it
-        console.error(e);
-    }
-
-    io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayVoice, session.voiceType, voiceLine, voiceAudioBase64);
+    const streamAudio = shouldStreamVoiceAudio(session.voiceType);
+    
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayVoice, session.voiceType, voiceLine, streamAudio);
 }

@@ -1,14 +1,15 @@
 
 import {
-    HostServerSocket, HostSocket, HostSocketCallback, ServerSocket, ServerSocketMessage, SessionState,
-    TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
+    HostServerSocket, HostSocket, HostSocketCallback, NORMAL_GAME_SETTINGS, PARTY_GAME_SETTINGS, ServerSocket, ServerSocketMessage,
+    SessionState, TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
 } from "jparty-shared";
 import { generate as generateRandomWord } from "random-words";
 import { Socket } from "socket.io";
 
-import { createSession, deleteSession, emitLeaderboardUpdate, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost, updateVoiceDuration } from "./session-utils.js";
+import { createSession, deleteSession, emitGamePreviewUpdate, emitLeaderboardUpdate, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost, updateVoiceDuration } from "./session-utils.js";
+import { generateTriviaGame } from "../api-requests/generate-trivia-game.js";
 import { io } from "../controller.js";
-import { debugLog, DebugLogType } from "../misc/log.js";
+import { debugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 
 function handleConnect(socket: Socket, clientID: string) {
     let sessionName = "";
@@ -19,6 +20,55 @@ function handleConnect(socket: Socket, clientID: string) {
 
     createSession(sessionName, socket.id, clientID);
     joinSessionAsHost(socket, sessionName);
+
+    generateGamePreview(socket, sessionName);
+}
+
+// pre-generate the entire trivia game while we're still in the lobby so the hosts can preview (and re-roll) the round 1 categories
+async function generateGamePreview(socket: Socket, sessionName: string) {
+    let session = getSession(sessionName);
+    if (!session || (session.state !== SessionState.Lobby)) {
+        return;
+    }
+
+    const gameSettingsPreset = session.triviaGameSettingsPreset;
+
+    let gameSettings = NORMAL_GAME_SETTINGS;
+
+    if (gameSettingsPreset === TriviaGameSettingsPreset.Party) {
+        gameSettings = PARTY_GAME_SETTINGS;
+    }
+
+    let triviaGame;
+
+    try {
+        triviaGame = await generateTriviaGame(TriviaGameSettings.clone(gameSettings));
+    }
+    catch (e) {
+        emitServerError(e, socket);
+        emitGamePreviewUpdate(sessionName);
+        return;
+    }
+
+    if ((session.state !== SessionState.Lobby) || (session.triviaGameSettingsPreset !== gameSettingsPreset)) {
+        return;
+    }
+
+    session.triviaGame = triviaGame;
+    emitGamePreviewUpdate(sessionName);
+}
+
+async function handleGenerateGamePreview(socket: Socket, sessionName: string) {
+    let session = getSession(sessionName);
+    if (!session || (session.state !== SessionState.Lobby)) {
+        return;
+    }
+
+    if (socket.id !== session.creatorSocketID) {
+        return;
+    }
+
+    await generateGamePreview(socket, sessionName);
 }
 
 function handleUpdateGameSettingsPreset(socket: Socket, sessionName: string, gameSettingsPreset: TriviaGameSettingsPreset) {
@@ -33,7 +83,11 @@ function handleUpdateGameSettingsPreset(socket: Socket, sessionName: string, gam
 
     session.triviaGameSettingsPreset = gameSettingsPreset;
 
-    io.to(Object.keys(session.hosts)).except(socket.id).emit(HostServerSocket.UpdateGameSettingsPreset, gameSettingsPreset);
+    io.to(Object.keys(session.hosts)).except(socket.id).emit(HostServerSocket.UpdateGameSettingsPreset, gameSettingsPreset, true /* fromServer */);
+
+    // if we have a trivia game already it must have been made with the old preset. discard it and roll a fresh preview
+    session.triviaGame = undefined;
+    generateGamePreview(socket, sessionName);
 }
 
 function handleUpdateVoiceType(socket: Socket, sessionName: string, voiceType: VoiceType) {
@@ -42,7 +96,7 @@ function handleUpdateVoiceType(socket: Socket, sessionName: string, voiceType: V
         return;
     }
 
-    debugLog(DebugLogType.Voice, `updating session (${sessionName}) to use voice type: ${voiceType}`);
+    debugLog(LogCategory.Voice, `updating session (${sessionName}) to use voice type: ${voiceType}`, LogVerbosity.Verbose);
 
     session.voiceType = voiceType;
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateVoiceType, voiceType, !process.env.USE_OPENAI_TTS /* modernVoicesDisabled */);
@@ -54,7 +108,7 @@ function handleUpdateVoiceDuration(socket: Socket, sessionName: string, voiceLin
         return;
     }
 
-    debugLog(DebugLogType.Voice, `got a new duration of ${durationSec} seconds for current voice line: "${session.currentVoiceLine}"`);
+    debugLog(LogCategory.Voice, `got a new duration of ${durationSec} seconds for current voice line: "${session.currentVoiceLine}"`, LogVerbosity.VeryVerbose);
 
     updateVoiceDuration(sessionName, voiceLine, durationSec * 1000);
 }
@@ -86,7 +140,7 @@ function handleLeaveSession(socket: Socket, sessionName: string) {
         return;
     }
 
-    debugLog(DebugLogType.ClientConnection, `socket ID (${socket.id}) is leaving session: ${session.name}`);
+    debugLog(LogCategory.ClientConnection, `socket ID (${socket.id}) is leaving session: ${session.name}`, LogVerbosity.Verbose);
 
     session.disconnectHost(socket.id);
 
@@ -131,6 +185,7 @@ function handlePlayAgain(socket: Socket, sessionName: string) {
     emitStateUpdate(sessionName);
     emitTriviaRoundUpdate(sessionName);
     emitLeaderboardUpdate(socket);
+    generateGamePreview(socket, sessionName);
 }
 
 const handlers: Record<HostSocket, Function> = {
@@ -141,6 +196,7 @@ const handlers: Record<HostSocket, Function> = {
     [HostSocket.AttemptSpectate]: handleAttemptSpectate,
     [HostSocket.LeaveSession]: handleLeaveSession,
     [HostSocket.GenerateCustomGame]: handleGenerateCustomGame,
+    [HostSocket.GenerateGamePreview]: handleGenerateGamePreview,
     [HostSocket.PlayAgain]: handlePlayAgain
 }
 

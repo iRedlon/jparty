@@ -3,110 +3,92 @@ import dotenv from "dotenv";
 import { TriviaClue, TriviaClueDecision } from "jparty-shared";
 import OpenAI from "openai";
 
-import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
+import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 
 const CLUE_DECISION_TIMEOUT_DURATION_MS = 10000;
+const CLUE_DECISION_MODEL = "gpt-5.4-nano";
+
+const CLUE_DECISION_INSTRUCTIONS = 
+`You judge a player's response to a trivia clue. You will receive the clue, its correct answer, and the player's response. Reply with exactly one of: "correct", "incorrect", "needs more detail".
+
+- "correct": the response shows the player knows the correct answer. Accept misspellings, phonetic spellings, abbreviations, and missing or extra articles. Accept a surname alone unless the clue requires disambiguation.
+- "needs more detail": the response is on the right track but too vague or incomplete to prove the player knows the answer.
+- "incorrect": anything else.
+
+Judge as generously as a TV game show host would.`;
 
 dotenv.config();
 
-if (!process.env.OPENAI_SECRET_KEY) {
-    throw new Error(formatDebugLog("attempted to connect to OpenAI without API key"));
-}
-
-if (!process.env.OPENAI_ASSISTANT_ID) {
-    throw new Error(formatDebugLog("attempted to connect to OpenAI without assistant ID"));
-}
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_SECRET_KEY });
+const openai = process.env.OPENAI_SECRET_KEY ? new OpenAI({ apiKey: process.env.OPENAI_SECRET_KEY }) : undefined;
 
 // players can reverse false positives/negatives manually, so always deal with unexpected situations by returning decision: incorrect
 export async function getClueDecision(clue: TriviaClue, response: string) {
-    try {
-        if (!response) {
-            return TriviaClueDecision.Incorrect;
-        }
+    if (!response) {
+        return TriviaClueDecision.Incorrect;
+    }
 
-        if (process.env.DEBUG_MODE) {
-            if (response === "correct") {
-                return TriviaClueDecision.Correct;
-            }
-            else if (response === "incorrect") {
-                return TriviaClueDecision.Incorrect;
-            }
-            else if (response === "detail") {
-                return TriviaClueDecision.NeedsMoreDetail;
-            }
-            else if (response === "error") {
-                throw new Error(formatDebugLog("triggered intentionally for testing. simulated an unexpected error"));
-            }
-        }
-        
-        // short circuit if the response is clearly the correct answer
-        if (response.toLowerCase().trim() === clue.answer.toLowerCase().trim()) {
+    // debug shorthand: type in correct/incorrect/detail to force that decision
+    if (process.env.DEBUG_MODE || !openai) {
+        if (response === "correct") {
             return TriviaClueDecision.Correct;
         }
-        // terminate this clue decision request if it takes too long
-        let timeout = false;
-        setTimeout(() => {
-            timeout = true;
-        }, CLUE_DECISION_TIMEOUT_DURATION_MS);
-
-        const thread = await openai.beta.threads.create();
-
-        const decisionRequest = `trivia question: "${clue.question}". correct answer: "${clue.answer}". response: "${response}".`;
-
-        await openai.beta.threads.messages.create(thread.id, {
-            role: "user",
-            content: decisionRequest
-        });
-
-        const run = await openai.beta.threads.runs.create(thread.id, {
-            assistant_id: process.env.OPENAI_ASSISTANT_ID || ""
-        });
-
-        let runStatus = await openai.beta.threads.runs.retrieve(
-            thread.id,
-            run.id
-        );
-
-        // poll for completion
-        while (runStatus.status !== "completed") {
-            runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-
-            if (timeout) {
-                return TriviaClueDecision.Incorrect;
-            }
-        }
-
-        const messages = await openai.beta.threads.messages.list(thread.id);
-        const latestMessage = messages.data.filter((message) => message.run_id === run.id && message.role === "assistant").pop();
-
-        if (!latestMessage) {
-            // we didn't get a usable decision back from the assistant
+        else if (response === "incorrect") {
             return TriviaClueDecision.Incorrect;
         }
-
-        let decision = TriviaClueDecision.Incorrect;
-
-        // the assistant is instructed to return its answer in a very specific format but sometimes punctuation (like "correct.") or bad formatting (like "decision: incorrect")
-        // slip through the cracks. we do an inclusive search as a safety measure against that inconsistency
-        const rawDecision = (latestMessage.content[0] as any).text.value.toLowerCase();
-        if (rawDecision.includes(TriviaClueDecision.Incorrect)) {
-            decision = TriviaClueDecision.Incorrect;
+        else if (response === "detail") {
+            return TriviaClueDecision.NeedsMoreDetail;
         }
-        else if (rawDecision.includes(TriviaClueDecision.NeedsMoreDetail)) {
-            decision = TriviaClueDecision.NeedsMoreDetail;
+        else if (response === "error") {
+            throw new Error(formatDebugLog("triggered intentionally for testing. simulated an unexpected error"));
         }
-        else if (rawDecision.includes(TriviaClueDecision.Correct)) {
-            decision = TriviaClueDecision.Correct;
-        }
+    }
 
-        debugLog(DebugLogType.ClueDecision, `request: ${decisionRequest}`);
-        debugLog(DebugLogType.ClueDecision, `decision: ${decision}`);
+    // short circuit if the response is clearly the correct answer
+    if (response.toLowerCase().trim() === clue.answer.toLowerCase().trim()) {
+        return TriviaClueDecision.Correct;
+    }
 
-        return decision;
+    // without OpenAI, an exact match is the best we can do
+    if (!openai) {
+        return TriviaClueDecision.Incorrect;
+    }
+
+    const decisionRequest = `trivia question: "${clue.question}". correct answer: "${clue.answer}". response: "${response}".`;
+
+    let rawDecision = "";
+
+    try {
+        const decisionResponse = await openai.responses.create({
+            model: CLUE_DECISION_MODEL,
+            reasoning: { effort: "low" },
+            instructions: CLUE_DECISION_INSTRUCTIONS,
+            input: decisionRequest
+        }, { timeout: CLUE_DECISION_TIMEOUT_DURATION_MS });
+
+        rawDecision = decisionResponse.output_text.toLowerCase();
     }
     catch (e) {
-        throw e;
+        // a failed or timed out request shouldn't interrupt the game. rule the response incorrect and let reversal votes make it right if need be
+        console.error(e);
+        return TriviaClueDecision.Incorrect;
     }
+
+    let decision = TriviaClueDecision.Incorrect;
+
+    // the model is instructed to reply in a very specific format but sometimes punctuation (like "correct.") or bad formatting (like "decision: incorrect")
+    // slips through the cracks. we do an inclusive search as a safety measure against that inconsistency
+    if (rawDecision.includes(TriviaClueDecision.Incorrect)) {
+        decision = TriviaClueDecision.Incorrect;
+    }
+    else if (rawDecision.includes(TriviaClueDecision.NeedsMoreDetail)) {
+        decision = TriviaClueDecision.NeedsMoreDetail;
+    }
+    else if (rawDecision.includes(TriviaClueDecision.Correct)) {
+        decision = TriviaClueDecision.Correct;
+    }
+
+    debugLog(LogCategory.ClueDecision, `request: ${decisionRequest}`, LogVerbosity.Verbose);
+    debugLog(LogCategory.ClueDecision, `decision: ${decision}`, LogVerbosity.Verbose);
+
+    return decision;
 }

@@ -1,6 +1,6 @@
 
 import { Box, Heading, Stack, Text } from "@chakra-ui/react";
-import { Player, PlayerResponseType, SessionState, TriviaClue, TriviaClueDecision } from "jparty-shared";
+import { getSortedSessionPlayerIDs, Player, PlayerResponseType, SessionState, TriviaClue, TriviaClueDecision } from "jparty-shared";
 import { useContext, useRef } from "react";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 
@@ -18,6 +18,17 @@ interface ResponderInfoProps {
     numResponders?: number
 }
 
+function getCorrectResponderNamesFontSize(numNames: number) {
+    if (numNames <= 3) {
+        return "1.5em";
+    }
+    else if (numNames <= 6) {
+        return "1.25em";
+    }
+
+    return "1em";
+}
+
 export default function ResponderInfo({ triviaClue, responder, responseType, showClueDecision, numSubmittedResponders, numResponders }: ResponderInfoProps) {
     const responderInfoRef = useRef(null);
     const clueDecisionRef = useRef(null);
@@ -30,6 +41,7 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
     const isResponse = isWagerResponse || isClueResponse;
 
     const showSubmittedResponders = triviaClue.isAllPlayClue() && isResponse;
+    const showAllPlayResults = triviaClue.isAllPlayClue() && (context.sessionState === SessionState.ReadingClueDecision) && !responder;
 
     let responderInfoState: any = "none";
     let responderInfoBox = <></>;
@@ -40,6 +52,34 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
             responderInfoBox = (
                 <Box className={"box submitted-responders-box"}>
                     <Heading size={"lg"} fontFamily={"clue"}>{numSubmittedResponders}/{numResponders} players submitted</Heading>
+                </Box>
+            );
+        }
+        else if (showAllPlayResults) {
+            const correctResponderNames = getSortedSessionPlayerIDs(context.sessionPlayers)
+                .map(playerID => context.sessionPlayers[playerID])
+                .filter(player => player && player.clueDecisionInfo &&
+                    (player.clueDecisionInfo.clue.id === triviaClue.id) &&
+                    (player.clueDecisionInfo.decision === TriviaClueDecision.Correct))
+                .map(player => player.name.toUpperCase());
+
+            const numCorrectResponders = correctResponderNames.length;
+
+            responderInfoState = "all-play-results";
+            responderInfoBox = (
+                <Box className={"box"} padding={"1em"} width={"30vw"} height={"7em"} marginLeft={"auto"} marginRight={"auto"}>
+                    {numCorrectResponders ? (
+                        <Stack direction={"column"} spacing={"0.25em"} overflow={"hidden"}>
+                            <Text><b>{(numCorrectResponders === 1) ? "1 CORRECT RESPONSE" : `${numCorrectResponders} CORRECT RESPONSES`}</b></Text>
+                            <Text fontSize={getCorrectResponderNamesFontSize(numCorrectResponders)} noOfLines={2}>
+                                <i>{correctResponderNames.join(", ")}</i>
+                            </Text>
+                        </Stack>
+                    ) : (
+                        <Stack direction={"column"} justifyContent={"center"} height={"100%"}>
+                            <Text fontSize={"1.5em"}><b>NO CORRECT RESPONSES</b></Text>
+                        </Stack>
+                    )}
                 </Box>
             );
         }
@@ -60,7 +100,7 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
                 decisionModifier = -1;
             }
 
-            // label our current state with this responder's client ID. this way the switch transition knows to animate between one responder to another
+            // label our current state with responder client ID so we're forced to animate between each responder
             responderInfoState = responder.clientID;
             responderInfoBox = (
                 <Stack direction={"row"} justifyContent={"center"}>

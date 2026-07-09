@@ -61,3 +61,33 @@
         transform: translateY(0);
     }
 }
+
+@keyframes kaleidoscope {
+    0% {
+        background-color: #46178f;
+    }
+
+    20% {
+        background-color: #1368ce;
+    }
+
+    40% {
+        background-color: #26890c;
+    }
+
+    60% {
+        background-color: #cf8a00;
+    }
+
+    80% {
+        background-color: #c81e3c;
+    }
+
+    100% {
+        background-color: #46178f;
+    }
+}
+
+.kaleidoscope-background canvas {
+    animation: kaleidoscope 30s linear infinite;
+}

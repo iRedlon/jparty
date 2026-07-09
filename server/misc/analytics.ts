@@ -1,5 +1,5 @@
 
-import { debugLog, DebugLogType } from "./log.js";
+import { debugLog, LogCategory, LogVerbosity } from "./log.js";
 
 export enum AnalyticsEvent {
     GameStarted = "game_started",
@@ -7,7 +7,8 @@ export enum AnalyticsEvent {
     PlayerJoined = "player_joined",
     PlayerLeft = "player_left",
     ClueDecision = "clue_decision",
-    LeaderboardChange = "leaderboard_change"
+    LeaderboardChange = "leaderboard_change",
+    ResponseWindowArrived = "response_window_arrived"
 }
 
 const GA_ENDPOINT = "https://www.google-analytics.com/mp/collect";
@@ -39,8 +40,8 @@ export function sendAnalyticsEvent(event: AnalyticsEvent, sessionName: string, p
         }]
     });
 
-    debugLog(DebugLogType.Analytics, `sending analytics event: ${event}`);
-    debugLog(DebugLogType.Analytics, body, true);
+    debugLog(LogCategory.Analytics, `sending analytics event: ${event}`, LogVerbosity.Verbose);
+    debugLog(LogCategory.Analytics, body, LogVerbosity.VeryVerbose);
 
     fetch(`${GA_ENDPOINT}?measurement_id=${measurementID}&api_secret=${apiSecret}`, { method: "POST", body }).catch(e => console.error(e));
 }

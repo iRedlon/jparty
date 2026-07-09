@@ -53,3 +53,14 @@ export function getTimeStamp() {
 
     return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}:${pad(d.getMilliseconds())}`;
 }
+
+export function getOrdinalString(n: number) {
+    const ones = n % 10;
+    const tens = n % 100;
+
+    if (ones === 1 && tens !== 11) return `${n}st`;
+    if (ones === 2 && tens !== 12) return `${n}nd`;
+    if (ones === 3 && tens !== 13) return `${n}rd`;
+    
+    return `${n}th`;
+}

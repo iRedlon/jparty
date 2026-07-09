@@ -48,6 +48,7 @@ export enum HostSocket {
     AttemptSpectate = "host_attempt_spectate",
     LeaveSession = "host_leave_session",
     GenerateCustomGame = "host_generate_custom_game",
+    GenerateGamePreview = "host_generate_game_preview",
     PlayAgain = "host_play_again"
 }
 
@@ -57,7 +58,9 @@ export type HostSocketCallback = {
 
 export enum HostServerSocket {
     UpdateLeaderboardPlayers = "host_server_update_leaderboard_players",
+    UpdateLeaderboardStats = "host_server_update_leaderboard_stats",
     UpdateGameSettingsPreset = "host_server_update_game_settings_preset",
+    UpdateGamePreview = "host_server_update_game_preview",
     UpdateReadingCategoryIndex = "host_server_update_reading_category_index",
     UpdateVoiceType = "host_server_update_voice_type",
     PlayAudio = "host_server_play_audio",
@@ -77,7 +80,8 @@ export enum PlayerSocket {
     Buzz = "player_buzz",
     UpdateResponse = "player_update_response",
     SubmitResponse = "player_submit_response",
-    VoteToReverseDecision = "player_vote_to_reverse_decision"
+    VoteToReverseDecision = "player_vote_to_reverse_decision",
+    ResponseWindowArrived = "player_response_window_arrived"
 }
 
 export type PlayerSocketCallback = {

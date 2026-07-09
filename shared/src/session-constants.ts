@@ -1,5 +1,5 @@
 
-import { MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD } from "./leaderboard-constants";
+import { LeaderboardType, MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD } from "./leaderboard-constants";
 import { TriviaClueDecisionInfo } from "./trivia-game";
 
 export enum SessionState {
@@ -83,6 +83,7 @@ export class Player {
     decided: boolean;
     clueDecisionInfo: TriviaClueDecisionInfo | undefined;
     queuedForDeletion: boolean;
+    claimedLeaderboardSpots: Partial<Record<LeaderboardType, number>>;
 
     constructor(clientID: string, name: string) {
         this.connected = true;
@@ -113,6 +114,7 @@ export class Player {
         this.decided = false;
         this.clearClueDecision();
         this.queuedForDeletion = false;
+        this.claimedLeaderboardSpots = {};
     }
 
     setIdle() {

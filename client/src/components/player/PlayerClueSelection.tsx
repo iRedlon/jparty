@@ -20,27 +20,42 @@ export default function PlayerClueSelection() {
     }
 
     useEffect(() => {
-        // if possible, set the default category index to be whatever was the last category this player selected
-        const prevCategoryIndexString = localStorage[LocalStorageKey.CategoryIndex];
-        if (prevCategoryIndexString) {
-            const prevCategoryIndex = parseInt(prevCategoryIndexString);
+        if (!context.triviaRound || (categoryIndex >= 0)) {
+            return;
+        }
 
-            const numCategories = context.triviaRound ? context.triviaRound.settings.numCategories : 0;
+        const numCategories = context.triviaRound.settings.numCategories;
 
-            if (isNaN(prevCategoryIndex) || prevCategoryIndex < 0 || prevCategoryIndex > (numCategories - 1) || context.triviaRound?.categories[prevCategoryIndex].completed) {
-                localStorage.removeItem(LocalStorageKey.CategoryIndex);
-            }
-            else {
-                setCategoryIndex(prevCategoryIndex);
-                return;
+        // if possible, default to whatever was the last category this player selected
+        let defaultCategoryIndex = parseInt(localStorage[LocalStorageKey.CategoryIndex]);
+        if (isNaN(defaultCategoryIndex)) {
+            defaultCategoryIndex = 0;
+        }
+
+        defaultCategoryIndex = Math.min(Math.max(defaultCategoryIndex, 0), numCategories - 1);
+
+        // if that category is finished, fall back to the nearest category that's still open
+        if (context.triviaRound.categories[defaultCategoryIndex].completed) {
+            for (let distance = 1; distance < numCategories; distance++) {
+                const rightIndex = defaultCategoryIndex + distance;
+                if ((rightIndex < numCategories) && !context.triviaRound.categories[rightIndex].completed) {
+                    defaultCategoryIndex = rightIndex;
+                    break;
+                }
+
+                const leftIndex = defaultCategoryIndex - distance;
+                if ((leftIndex >= 0) && !context.triviaRound.categories[leftIndex].completed) {
+                    defaultCategoryIndex = leftIndex;
+                    break;
+                }
             }
         }
 
-        const nextRightCategoryIndex = getNextRightCategoryIndex();
-        setCategoryIndex(nextRightCategoryIndex !== undefined ? nextRightCategoryIndex : 0);
-    }, []);
+        setCategoryIndex(defaultCategoryIndex);
+    }, [context.triviaRound, categoryIndex]);
 
     const emitSelectClue = (clueIndex: number) => {
+        localStorage.setItem(LocalStorageKey.CategoryIndex, `${categoryIndex}`);
         socket.emit(PlayerSocket.SelectClue, categoryIndex, clueIndex);
     }
 

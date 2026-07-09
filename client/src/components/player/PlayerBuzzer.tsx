@@ -4,27 +4,30 @@ import { PlayerSocket, ServerSocket, SessionTimeoutType } from "jparty-shared";
 import { useEffect, useState } from "react";
 import { AwesomeButton } from "react-awesome-button";
 
-import { estimateLocalTimeMs, socket } from "../../misc/socket";
+import { estimateClientTimeMs, socket } from "../../misc/socket";
 
 import "react-awesome-button/dist/styles.css";
 import "../../style/components/PlayerBuzzer.css";
 
-let buzzerOpenLocalTimeMs = 0;
+let buzzerOpenClientTimeMs = 0;
 
 socket.on(ServerSocket.StartTimeout, (timeoutType: SessionTimeoutType, openTimeMs: number, _closeTimeMs: number) => {
     if (timeoutType === SessionTimeoutType.BuzzWindow) {
-        buzzerOpenLocalTimeMs = estimateLocalTimeMs(openTimeMs);
+        buzzerOpenClientTimeMs = estimateClientTimeMs(openTimeMs);
+        
+        const responseWindowArrivalSlackMs = Math.round(buzzerOpenClientTimeMs - Date.now());
+        socket.emit(PlayerSocket.ResponseWindowArrived, timeoutType, responseWindowArrivalSlackMs);
     }
 });
 
 function attemptBuzz() {
-    if (Date.now() >= buzzerOpenLocalTimeMs) {
+    if (Date.now() >= buzzerOpenClientTimeMs) {
         socket.emit(PlayerSocket.Buzz);
     }
 }
 
 export default function PlayerBuzzer() {
-    const [armed, setArmed] = useState(Date.now() >= buzzerOpenLocalTimeMs);
+    const [armed, setArmed] = useState(Date.now() >= buzzerOpenClientTimeMs);
 
     useEffect(() => {
         if (armed) {
@@ -32,7 +35,7 @@ export default function PlayerBuzzer() {
         }
 
         const interval = setInterval(() => {
-            if (Date.now() >= buzzerOpenLocalTimeMs) {
+            if (Date.now() >= buzzerOpenClientTimeMs) {
                 setArmed(true);
             }
         }, 50);

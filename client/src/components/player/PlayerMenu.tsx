@@ -16,6 +16,7 @@ import { getEnumKeys, PlayerState } from "jparty-shared";
 import { useContext } from "react";
 
 import { LayoutContext } from "../common/Layout";
+import MenuPanel_Appearance from "../common/MenuPanel_Appearance";
 import MenuPanel_Credits from "../common/MenuPanel_Credits";
 import MenuPanel_Debug from "../common/MenuPanel_Debug";
 import MenuPanel_Feedback from "../common/MenuPanel_Feedback";
@@ -51,6 +52,7 @@ export default function PlayerMenu() {
 
   const menuTabs = [
     <Tab key={"settings-tab"}>Settings</Tab>,
+    <Tab key={"appearance-tab"}>Appearance</Tab>,
     <Tab key={"feedback-tab"}>Feedback</Tab>,
     <Tab key={"credits-tab"}>Credits</Tab>,
     context.debugMode && <Tab key={"debug-tab"}>Debug</Tab>,
@@ -58,6 +60,7 @@ export default function PlayerMenu() {
 
   const menuPanels = [
     <MenuPanel_Settings key={"settings-panel"} />,
+    <MenuPanel_Appearance key={"appearance-panel"} />,
     <MenuPanel_Feedback key={"feedback-panel"} />,
     <MenuPanel_Credits key={"credits-panel"} />,
     context.debugMode && (

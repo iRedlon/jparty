@@ -7,7 +7,7 @@ import { CSSTransition } from "react-transition-group";
 
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { getClientID } from "../../misc/client-utils";
-import { estimateLocalTimeMs, socket } from "../../misc/socket";
+import { estimateClientTimeMs, socket } from "../../misc/socket";
 import { Layer } from "../../misc/ui-constants";
 
 import "../../style/components/Timer.css";
@@ -38,7 +38,7 @@ export default function Timer() {
 
     const handleStartTimeout = (timeoutType: SessionTimeoutType, openTimeMs: number, closeTimeMs: number) => {
         setCurrentTimeoutType(timeoutType);
-        setCurrentTimeoutEndTimeMs(estimateLocalTimeMs(closeTimeMs));
+        setCurrentTimeoutEndTimeMs(estimateClientTimeMs(closeTimeMs));
     }
 
     const handleStopTimeout = () => {

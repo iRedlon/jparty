@@ -9,9 +9,9 @@ import { Socket } from "socket.io";
 
 import { playVoiceLine } from "./audio.js";
 import { Session } from "./session.js";
-import { addNewLeaderboardPlayer, getLeaderboardPlayers } from "../api-requests/leaderboard-db.js";
+import { addNewLeaderboardPlayer, getLeaderboardPlayers, getLeaderboardStats, recordLeaderboardGameStats } from "../api-requests/leaderboard-db.js";
 import { io } from "../controller.js";
-import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
+import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 
 // don't let "the man" convince you that 1000 and 60 are magic numbers
 const SESSION_EXPIRATION_PERIOD_MS = 10 * 60 * 1000;
@@ -76,7 +76,7 @@ export function joinSession(socket: Socket, sessionName: string) {
 
     socket.emit(ServerSocket.UpdateSessionName, session.name);
 
-    if (session.getCurrentRound()) {
+    if (session.getCurrentRound() && (session.state !== SessionState.Lobby)) {
         socket.emit(ServerSocket.UpdateTriviaRound, session.getCurrentRound());
         socket.emit(ServerSocket.SelectClue, session.categoryIndex, session.clueIndex);
     }
@@ -116,8 +116,12 @@ export function joinSessionAsHost(socket: Socket, sessionName: string) {
     }
 
     emitLeaderboardUpdate(socket);
-    socket.emit(HostServerSocket.UpdateGameSettingsPreset, session.triviaGameSettingsPreset);
+    socket.emit(HostServerSocket.UpdateGameSettingsPreset, session.triviaGameSettingsPreset, true /* fromServer */);
     socket.emit(HostServerSocket.UpdateReadingCategoryIndex, session.readingCategoryIndex);
+
+    if (session.state === SessionState.Lobby) {
+        emitGamePreviewUpdate(sessionName, socket);
+    }
 
     if (session.spotlightResponderID) {
         socket.emit(HostServerSocket.RevealClueDecision, session.displayingCorrectAnswer);
@@ -128,7 +132,7 @@ export function joinSessionAsHost(socket: Socket, sessionName: string) {
         socket.emit(HostServerSocket.UpdateNumSubmittedResponders, numSubmittedResponders, numResponders);
     }
 
-    debugLog(DebugLogType.ClientConnection, `host socket ID (${socket.id}) joined session: ${session.name}`);
+    debugLog(LogCategory.ClientConnection, `host socket ID (${socket.id}) joined session: ${session.name}`, LogVerbosity.Verbose);
 }
 
 export function joinSessionAsPlayer(socket: Socket, sessionName: string) {
@@ -149,7 +153,7 @@ export function joinSessionAsPlayer(socket: Socket, sessionName: string) {
     // check if this player needs to become the game starter
     session.promptGameStarter();
 
-    debugLog(DebugLogType.ClientConnection, `player socket ID (${socket.id}) joined session: ${session.name}`);
+    debugLog(LogCategory.ClientConnection, `player socket ID (${socket.id}) joined session: ${session.name}`, LogVerbosity.Verbose);
 }
 
 export function handleDisconnect(socket: Socket) {
@@ -171,7 +175,7 @@ export function handleDisconnect(socket: Socket) {
             session.disconnectHost(socket.id);
         }
 
-        debugLog(DebugLogType.ClientConnection, `socket ID (${socket.id}) disconnected from session: ${session.name}`);
+        debugLog(LogCategory.ClientConnection, `socket ID (${socket.id}) disconnected from session: ${session.name}`, LogVerbosity.Verbose);
     }
     catch (e) {
         emitServerError(e, socket, sessionName);
@@ -179,11 +183,11 @@ export function handleDisconnect(socket: Socket) {
 }
 
 export function handleAttemptReconnect(socket: Socket, sessionName: string, clientID: string, callback: ClientSocketCallback[ClientSocket.AttemptReconnect]) {
-    debugLog(DebugLogType.ClientConnection, `socket ID (${socket.id}), client ID (${clientID}), attempting to reconnect to session: ${sessionName}`);
+    debugLog(LogCategory.ClientConnection, `socket ID (${socket.id}), client ID (${clientID}), attempting to reconnect to session: ${sessionName}`, LogVerbosity.Verbose);
 
     try {
         const result = attemptReconnectInternal(socket, sessionName, clientID);
-        debugLog(DebugLogType.ClientConnection, `finished reconnection attempt with result: ${AttemptReconnectResult[result]}`);
+        debugLog(LogCategory.ClientConnection, `finished reconnection attempt with result: ${AttemptReconnectResult[result]}`, LogVerbosity.Verbose);
         callback(result);
     }
     catch (e) {
@@ -242,12 +246,15 @@ export async function updateLeaderboard(sessionName: string) {
         return;
     }
 
-    if (session.triviaGameSettingsPreset !== TriviaGameSettingsPreset.Normal) {
+    if (!process.env.DEBUG_MODE && (session.triviaGameSettingsPreset !== TriviaGameSettingsPreset.Normal)) {
         return;
     }
 
     session.clearPlayerClueDecisions();
     emitStateUpdate(sessionName);
+
+    const moneyEarned = Object.values(session.players).reduce((total, player) => total + Math.max(player.score, 0), 0);
+    await recordLeaderboardGameStats(moneyEarned);
 
     for (const playerID in session.players) {
         const player = session.players[playerID];
@@ -257,6 +264,8 @@ export async function updateLeaderboard(sessionName: string) {
 
         await addNewLeaderboardPlayer(player, sessionName);
     }
+
+    emitStateUpdate(sessionName);
 }
 
 export function updateVoiceDuration(sessionName: string, voiceLine: string, durationMs: number) {
@@ -389,10 +398,30 @@ export function emitTriviaRoundUpdate(sessionName: string) {
     io.in(sessionName).emit(ServerSocket.UpdateTriviaRound, session.getCurrentRound());
 }
 
+export function emitGamePreviewUpdate(sessionName: string, socket?: Socket) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    const categoryNames = session.triviaGame ? session.triviaGame.rounds[0].categories.map(category => category.name) : [];
+
+    if (socket) {
+        socket.emit(HostServerSocket.UpdateGamePreview, categoryNames);
+    }
+    else {
+        io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateGamePreview, categoryNames);
+    }
+}
+
 export async function emitLeaderboardUpdate(socket: Socket) {
     socket.emit(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.AllTime, await getLeaderboardPlayers(LeaderboardType.AllTime));
     socket.emit(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.Monthly, await getLeaderboardPlayers(LeaderboardType.Monthly));
     socket.emit(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.Weekly, await getLeaderboardPlayers(LeaderboardType.Weekly));
+
+    socket.emit(HostServerSocket.UpdateLeaderboardStats, LeaderboardType.AllTime, await getLeaderboardStats(LeaderboardType.AllTime));
+    socket.emit(HostServerSocket.UpdateLeaderboardStats, LeaderboardType.Monthly, await getLeaderboardStats(LeaderboardType.Monthly));
+    socket.emit(HostServerSocket.UpdateLeaderboardStats, LeaderboardType.Weekly, await getLeaderboardStats(LeaderboardType.Weekly));
 }
 
 export function emitServerError(error: any, socket?: Socket, sessionName?: string) {

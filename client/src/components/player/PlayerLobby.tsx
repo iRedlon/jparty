@@ -1,12 +1,13 @@
 
 import { Box, Button, Heading, Input } from "@chakra-ui/react";
 import { HostSocket, PlayerSocket } from "jparty-shared";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { isMobile } from "react-device-detect";
 
 import { LayoutContext } from "../common/Layout";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
 import { getClientID } from "../../misc/client-utils";
+import { isQAPlayer, qaPlayerName, qaSessionName } from "../../misc/qa-mode";
 import { socket } from "../../misc/socket";
 import { LocalStorageKey } from "../../misc/ui-constants";
 
@@ -14,6 +15,17 @@ export default function PlayerLobby() {
     const context = useContext(LayoutContext);
     const [sessionName, setSessionName] = useState("");
     const [playerName, setPlayerName] = useState("");
+    const didQAAutoJoinRef = useRef(false);
+
+    useEffect(() => {
+        if (!isQAPlayer || !qaSessionName || !qaPlayerName || didQAAutoJoinRef.current || localStorage[LocalStorageKey.SessionName]) {
+            return;
+        }
+
+        // auto-join the QA session
+        didQAAutoJoinRef.current = true;
+        socket.emit(PlayerSocket.Connect, qaSessionName, getClientID(), qaPlayerName, () => {});
+    }, []);
 
     const emitConnect = () => {
         socket.emit(PlayerSocket.Connect, sessionName, getClientID(), playerName, (resetSessionName: boolean, resetPlayerName: boolean) => {

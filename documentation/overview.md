@@ -8,39 +8,7 @@ A high level description of this codebase. Linked files/folders lead to relevant
 - The shared directory contains the "shared project" (jparty-shared); written in node typescript; contains enums/classes/types/etc. that are shared by both the server and client projects. Both projects utilize the shared project in the form of a local npm dependency
 
 ## _Environment Variables_
-jparty server and client both rely on environment variables, most notably to store the credentials for connecting to 3rd-party services.
-Locally, these environment variables are set with a .env file in the base directory of jparty/server and jparty/client which are loaded with dotenv.
-In production, they're set manually within the server environment provided by our hosting service.
-
-### Server Environment (store at .env in root directory)
-#### server settings
-- PORT
-- LOG_LEVEL: a value defined in misc/log.ts, the log level determines which systems' debug messages will be logged
-- DEBUG_MODE (optional): enables debug logging on server and the debug menu on client
-- USE_OPENAI_TTS (optional): enables OpenAI API requests for TTS voice lines. Browser screen reader will otherwise be used as a fallback
-
-#### api credentials
-- MONGO_CONNECTION_STRING
-- OPENAI_SECRET_KEY
-- OPENAI_ASSISTANT_ID
-
-#### email credentials
-- FEEDBACK_EMAIL
-- FEEDBACK_EMAIL_PASSWORD
-- ETHEREAL_EMAIL
-- ETHEREAL_EMAIL_PASSWORD
-
-### Client Environment (store at client/.env)
-- PORT
-- SERVER_PORT
-- REACT_APP_OFFLINE (optional): indicates whether this app should attempt to connect to a websocket or not. only ever enabled when testing with a disconnected client
-
-### 3rd-Party Services
-- Ethereal Email (Dev Email)
-- MongoDB (Persistent Storage)
-- OpenAI (NLP for Decision-Making to Clue Responses)
-- Namecheap (Domain Name, SSL, Prod Email)
-- Heroku (Web Hosting)
+Environment variables are set by a .env file at the roots of the server and client projects. Copy from [server example](.env.example) or [this example](documentation/overview.md) and fill out variables as needed. Setting these variables isn't a requirement; if none are set: trivia games use test data and other APIs like clue decisions and host voice are disabled
 
 ## _[Sessions](../server/session/session.ts)_
 - A "session" is an object that stores all of the relevant data for a particular game session. This includes client info for hosts and players, its current trivia game, and most importantly: its state
@@ -71,13 +39,21 @@ In production, they're set manually within the server environment provided by ou
 - Client events are handled seperately depending on if they were emitted by a [host](../server/session/handle-host-event.ts) or [player](../server/session/handle-player-event.ts). As a style rule: event handlers are responsible for communicating back with clients, while the session object is only responsible for reading and writing its own state
 - Any event handlers or session utilities that are shared between host and player clients are stored in [session-utils](../server/session/session-utils.ts)
 
+## _Scheduled Action Windows_
+- Time-sensitive player actions (buzzing, responding) are governed by "action windows" scheduled in real-world clock time, rather than timers that start whenever each client happens to hear about them
+- Clients estimate their clock offset from the server, and each window opens slightly in the future so every player's screen unlocks at the same real-world instant regardless of latency
+
 ## _[Logging](../server/misc/log.ts)_
-- All server logging flows through a single custom function: "debugLog". This is so that each log can be labelled by the system its a part of (i.e. connection, clue decision, game generation) and can be chosen to be logged or not depending on the current log level (which is ultimately set by an environment variable)
+- All server logging flows through a single custom function: "debugLog". This is so that each log can be labelled by the system its a part of (i.e. connection, clue decision, game generation) and can be chosen to be logged or not depending on the current log level (which is ultimately set by an environment variable: LOG_LEVEL)
+
+## _[Analytics](../server/misc/analytics.ts)_
+- Custom game events are sent server-side to a separate Google Analytics property using the Measurement Protocol
+- Each session is reported as a distinct GA "user", so "active users" really means "active sessions"
+- Analytics are disabled entirely when the GA environment variables are unset. Note that new event params must also be registered as custom dimensions in GA before they'll show up in reports
 
 ## _[Trivia Database](../server/api-requests/generate-trivia-game.ts)_
 - jparty has its own database for trivia clues. It's organized as follows: category type -> categories -> clue difficulty -> clues
 - For example: within the "Science" category type, we have an array of categories including one called "Solar System". Within "Solar System" we have an array of clues including one of difficulty=1 (easiest) which is "The Earth orbits around this star"
-- The trivia game generation process consists of randomly selecting categories from mongo using queries based on the given settings for the requesting session
 
 ## _Buzz Tossup_
 - A new feature in jparty is a catchup mechanic intended to handle "buzz tossups" in a more even way
@@ -88,10 +64,9 @@ In production, they're set manually within the server environment provided by ou
 - This is because easier clues are more likely to result in a buzz tossup where multiple players know the answer
 
 ## _[Clue Decisions](../server/api-requests/clue-decision.ts)_
-- It's ChatGPT. In other words, it's an OpenAI assistant whose job is to evaluate player clue responses
+- It's ChatGPT. In other words, it's an OpenAI model whose job is to evaluate player clue responses
 - Its reply must be: "correct", "incorrect", or "needs more detail"
-- Its exact instructions are:
-> Your job is to judge whether a response to a trivia question was 'correct', 'incorrect', or 'needs more detail'. You'll be given the trivia question, the correct answer, and the response. If the response is vague or non-specific you should return 'needs more detail'. If the response contains the correct answer, but also contains other incorrect answers, you should return 'needs more detail'. The response doesn't need to be an exact match to be considered 'correct', it is allowed to have discrepancies in spelling, pronunciation, and phrasing.  Try to consider if a response with spelling errors would be close to the correct answer had it been spelled correctly, in such a case: the response should still be considered 'correct'. If the response sounds similar to the correct answer phonetically, that should also be considered 'correct'. A response should only be considered 'incorrect' if it is in no way close to the correct answer. When you make your judgement, consider the possibility that the response is meant to fool you. Make your judgement based on whether you think the responder actually knows the correct answer. Please return your response by itself with no other explanation.
+- A response that exactly matches the correct answer is ruled correct without an API request. If the request fails or times out, the response is ruled incorrect rather than interrupting the game; reversal votes are the safety net for any bad ruling
 - Test #1: `trivia question: "This man was the second president of the U.S.". correct answer: "John Adams". response: "John"` should be `needs more detail`
 - Test #2: `trivia question: "This is the color of the middle stripe of the U.S. flag". correct answer: "red". response: "red or white"` should be `needs more detail`
 - Test #3: `trivia question: "She is the protagonist of Pride & Prejudice". correct answer: "elizabeth bennet". response: "the progatonist of pride & prejudice"` should be `incorrect`
@@ -107,10 +82,12 @@ In production, they're set manually within the server environment provided by ou
 - And these on server:
   - Enables debug logging which includes some extra info like the position of clue bonuses, outgoing API requests, etc.
   - Forced clue decisions by responding with the desired response. A response may be "correct", "incorrect", or "detail"
+  - Serves the QA dashboard at /qa: a tool that runs a host screen and any number of auto-joined players together in a single tab (see [client/qa.html](../client/qa.html) and [qa-mode](../client/src/misc/qa-mode.ts))
 
 ## _[Host Voice](../client/src/misc/audio.ts)_
 - Voice lines are spoken aloud by the host computer throughout the game. Most importantly, this voice reads out the clues but also filler lines like "correct" or "that's a bonus, you get to wager, etc."
 - There are two TTS systems in use in jparty: the first is API-requested OpenAI TTS with a very realistic sounding voice. This service costs money per request and is enabled/disabled with an environment variable
+- OpenAI TTS audio is streamed to the host through the server (see [tts.ts](../server/api-requests/tts.ts)), so playback can begin before the whole file is generated. The server also caches the audio for repeated voice lines (welcomes, announcements, etc.) to save time and API usage
 - The second is the built-in browser screen reader. This TTS is actually pretty good in terms of pronunciation, but is still very robotic. We support it because it's free and not API requested so if the API needs to be disabled or is otherwise not working for any reason: we can easily fall back on the screen reader
 - Many timers in the game rely on the TTS system (i.e. when reading out the clue, we need to trigger the next state change once it's done being read aloud) but for various reasons, it's difficult to tell exactly how long a voice line will take to say out loud
-- To solve this, we start the timer with an educated estimate that's intentionally generous. Then, once we have more info about exactly how long it will take to be spoken, we update the timer by cancelling it and restarting it with our new duration. These timers are always hidden from players so the mid-timer duration update isn't jarring or confusing
+- To solve this, we start the timer with an educated estimate that's intentionally generous. Then, once we have more info about exactly how long it will take to be spoken, we update the timer by cancelling it and restarting it with our new duration. These timers are always hidden from players so the mid-timer duration update isn't noticeable

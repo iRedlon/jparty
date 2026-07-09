@@ -3,9 +3,19 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta name="jparty" content="A couch co-op trivia game" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+    <title>jparty</title>
+    <meta name="description" content="A couch co-op trivia game show. Host on your computer while everyone plays along on their phones." />
+    <link rel="canonical" href="https://jparty.io/" />
+
+    <!-- social link previews -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="jparty" />
+    <meta property="og:title" content="jparty" />
+    <meta property="og:description" content="A couch co-op trivia game show. Host on your computer while everyone plays along on their phones." />
+    <meta property="og:url" content="https://jparty.io/" />
+    <meta property="og:image" content="https://jparty.io/android-chrome-192x192.png" />
 
     <!-- favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -16,21 +26,19 @@
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
 
-    <title>jparty</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JG98126Z9F"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag("js", new Date());
+
+        gtag("config", "G-JG98126Z9F");
+    </script>
 </head>
 
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-JG98126Z9F"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-
-    gtag('config', 'G-JG98126Z9F');
-</script>
-
 <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <noscript>You need to enable JavaScript to play.</noscript>
     <div id="mock-socket"></div>
     <div id="root"></div>
 </body>

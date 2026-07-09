@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>jparty QA</title>
+
+<style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: #14161f;
+        color: #e8e8f0;
+        font: 14px/1.4 system-ui, sans-serif;
+    }
+
+    .topbar {
+        flex: none;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1em;
+        padding: 0.5em 1em;
+        background: #1d2030;
+        border-bottom: 1px solid #333850;
+    }
+
+    .topbar .logo { font-weight: 700; letter-spacing: 0.05em; }
+
+    #session-label {
+        font-family: ui-monospace, Consolas, monospace;
+        background: #262b40;
+        padding: 0.2em 0.6em;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .topbar label { display: flex; align-items: center; gap: 0.4em; color: #a8adc4; }
+
+    .topbar input[type="number"] {
+        width: 3.5em;
+        background: #262b40;
+        color: inherit;
+        border: 1px solid #333850;
+        border-radius: 4px;
+        padding: 0.2em 0.4em;
+    }
+
+    .topbar button {
+        background: #2b5cd9;
+        color: #fff;
+        border: 0;
+        border-radius: 4px;
+        padding: 0.35em 0.8em;
+        cursor: pointer;
+    }
+
+    .topbar button.secondary { background: #3a3f5c; }
+    .topbar button:hover { filter: brightness(1.15); }
+    .topbar .hint { color: #6b7090; margin-left: auto; }
+
+    main {
+        flex: 1;
+        display: flex;
+        align-items: flex-start;
+        gap: 1em;
+        padding: 1em;
+        overflow: auto;
+    }
+
+    .panel {
+        border: 1px solid #333850;
+        border-radius: 6px;
+        background: #1d2030;
+        overflow: hidden;
+        flex: none;
+    }
+
+    .panel-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+        padding: 0.25em 0.6em;
+        font-weight: 600;
+        background: #262b40;
+    }
+
+    .panel-bar .spacer { flex: 1; }
+
+    .panel-bar button {
+        background: none;
+        border: 0;
+        color: #a8adc4;
+        cursor: pointer;
+        font-size: 1em;
+        padding: 0 0.2em;
+    }
+
+    .panel-bar button:hover { color: #fff; }
+
+    .frame-wrap { overflow: hidden; background: #000; }
+    .frame-wrap iframe { border: 0; display: block; transform-origin: top left; background: #000; }
+
+    #players {
+        flex: 1;
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 0.75em;
+    }
+</style>
+</head>
+<body>
+    <div class="topbar">
+        <span class="logo">jparty QA</span>
+        <span id="session-label" title="click to copy">waiting for session&hellip;</span>
+        <label>players <input id="player-count" type="number" min="1" max="12"></label>
+        <label>size <input id="player-scale" type="range" min="0.5" max="1" step="0.05"></label>
+        <button id="add-player">+ player</button>
+        <button id="reset" class="secondary">reset all</button>
+        <span class="hint">audio blocked? click inside the host panel once</span>
+    </div>
+
+    <main>
+        <div class="panel" id="host-panel">
+            <div class="panel-bar"><span>host</span></div>
+            <div class="frame-wrap" id="host-frame-wrap">
+                <iframe id="host-frame" allow="autoplay"></iframe>
+            </div>
+        </div>
+
+        <div id="players"></div>
+    </main>
+
+<script>
+(function () {
+    const HOST_W = 1280, HOST_H = 720;
+    const PLAYER_W = 375, PLAYER_H = 640;
+
+    const $ = (selector) => document.querySelector(selector);
+    const uid = () => Math.random().toString(36).slice(2, 10);
+
+    const playersEl = $("#players");
+    const sessionLabel = $("#session-label");
+    const countInput = $("#player-count");
+    const scaleInput = $("#player-scale");
+    const hostFrame = $("#host-frame");
+    const hostFrameWrap = $("#host-frame-wrap");
+
+    countInput.value = localStorage.getItem("jparty-qa-player-count") || "3";
+    scaleInput.value = localStorage.getItem("jparty-qa-player-scale") || "0.8";
+
+    let sessionName = "";
+    let playerSeq = 0;
+
+    function playerURL(name, clientID, rejoin) {
+        const params = new URLSearchParams({ qa: "player", session: sessionName, name: name, clientid: clientID });
+
+        if (rejoin) {
+            params.set("rejoin", "1");
+        }
+
+        return "/?" + params.toString();
+    }
+
+    function addPlayer() {
+        if (!sessionName) {
+            return;
+        }
+
+        playerSeq += 1;
+        const name = "player" + playerSeq;
+        const clientID = "qa-" + name + "-" + uid();
+
+        const panel = document.createElement("div");
+        panel.className = "panel";
+        panel.dataset.name = name;
+        panel.dataset.clientid = clientID;
+
+        const bar = document.createElement("div");
+        bar.className = "panel-bar";
+
+        const label = document.createElement("span");
+        label.textContent = name;
+
+        const spacer = document.createElement("span");
+        spacer.className = "spacer";
+
+        const reconnectBtn = document.createElement("button");
+        reconnectBtn.textContent = "⟳";
+        reconnectBtn.title = "reload this player and reconnect to the session";
+
+        const closeBtn = document.createElement("button");
+        closeBtn.textContent = "✕";
+        closeBtn.title = "remove this player";
+
+        bar.append(label, spacer, reconnectBtn, closeBtn);
+
+        const wrap = document.createElement("div");
+        wrap.className = "frame-wrap";
+
+        const frame = document.createElement("iframe");
+        frame.allow = "autoplay";
+        frame.width = PLAYER_W;
+        frame.height = PLAYER_H;
+        frame.src = playerURL(name, clientID, false);
+
+        wrap.appendChild(frame);
+        panel.append(bar, wrap);
+        playersEl.appendChild(panel);
+
+        reconnectBtn.addEventListener("click", () => { frame.src = playerURL(name, clientID, true); });
+        closeBtn.addEventListener("click", () => panel.remove());
+
+        applyPlayerScale();
+    }
+
+    window.addEventListener("message", (event) => {
+        if (event.origin !== location.origin) {
+            return;
+        }
+
+        const data = event.data;
+        if (!data || (data.type !== "jparty-qa-session-name") || !data.sessionName || (data.sessionName === sessionName)) {
+            return;
+        }
+
+        const firstSession = !sessionName;
+        sessionName = data.sessionName;
+        sessionLabel.textContent = sessionName;
+
+        if (firstSession) {
+            const count = Math.max(1, Math.min(12, parseInt(countInput.value, 10) || 3));
+            for (let i = 0; i < count; i++) {
+                addPlayer();
+            }
+        }
+        else {
+            document.querySelectorAll("#players .panel").forEach((panel) => {
+                panel.querySelector("iframe").src = playerURL(panel.dataset.name, panel.dataset.clientid, false);
+            });
+        }
+    });
+
+    function applyHostScale() {
+        const scale = Math.min(1, Math.max(320, window.innerWidth * 0.48) / HOST_W);
+
+        hostFrame.width = HOST_W;
+        hostFrame.height = HOST_H;
+        hostFrame.style.transform = "scale(" + scale + ")";
+        hostFrameWrap.style.width = (HOST_W * scale) + "px";
+        hostFrameWrap.style.height = (HOST_H * scale) + "px";
+    }
+
+    function applyPlayerScale() {
+        const scale = parseFloat(scaleInput.value) || 0.8;
+
+        document.querySelectorAll("#players .panel").forEach((panel) => {
+            const frame = panel.querySelector("iframe");
+            frame.style.transform = "scale(" + scale + ")";
+
+            const wrap = panel.querySelector(".frame-wrap");
+            wrap.style.width = (PLAYER_W * scale) + "px";
+            wrap.style.height = (PLAYER_H * scale) + "px";
+        });
+
+        localStorage.setItem("jparty-qa-player-scale", scaleInput.value);
+    }
+
+    $("#add-player").addEventListener("click", addPlayer);
+    $("#reset").addEventListener("click", () => location.reload());
+    scaleInput.addEventListener("input", applyPlayerScale);
+    countInput.addEventListener("change", () => localStorage.setItem("jparty-qa-player-count", countInput.value));
+    sessionLabel.addEventListener("click", () => { if (sessionName) navigator.clipboard.writeText(sessionName); });
+    window.addEventListener("resize", applyHostScale);
+
+    applyHostScale();
+    hostFrame.src = "/?qa=host&clientid=" + encodeURIComponent("qa-host-" + uid());
+})();
+</script>
+</body>
+</html>

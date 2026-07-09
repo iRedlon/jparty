@@ -1,6 +1,6 @@
 
 import { Box, Center, Flex } from "@chakra-ui/react";
-import { AudioType, HostServerSocket, LeaderboardPlayers, LeaderboardType, SessionAnnouncement, SessionState, VoiceType } from "jparty-shared";
+import { AudioType, HostServerSocket, LeaderboardPlayers, LeaderboardStatsSchema, LeaderboardType, SessionAnnouncement, SessionState, TriviaClueBonus, VoiceType } from "jparty-shared";
 import { useContext, useEffect, useRef, useState } from "react";
 import { GoMute } from "react-icons/go";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
@@ -40,6 +40,9 @@ export default function HostLayout() {
     const [allTimeLeaderboardPlayers, setAllTimeLeaderboardPlayers] = useState<LeaderboardPlayers | undefined>();
     const [monthlyLeaderboardPlayers, setMonthlyLeaderboardPlayers] = useState<LeaderboardPlayers | undefined>();
     const [weeklyLeaderboardPlayers, setWeeklyLeaderboardPlayers] = useState<LeaderboardPlayers | undefined>();
+    const [allTimeLeaderboardStats, setAllTimeLeaderboardStats] = useState<LeaderboardStatsSchema | undefined>();
+    const [monthlyLeaderboardStats, setMonthlyLeaderboardStats] = useState<LeaderboardStatsSchema | undefined>();
+    const [weeklyLeaderboardStats, setWeeklyLeaderboardStats] = useState<LeaderboardStatsSchema | undefined>();
     const [announcement, setAnnouncement] = useState<SessionAnnouncement | undefined>();
     const [queuedToHideAnnouncement, setQueuedToHideAnnouncement] = useState(false);
     const [numSubmittedResponders, setNumSubmittedResponders] = useState(0);
@@ -50,6 +53,7 @@ export default function HostLayout() {
         window.speechSynthesis.getVoices();
         
         socket.on(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
+        socket.on(HostServerSocket.UpdateLeaderboardStats, handleUpdateLeaderboardStats);
         socket.on(HostServerSocket.PlayAudio, handlePlayAudio);
         socket.on(HostServerSocket.PlayVoice, handlePlayVoice);
         socket.on(HostServerSocket.ShowAnnouncement, handleShowAnnouncement);
@@ -58,6 +62,7 @@ export default function HostLayout() {
         socket.on(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
         addMockSocketEventHandler(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
+        addMockSocketEventHandler(HostServerSocket.UpdateLeaderboardStats, handleUpdateLeaderboardStats);
         addMockSocketEventHandler(HostServerSocket.PlayAudio, handlePlayAudio);
         addMockSocketEventHandler(HostServerSocket.PlayVoice, handlePlayVoice);
         addMockSocketEventHandler(HostServerSocket.ShowAnnouncement, handleShowAnnouncement);
@@ -67,6 +72,7 @@ export default function HostLayout() {
 
         return () => {
             socket.off(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
+            socket.off(HostServerSocket.UpdateLeaderboardStats, handleUpdateLeaderboardStats);
             socket.off(HostServerSocket.PlayAudio, handlePlayAudio);
             socket.off(HostServerSocket.PlayVoice, handlePlayVoice);
             socket.off(HostServerSocket.ShowAnnouncement, handleShowAnnouncement);
@@ -75,6 +81,7 @@ export default function HostLayout() {
             socket.off(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
 
             removeMockSocketEventHandler(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
+            removeMockSocketEventHandler(HostServerSocket.UpdateLeaderboardStats, handleUpdateLeaderboardStats);
             removeMockSocketEventHandler(HostServerSocket.PlayAudio, handlePlayAudio);
             removeMockSocketEventHandler(HostServerSocket.PlayVoice, handlePlayVoice);
             removeMockSocketEventHandler(HostServerSocket.ShowAnnouncement, handleShowAnnouncement);
@@ -84,8 +91,24 @@ export default function HostLayout() {
         }
     }, []);
 
+    const getMusicAudioType = () => {
+        if (context.sessionState === SessionState.Lobby) {
+            return AudioType.LobbyMusic;
+        }
+
+        // play "thinking music" when responding to an all wager clue
+        if ((context.sessionState === SessionState.ClueResponse) && (context.categoryIndex >= 0) && (context.clueIndex >= 0)) {
+            const triviaClue = context.triviaRound?.categories[context.categoryIndex]?.clues[context.clueIndex];
+            if (triviaClue?.bonus === TriviaClueBonus.AllWager) {
+                return AudioType.ThinkingMusic;
+            }
+        }
+
+        return AudioType.GameMusic;
+    }
+
     useEffect(() => {
-        playAudio(AudioType.GameMusic);
+        playAudio(getMusicAudioType());
 
         if (queuedToHideAnnouncement) {
             setAnnouncement(undefined);
@@ -112,13 +135,33 @@ export default function HostLayout() {
         }
     }
 
+    const handleUpdateLeaderboardStats = (leaderboardType: LeaderboardType, leaderboardStats: LeaderboardStatsSchema) => {
+        switch (leaderboardType) {
+            case LeaderboardType.AllTime:
+                {
+                    setAllTimeLeaderboardStats(leaderboardStats);
+                }
+                break;
+            case LeaderboardType.Monthly:
+                {
+                    setMonthlyLeaderboardStats(leaderboardStats);
+                }
+                break;
+            case LeaderboardType.Weekly:
+                {
+                    setWeeklyLeaderboardStats(leaderboardStats);
+                }
+                break;
+        }
+    }
+
     const handlePlayAudio = (audioType: AudioType) => {
         playAudio(audioType);
     }
 
-    const handlePlayVoice = (voiceType: VoiceType, voiceLine: string, audioBase64?: string) => {
-        if (audioBase64) {
-            playOpenAIVoice(voiceLine, audioBase64);
+    const handlePlayVoice = (voiceType: VoiceType, voiceLine: string, streamAudio?: boolean) => {
+        if (streamAudio) {
+            playOpenAIVoice(voiceType, voiceLine);
         }
         else {
             playSpeechSynthesisVoice(voiceType, voiceLine);
@@ -152,7 +195,7 @@ export default function HostLayout() {
         setIsMuted(isMuted);
 
         if (!isMuted) {
-            playAudio(AudioType.GameMusic);
+            playAudio(getMusicAudioType());
         }
     }
 
@@ -167,7 +210,10 @@ export default function HostLayout() {
                 [<HostLobby
                     allTimeLeaderboardPlayers={allTimeLeaderboardPlayers}
                     monthlyLeaderboardPlayers={monthlyLeaderboardPlayers}
-                    weeklyLeaderboardPlayers={weeklyLeaderboardPlayers} />, HostComponentState.Lobby] :
+                    weeklyLeaderboardPlayers={weeklyLeaderboardPlayers}
+                    allTimeLeaderboardStats={allTimeLeaderboardStats}
+                    monthlyLeaderboardStats={monthlyLeaderboardStats}
+                    weeklyLeaderboardStats={weeklyLeaderboardStats} />, HostComponentState.Lobby] :
                 [<></>, HostComponentState.None];
         }
 

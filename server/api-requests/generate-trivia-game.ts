@@ -7,10 +7,16 @@ import {
 } from "jparty-shared";
 
 import { getRandomCategorySchema } from "./trivia-db.js";
-import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
+import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 import { formatText } from "../misc/text-utils.js";
 
 const GAME_GENERATION_TIMEOUT_DURATION_MS = 10000;
+
+function checkGameGenerationTimeout(deadlineMs: number) {
+    if (Date.now() > deadlineMs) {
+        throw new Error(formatDebugLog("the game generation process timed out"));
+    }
+}
 
 function generateTriviaClue(roundSettings: TriviaRoundSettings, clueSchema: TriviaClueSchema, clueIndex: number) {
     clueSchema.question = formatText(clueSchema.question);
@@ -44,7 +50,9 @@ function rollClueDifficultyOrder(gameSettings: TriviaGameSettings, roundSettings
     return clueDifficultyOrder.sort((a, b) => { return a - b; });
 }
 
-async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSettings: TriviaRoundSettings, categorySettings: TriviaCategorySettings) {
+async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSettings: TriviaRoundSettings, categorySettings: TriviaCategorySettings, deadlineMs: number) {
+    checkGameGenerationTimeout(deadlineMs);
+
     const clueDifficultyOrder = rollClueDifficultyOrder(gameSettings, roundSettings);
 
     let categorySchema;
@@ -75,13 +83,21 @@ async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSet
         return !answerInCategoryName && usedAnswers.has(answer);
     }
 
+    let pickAttempts = 0;
+    const maxPickAttempts = roundSettings.numClues * 20;
+
     while (triviaCategory.clues.length < roundSettings.numClues) {
+        if (++pickAttempts > maxPickAttempts) {
+            throw new Error(formatDebugLog("failed to pick enough unique clues for a category"));
+        }
+
         const clueDifficulty = clueDifficultyOrder[clueIndex];
         let clueSchema: TriviaClueSchema = getRandomChoice<TriviaClueSchema>(categorySchema.clues[clueDifficulty]);
-        // ensure category doesn't have two clues with the same answer
-        // also do a naive check to try to make sure it's not an image clue
+        
         let attempts = 0;
 
+        // ensure category doesn't have two clues with the same answer
+        // also do a naive check to make sure it's not an image clue
         while ((isDuplicateAnswer(clueSchema.answer) || likelyToBeImageClue(clueSchema.question)) && attempts < 10) {
             clueSchema = getRandomChoice<TriviaClueSchema>(categorySchema.clues[clueDifficulty]);
             attempts++;
@@ -129,7 +145,7 @@ function rollCategoryTypeOrder(roundSettings: TriviaRoundSettings) {
     return categoryTypeOrder;
 }
 
-async function generateTriviaRound(gameSettings: TriviaGameSettings, roundSettings: TriviaRoundSettings) {
+async function generateTriviaRound(gameSettings: TriviaGameSettings, roundSettings: TriviaRoundSettings, deadlineMs: number) {
     let triviaRound = new TriviaRound(roundSettings, []);
 
     const categoryTypeOrder = rollCategoryTypeOrder(roundSettings);
@@ -139,12 +155,14 @@ async function generateTriviaRound(gameSettings: TriviaGameSettings, roundSettin
     let usedCategoryIDs: number[] = [];
 
     while (triviaRound.categories.length < roundSettings.numCategories) {
+        checkGameGenerationTimeout(deadlineMs);
+
         let categorySettings = { type: categoryTypeOrder[categoryIndex] } as TriviaCategorySettings;
 
         let triviaCategory;
 
         try {
-            triviaCategory = await generateTriviaCategory(gameSettings, roundSettings, categorySettings);
+            triviaCategory = await generateTriviaCategory(gameSettings, roundSettings, categorySettings, deadlineMs);
         }
         catch (e) {
             throw e;
@@ -181,7 +199,10 @@ function addClueBonuses(triviaGame: TriviaGame) {
 
             let cluesAssigned = 0;
 
-            while (cluesAssigned < bonusCount) {
+            let assignAttempts = 0;
+            const maxAssignAttempts = 1000;
+
+            while ((cluesAssigned < bonusCount) && (++assignAttempts <= maxAssignAttempts)) {
                 const categoryIndex = getRandomNum(roundSettings.numCategories);
                 const clueIndex = triviaGame.settings.getRating().isRated ? getWeightedRandomNum(RATED_CLUE_BONUS_POSITION_DISTRIBUTION) : getRandomNum(roundSettings.numClues);
 
@@ -204,7 +225,7 @@ function addClueBonuses(triviaGame: TriviaGame) {
                 const categoryName = triviaGame.rounds[roundIndex].categories[categoryIndex].name;
                 const clueValue = triviaGame.rounds[roundIndex].categories[categoryIndex].clues[clueIndex].value;
 
-                debugLog(DebugLogType.TriviaDatabase, `adding ${TriviaClueBonus[clueBonus]} to \"${categoryName}\" for $${clueValue}`);
+                debugLog(LogCategory.TriviaDatabase, `adding ${TriviaClueBonus[clueBonus]} to \"${categoryName}\" for $${clueValue}`, LogVerbosity.Verbose);
 
                 triviaGame.rounds[roundIndex].categories[categoryIndex].clues[clueIndex].bonus = clueBonus;
 
@@ -220,20 +241,19 @@ export async function generateTriviaGame(gameSettings: TriviaGameSettings) {
     let triviaGame = new TriviaGame(gameSettings, []);
 
     // terminate this game generation attempt if it takes too long
-    let timeout = false;
-    setTimeout(() => {
-        timeout = true;
-    }, GAME_GENERATION_TIMEOUT_DURATION_MS);
+    const deadlineMs = Date.now() + GAME_GENERATION_TIMEOUT_DURATION_MS;
 
     let roundIndex = 0;
 
-    while (!timeout && triviaGame.rounds.length < gameSettings.roundSettings.length) {
+    while (triviaGame.rounds.length < gameSettings.roundSettings.length) {
+        checkGameGenerationTimeout(deadlineMs);
+
         let roundSettings = gameSettings.roundSettings[roundIndex];
 
         let triviaRound;
 
         try {
-            triviaRound = await generateTriviaRound(gameSettings, roundSettings);
+            triviaRound = await generateTriviaRound(gameSettings, roundSettings, deadlineMs);
         }
         catch (e) {
             throw e;
@@ -243,12 +263,8 @@ export async function generateTriviaGame(gameSettings: TriviaGameSettings) {
         roundIndex++;
     }
 
-    debugLog(DebugLogType.TriviaDatabase, `finished generating trivia game`);
-    debugLog(DebugLogType.TriviaDatabase, triviaGame, true);
-
-    if (timeout) {
-        throw new Error(formatDebugLog("the game generation process timed out"));
-    }
+    debugLog(LogCategory.TriviaDatabase, `finished generating trivia game`, LogVerbosity.Normal);
+    debugLog(LogCategory.TriviaDatabase, triviaGame, LogVerbosity.VeryVerbose);
 
     addClueBonuses(triviaGame);
 

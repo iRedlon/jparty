@@ -4,7 +4,8 @@ import { getTimeStamp } from "jparty-shared";
 
 dotenv.config();
 
-export enum DebugLogType {
+// label for easier log searching
+export enum LogCategory {
     Server,
     ClientConnection,
     Analytics,
@@ -17,55 +18,19 @@ export enum DebugLogType {
     Timeout
 }
 
-export enum LogLevel {
+export enum LogVerbosity {
     Normal,
-    Debug,
-    Verbose
+    Verbose,
+    VeryVerbose
 }
 
-const NORMAL_LOG_LEVEL_TYPES = [
-    DebugLogType.Server,
-];
-
-const DEBUG_LOG_LEVEL_TYPES = NORMAL_LOG_LEVEL_TYPES.concat([
-    DebugLogType.Analytics,
-    DebugLogType.Buzz,
-    DebugLogType.TriviaDatabase,
-    DebugLogType.ClueDecision,
-    DebugLogType.Email,
-    DebugLogType.Voice,
-    DebugLogType.Timeout
-]);
-
-const VERBOSE_LOG_LEVEL_TYPES = DEBUG_LOG_LEVEL_TYPES.concat([
-    DebugLogType.ClientConnection,
-]);
-
-// defines which systems' debug messages will be logged at each log level
-export const LOG_LEVEL_TYPES: Record<LogLevel, DebugLogType[]> = {
-    [LogLevel.Normal]: NORMAL_LOG_LEVEL_TYPES,
-    [LogLevel.Debug]: DEBUG_LOG_LEVEL_TYPES,
-    [LogLevel.Verbose]: VERBOSE_LOG_LEVEL_TYPES
-};
-
-export function debugLog(type: DebugLogType, message?: any, isVerbose?: boolean) {
-    let rawLogLevel = process.env.LOG_LEVEL;
-    if (!rawLogLevel) {
-        throw new Error(formatDebugLog("missing environment variable: LOG_LEVEL"));
+export function debugLog(category: LogCategory, message: any, verbosity: LogVerbosity) {
+    let logLevel = process.env.LOG_LEVEL ? (parseInt(process.env.LOG_LEVEL) as LogVerbosity) : LogVerbosity.Normal;
+    if (process.env.DEBUG_MODE && (logLevel < LogVerbosity.Verbose)) {
+        logLevel = LogVerbosity.Verbose;
     }
 
-    let logLevel = parseInt(rawLogLevel) as LogLevel;
-    if (process.env.DEBUG_MODE) {
-        logLevel = LogLevel.Debug;
-    }
-
-    const logLevelTypes = LOG_LEVEL_TYPES[logLevel];
-
-    if (!logLevelTypes.includes(type)) {
-        return;
-    }
-
-    if (isVerbose && (logLevel !== LogLevel.Verbose)) {
+    if (verbosity > logLevel) {
         return;
     }
 
@@ -73,13 +38,13 @@ export function debugLog(type: DebugLogType, message?: any, isVerbose?: boolean)
         console.dir(message, { depth: null });
     }
     else {
-        console.log(formatDebugLog(message));
+        console.log(formatDebugLog(`[${LogCategory[category].toLowerCase()}] ${message}`));
     }
 }
 
 export function formatDebugLog(message: string) {
     // don't log a timestamp in production, that environment logs a timestamp already
     const timestamp = (process.env.NODE_ENV === "production") ? "" : `(${getTimeStamp()}) `;
-    
+
     return `${timestamp}[jparty-server]: ${message}`;
 }

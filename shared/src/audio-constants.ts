@@ -20,9 +20,15 @@ export enum VolumeType {
 export enum AudioType {
     LobbyMusic,
     GameMusic,
+    ThinkingMusic,
     BuzzWindowTimeout,
     Applause,
-    LongApplause
+    LongApplause,
+    Buzz,
+    ClueResponseSubmitted,
+    WagerResponseSubmitted,
+    CorrectDecision,
+    IncorrectDecision
 }
 
 export enum VoiceType {

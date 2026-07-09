@@ -16,6 +16,12 @@ export interface LeaderboardPlayerSchema {
     timestampMs: number;
 }
 
+// DO NOT TOUCH: leaderboard database relies on this schema signature
+export interface LeaderboardStatsSchema {
+    gamesPlayed: number;
+    moneyEarned: number;
+}
+
 export type LeaderboardPlayers = LeaderboardPlayerSchema[];
 export const PLACEHOLDER_LEADERBOARD_PLAYERS: LeaderboardPlayers = [
     {

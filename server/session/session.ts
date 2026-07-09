@@ -7,7 +7,7 @@ import {
 
 import { getClueDecision } from "../api-requests/clue-decision.js";
 import { generateTriviaGame } from "../api-requests/generate-trivia-game.js";
-import { debugLog, DebugLogType } from "../misc/log.js";
+import { debugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 import { formatClueResponse } from "../misc/text-utils.js";
 
 // this is a wrapper for Node timeouts. we utilize it to keep track of timeouts that are in progress, start/stop/restart them in an abstract way, and delay them if needed
@@ -25,7 +25,7 @@ export class TimeoutInfo {
         this.callback = callback;
         this.durationMs = durationMs;
 
-        debugLog(DebugLogType.Timeout, `(${this.getDisplayName()}) was constructed`);
+        debugLog(LogCategory.Timeout, `(${this.getDisplayName()}) was constructed`, LogVerbosity.VeryVerbose);
 
         this.startTimeout();
     }
@@ -43,8 +43,8 @@ export class TimeoutInfo {
     }
 
     startTimeout() {
-        debugLog(DebugLogType.Timeout, `(${this.getDisplayName()}) has started`);
-        debugLog(DebugLogType.Timeout, `--------------------------------------`);
+        debugLog(LogCategory.Timeout, `(${this.getDisplayName()}) has started`, LogVerbosity.VeryVerbose);
+        debugLog(LogCategory.Timeout, `--------------------------------------`, LogVerbosity.VeryVerbose);
 
         this.timeout = setTimeout(() => this.callback(), this.durationMs);
         this.resetEndTimeMs();
@@ -95,7 +95,6 @@ export class Session {
     currentResponderIDs: SocketID[];
     previousResponderIDs: SocketID[];
     spotlightResponderID: SocketID;
-    awaitingDecisionResponderID: SocketID;
 
     constructor(name: string, creatorSocketID: SocketID, creatorClientID: SocketID) {
         this.creatorSocketID = creatorSocketID;
@@ -133,7 +132,6 @@ export class Session {
         this.currentResponderIDs = [];
         this.previousResponderIDs = [];
         this.spotlightResponderID = "";
-        this.awaitingDecisionResponderID = "";
 
         this.promptGameStarter();
     }
@@ -304,7 +302,6 @@ export class Session {
         this.gameStarterID = (this.gameStarterID === oldPlayerID) ? newPlayerID : this.gameStarterID;
         this.clueSelectorID = (this.clueSelectorID === oldPlayerID) ? newPlayerID : this.clueSelectorID;
         this.spotlightResponderID = (this.spotlightResponderID === oldPlayerID) ? newPlayerID : this.spotlightResponderID;
-        this.awaitingDecisionResponderID = (this.awaitingDecisionResponderID === oldPlayerID) ? newPlayerID : this.awaitingDecisionResponderID;
 
         this.currentResponderIDs = this.currentResponderIDs.map(playerID => (playerID === oldPlayerID) ? newPlayerID : playerID);
         this.previousResponderIDs = this.previousResponderIDs.map(playerID => (playerID === oldPlayerID) ? newPlayerID : playerID);
@@ -460,11 +457,10 @@ export class Session {
 
     static TOSSUP_WINDOW_DURATION_MS = 750;
 
-    // action windows open slightly in the future so every client can reveal them at the same real-world instant, regardless of latency
-    static WINDOW_OPEN_LEAD_MS = 500;
+    // response windows adjust for latency by opening and closing a bit later than reality
+    static RESPONSE_WINDOW_OPEN_LEAD_MS = 500;
 
-    // keep accepting actions briefly after the displayed close, so a last-instant action isn't dropped because of network latency
-    static WINDOW_CLOSE_GRACE_MS = 500;
+    static RESPONSE_WINDOW_CLOSE_GRACE_MS = 500;
 
     getResponseWindowDurationMs() {
         if (!this.triviaGame) {
@@ -473,7 +469,6 @@ export class Session {
 
         let durationMs = this.triviaGame.settings.responseDurationSec * 1000;
 
-        // double the response duration for "all wager" clues. this applies to both the wager and clue response periods
         if (this.getCurrentClue()?.bonus === TriviaClueBonus.AllWager) {
             durationMs *= 2;
         }
@@ -505,7 +500,7 @@ export class Session {
                 break;
             case SessionTimeoutType.BuzzWindow:
                 {
-                    durationMs = Session.WINDOW_OPEN_LEAD_MS + (this.triviaGame.settings.buzzWindowDurationSec * 1000) + Session.WINDOW_CLOSE_GRACE_MS;
+                    durationMs = Session.RESPONSE_WINDOW_OPEN_LEAD_MS + (this.triviaGame.settings.buzzWindowDurationSec * 1000) + Session.RESPONSE_WINDOW_CLOSE_GRACE_MS;
                 }
                 break;
             case SessionTimeoutType.TossupWindow:
@@ -522,7 +517,7 @@ export class Session {
                 break;
             case SessionTimeoutType.ResponseWindow:
                 {
-                    durationMs = Session.WINDOW_OPEN_LEAD_MS + this.getResponseWindowDurationMs() + Session.WINDOW_CLOSE_GRACE_MS;
+                    durationMs = Session.RESPONSE_WINDOW_OPEN_LEAD_MS + this.getResponseWindowDurationMs() + Session.RESPONSE_WINDOW_CLOSE_GRACE_MS;
                 }
                 break;
             case SessionTimeoutType.ReadingClueDecision:
@@ -557,7 +552,7 @@ export class Session {
     }
 
     startTimeout(timeoutType: SessionTimeoutType, callback: Function) {
-        debugLog(DebugLogType.Timeout, `(session-utils.startTimeout): ${SessionTimeoutType[timeoutType]}`);
+        debugLog(LogCategory.Timeout, `(session-utils.startTimeout): ${SessionTimeoutType[timeoutType]}`, LogVerbosity.VeryVerbose);
         this.stopTimeout(timeoutType);
         this.timeoutInfo[timeoutType] = new TimeoutInfo(timeoutType, callback, this.getTimeoutDurationMs(timeoutType));
     }
@@ -565,7 +560,7 @@ export class Session {
     stopTimeout(timeoutType: SessionTimeoutType) {
         let timeoutInfo = this.timeoutInfo[timeoutType];
         if (timeoutInfo) {
-            debugLog(DebugLogType.Timeout, `(session-utils.stopTimeout): ${SessionTimeoutType[timeoutType]}`);
+            debugLog(LogCategory.Timeout, `(session-utils.stopTimeout): ${SessionTimeoutType[timeoutType]}`, LogVerbosity.VeryVerbose);
             clearTimeout(timeoutInfo.timeout);
             delete this.timeoutInfo[timeoutType];
         }
@@ -587,7 +582,7 @@ export class Session {
 
             const newTimeoutID = this.timeoutInfo[timeoutType].id;
 
-            debugLog(DebugLogType.Timeout, `(session-utils.restartTimeout): ${SessionTimeoutType[timeoutType]} was (${oldTimeoutID}) but is now (${newTimeoutID})`);
+            debugLog(LogCategory.Timeout, `(session-utils.restartTimeout): ${SessionTimeoutType[timeoutType]} was (${oldTimeoutID}) but is now (${newTimeoutID})`, LogVerbosity.VeryVerbose);
         }
     }
 
@@ -837,7 +832,7 @@ export class Session {
         this.state = SessionState.ClueTossup;
         this.buzzPlayerIDs = [];
         this.spotlightResponderID = "";
-        this.buzzWindowOpenTimeMs = Date.now() + Session.WINDOW_OPEN_LEAD_MS;
+        this.buzzWindowOpenTimeMs = Date.now() + Session.RESPONSE_WINDOW_OPEN_LEAD_MS;
 
         for (const playerID in this.players) {
             // players may only respond to each clue once
@@ -857,7 +852,7 @@ export class Session {
         }
 
         if (!this.buzzPlayerIDs.includes(playerID)) {
-            debugLog(DebugLogType.Buzz, `${player.name} buzzed in!`);
+            debugLog(LogCategory.Buzz, `${player.name} buzzed in!`, LogVerbosity.Verbose);
             this.buzzPlayerIDs.push(playerID);
         }
 
@@ -882,7 +877,7 @@ export class Session {
         const finalBuzzPlayerID = getWeightedRandomKey(buzzPlayerTossupWeights);
         const finalBuzzPlayer = this.players[finalBuzzPlayerID];
 
-        debugLog(DebugLogType.Buzz, `${finalBuzzPlayer.name} was chosen to respond!`);
+        debugLog(LogCategory.Buzz, `${finalBuzzPlayer.name} was chosen to respond!`, LogVerbosity.Verbose);
 
         // this wasn't a tossup if only one player attempted to buzz in
         if (this.buzzPlayerIDs.length > 1) {
@@ -898,7 +893,7 @@ export class Session {
                 const weightModifier = (buzzPlayerID === finalBuzzPlayerID) ? 0.5 : 2;
                 buzzPlayer.tossupWeight *= weightModifier;
 
-                debugLog(DebugLogType.Buzz, `${buzzPlayer.name} now has a tossup weight of: ${buzzPlayer.tossupWeight}`);
+                debugLog(LogCategory.Buzz, `${buzzPlayer.name} now has a tossup weight of: ${buzzPlayer.tossupWeight}`, LogVerbosity.VeryVerbose);
             }
         }
 
@@ -926,7 +921,7 @@ export class Session {
     // player response is a generic system. it can prompt any number of players for any of the different response types (i.e. clue, wager)
     // note that we pass in all responders who need to be prompted in one function call instead of individually for each responder
     promptResponse(responseType: PlayerResponseType, ...responderIDs: SocketID[]) {
-        this.responseWindowOpenTimeMs = Date.now() + Session.WINDOW_OPEN_LEAD_MS;
+        this.responseWindowOpenTimeMs = Date.now() + Session.RESPONSE_WINDOW_OPEN_LEAD_MS;
 
         switch (responseType) {
             case PlayerResponseType.Clue:
@@ -1069,8 +1064,9 @@ export class Session {
     }
 
     async getClueDecision(responderID: SocketID) {
-        this.awaitingDecisionResponderID = responderID;
-        let responder = this.players[this.awaitingDecisionResponderID];
+        const responderIndex = this.currentResponderIDs.indexOf(responderID);
+
+        let responder = this.players[responderID];
         let decision = TriviaClueDecision.Incorrect;
 
         if (!responder) {
@@ -1092,7 +1088,12 @@ export class Session {
             throw e;
         }
 
-        responder = this.players[this.awaitingDecisionResponderID];
+        // re-resolve the responder in case their socket ID changed while we were waiting on the decision
+        if (responderIndex >= 0) {
+            responderID = this.currentResponderIDs[responderIndex];
+        }
+
+        responder = this.players[responderID];
         if (!responder) {
             return decision;
         }
@@ -1105,7 +1106,7 @@ export class Session {
             decision = TriviaClueDecision.Incorrect;
         }
 
-        const clueValue = this.getClueValue(this.getCurrentClue(), this.awaitingDecisionResponderID, decision);
+        const clueValue = this.getClueValue(this.getCurrentClue(), responderID, decision);
         const clueDecisionInfo = new TriviaClueDecisionInfo(currentCategory.id, currentCategory.name, currentClue, clueResponse, decision, clueValue);
 
         responder.clueDecisionInfo = clueDecisionInfo;
@@ -1114,11 +1115,13 @@ export class Session {
         responder.decided = true;
 
         if (clueDecisionInfo.decision !== TriviaClueDecision.NeedsMoreDetail) {
-            this.updatePlayerScore(this.awaitingDecisionResponderID, clueDecisionInfo.clueValue, clueDecisionInfo.decision);
+            this.updatePlayerScore(responderID, clueDecisionInfo.clueValue, clueDecisionInfo.decision);
         }
 
         this.state = SessionState.ReadingClueDecision;
-        this.spotlightResponderID = this.awaitingDecisionResponderID;
+
+        // no spotlight responder on an all play clue. we just show a list of all the correct responder names
+        this.spotlightResponderID = this.getCurrentClue()?.isAllPlayClue() ? "" : responderID;
 
         return decision;
     }

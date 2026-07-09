@@ -3,37 +3,22 @@ import { Feedback, getDateStamp, ServerSocket, ServerSocketMessage } from "jpart
 import nodemailer from "nodemailer";
 import { Socket } from "socket.io";
 
-import { debugLog, DebugLogType } from "../misc/log";
+import { debugLog, LogCategory, LogVerbosity } from "../misc/log";
 import { getSession } from "../session/session-utils";
 
-let mailConfig;
-
-// in production: send emails with a real SMTP service (Google)
-if (process.env.NODE_ENV === "production") {
-    mailConfig = {
-        service: "gmail",
-        auth: {
-            user: process.env.FEEDBACK_EMAIL,
-            pass: process.env.FEEDBACK_EMAIL_PASSWORD
-        }
-    };
-// otherwise: send emails to a transient inbox with Ethereal, a fake SMTP service
-} else {
-    mailConfig = {
-        host: "smtp.ethereal.email",
-        port: 587,
-        auth: {
-            user: process.env.ETHEREAL_EMAIL,
-            pass: process.env.ETHEREAL_EMAIL_PASSWORD
-        }
-    };
-}
+let mailConfig = {
+    service: "gmail",
+    auth: {
+        user: process.env.FEEDBACK_EMAIL,
+        pass: process.env.FEEDBACK_EMAIL_PASSWORD
+    }
+};
 
 const transporter = nodemailer.createTransport(mailConfig);
 
 export function handleSubmitFeedback(socket: Socket, feedback: Feedback) {
-    debugLog(DebugLogType.Email, `heard feedback submission. attempting to send it as an email`);
-    debugLog(DebugLogType.Email, JSON.stringify(feedback), true);
+    debugLog(LogCategory.Email, `heard feedback submission. attempting to send it as an email`, LogVerbosity.Normal);
+    debugLog(LogCategory.Email, JSON.stringify(feedback), LogVerbosity.Verbose);
 
     const escapeHtml = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -56,7 +41,7 @@ export function handleSubmitFeedback(socket: Socket, feedback: Feedback) {
             console.error(error);
         } else {
             socket.emit(ServerSocket.Message, new ServerSocketMessage(`Your feedback was submitted successfully. Thank you!`));
-            debugLog(DebugLogType.Email, `feedback was submitted successfully`);
+            debugLog(LogCategory.Email, `feedback was submitted successfully`, LogVerbosity.Normal);
         }
     });
 }

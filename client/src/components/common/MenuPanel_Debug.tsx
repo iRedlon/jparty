@@ -94,10 +94,8 @@ export default function MenuPanel_Debug({
 
             <Divider />
 
-            {/* Body */}
             <Box px={{ base: 4, md: 5 }} py={{ base: 4, md: 5 }}>
               <Stack spacing={5}>
-                {/* IDs */}
                 <Box
                   borderWidth="1px"
                   borderColor={borderColor}
@@ -122,7 +120,6 @@ export default function MenuPanel_Debug({
                   </Stack>
                 </Box>
 
-                {/* Controls */}
                 <Stack spacing={3}>
                   <Button
                     onClick={() =>
