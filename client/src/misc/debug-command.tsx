@@ -75,6 +75,7 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
                 emitMockSocketEvent(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.AllTime, PLACEHOLDER_LEADERBOARD_PLAYERS);
                 emitMockSocketEvent(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.Monthly, PLACEHOLDER_LEADERBOARD_PLAYERS);
                 emitMockSocketEvent(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.Weekly, PLACEHOLDER_LEADERBOARD_PLAYERS);
+                emitMockSocketEvent(HostServerSocket.UpdateGamePreview, ["category one", "category two", "category three", "category four", "category five", "category six"]);
             }
             break;
         case DebugCommand.UpdateSessionState:

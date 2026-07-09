@@ -109,6 +109,8 @@ export default function MenuPanel_Credits() {
                   Jeopardy Theme Song Remix - Attic Stein
                 </Text>
 
+                <br />
+
                 <Text>
                   Data Stream of Consciousness - Aldous Ichnite
                   <br />

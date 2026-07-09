@@ -15,6 +15,7 @@ import { socket } from "../../misc/socket";
 import { LocalStorageKey, PATCH_NOTES_LINK } from "../../misc/ui-constants";
 
 import "../../style/components/HostLobby.css";
+import { addMockSocketEventHandler } from "../../misc/mock-socket";
 
 function JoinedPlayerBox(player: Player) {
     return (
@@ -73,9 +74,13 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
         socket.on(HostServerSocket.UpdateGameSettingsPreset, handleUpdateGameSettingsPreset);
         socket.on(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
 
+        addMockSocketEventHandler(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
+
         return () => {
             socket.off(HostServerSocket.UpdateGameSettingsPreset, handleUpdateGameSettingsPreset);
             socket.off(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
+
+            addMockSocketEventHandler(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
         }
     }, []);
 
@@ -158,10 +163,10 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                     <Box>
                         join on your phone with session name:
                         <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} gap={"1em"}>
-                            <Heading fontFamily={"logo"} fontSize={"3em"}>{context.sessionName}</Heading>
-                            <Divider orientation={"vertical"} height={"2.5em"} />
+                            <Heading fontFamily={"logo"} fontSize={"3em"} marginBottom={"-0.1em"}>{context.sessionName}</Heading>
+                            <Divider orientation={"vertical"} height={"4em"} />
                             {context.sessionName && (
-                                <QRCodeSVG value={`${window.location.origin}/?join=${context.sessionName}`} marginSize={1} style={{ width: "2.5em", height: "2.5em" }} />
+                                <QRCodeSVG value={`${window.location.origin}/?join=${context.sessionName}`} marginSize={1} style={{ width: "5em", height: "5em" }} />
                             )}
                         </Stack>
                     </Box>
@@ -224,13 +229,22 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
 
                     <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
 
-                    <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>round 1 categories</Heading>
+                    <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>category preview</Heading>
                     {gamePreviewCategoryNames ? (
-                        <UnorderedList justifyContent={"center"} listStyleType={"none"} margin={0}>
-                            {gamePreviewCategoryNames.map((categoryName, index) => (
-                                <ListItem key={`game-preview-category-${index}`}>{categoryName}</ListItem>
-                            ))}
-                        </UnorderedList>
+                        <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} gap={"1em"}>
+                            <UnorderedList justifyContent={"center"} listStyleType={"none"} margin={0}>
+                                {gamePreviewCategoryNames.slice(0, 3).map((categoryName, index) => (
+                                    <ListItem key={`game-preview-category-${index}`}>{categoryName}</ListItem>
+                                ))}
+                            </UnorderedList>
+
+                            <UnorderedList justifyContent={"center"} listStyleType={"none"} margin={0}>
+                                {gamePreviewCategoryNames.slice(3).map((categoryName, index) => (
+                                    <ListItem key={`game-preview-category-${index}`}>{categoryName}</ListItem>
+                                ))}
+                            </UnorderedList>
+                        </Stack>
+                        
                     ) : (
                         <Text><i>generating trivia...</i></Text>
                     )}

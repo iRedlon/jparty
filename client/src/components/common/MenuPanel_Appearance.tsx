@@ -44,10 +44,7 @@ export default function MenuPanel_Appearance() {
             boxShadow="md"
           >
             <Box px={{ base: 4, md: 5 }} py={{ base: 3, md: 4 }}>
-              <Heading size="md">Background</Heading>
-              <Text mt={1} fontSize="sm" color={muted}>
-                Saved on this device
-              </Text>
+              <Heading size="md">Background theme</Heading>
             </Box>
 
             <Divider />

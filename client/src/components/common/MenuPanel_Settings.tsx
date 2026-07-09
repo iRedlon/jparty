@@ -271,29 +271,6 @@ export default function MenuPanel_Settings({
                 </Box>
               </Box>
             )}
-
-            {!context.isPlayer && (
-              <Box
-                bg={cardBg}
-                borderWidth="1px"
-                borderColor={borderColor}
-                borderRadius="2xl"
-                boxShadow="md"
-              >
-                <Box px={{ base: 4, md: 5 }} py={{ base: 3, md: 4 }}>
-                  <Heading size="md">Tips</Heading>
-                </Box>
-
-                <Divider />
-
-                <Box px={{ base: 4, md: 5 }} py={{ base: 4, md: 5 }}>
-                  <UnorderedList spacing={2} color={muted}>
-                    <ListItem>Go fullscreen with F11</ListItem>
-                    <ListItem>Change text size with Ctrl-/Ctrl+</ListItem>
-                  </UnorderedList>
-                </Box>
-              </Box>
-            )}
           </Stack>
         </Box>
       </Flex>
