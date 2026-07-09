@@ -1,7 +1,7 @@
 
 import {
     ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES, AudioType, CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES,
-    DISPLAY_CORRECT_ANSWER_VOICE_LINES, getRandomChoice, HostServerSocket, PROMPT_CLUE_SELECTION_VOICE_LINES, READ_CLUE_SELECTION_VOICE_LINE, 
+    DISPLAY_CORRECT_ANSWER_VOICE_LINES, getRandomChoiceNoRepeat, HostServerSocket, PROMPT_CLUE_SELECTION_VOICE_LINES, READ_CLUE_SELECTION_VOICE_LINE,
     READ_FIRST_CATEGORY_NAME_VOICE_LINES, READ_LAST_CATEGORY_NAME_VOICE_LINES, READ_MIDDLE_CATEGORY_NAME_VOICE_LINES,
     SESSION_ANNOUNCEMENT_VOICE_LINES, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable, WELCOME_VOICE_LINES,
 } from "jparty-shared";
@@ -40,18 +40,18 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                 }
 
                 if (session.readingCategoryIndex === 0) {
-                    voiceLine = getRandomChoice(READ_FIRST_CATEGORY_NAME_VOICE_LINES);
+                    voiceLine = getRandomChoiceNoRepeat(READ_FIRST_CATEGORY_NAME_VOICE_LINES);
 
                     if (session.roundIndex === 0) {
                         // if we're reading the first category for the first round, tack on an extra line welcoming players to the game
-                        voiceLine = getRandomChoice(WELCOME_VOICE_LINES) + voiceLine;
+                        voiceLine = getRandomChoiceNoRepeat(WELCOME_VOICE_LINES) + voiceLine;
                     }
                 }
                 else if (session.readingCategoryIndex === (currentRound.settings.numCategories - 1)) {
-                    voiceLine = getRandomChoice(READ_LAST_CATEGORY_NAME_VOICE_LINES);
+                    voiceLine = getRandomChoiceNoRepeat(READ_LAST_CATEGORY_NAME_VOICE_LINES);
                 }
                 else {
-                    voiceLine = getRandomChoice(READ_MIDDLE_CATEGORY_NAME_VOICE_LINES);
+                    voiceLine = getRandomChoiceNoRepeat(READ_MIDDLE_CATEGORY_NAME_VOICE_LINES);
                 }
             }
             break;
@@ -62,7 +62,7 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                     break;
                 }
 
-                voiceLine = getRandomChoice(SESSION_ANNOUNCEMENT_VOICE_LINES[session.currentAnnouncement]);
+                voiceLine = getRandomChoiceNoRepeat(SESSION_ANNOUNCEMENT_VOICE_LINES[session.currentAnnouncement]);
             }
             break;
         case VoiceLineType.PromptClueSelection:
@@ -83,10 +83,10 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
 
                 if (currentCategory && currentCategory.didPlayerClear(clueSelector.clientID)) {
                     playAudio(sessionName, AudioType.Applause);
-                    voiceLine = getRandomChoice(CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES);
+                    voiceLine = getRandomChoiceNoRepeat(CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES);
                 }
                 else if (session.hasNewClueSelector()) {
-                    voiceLine = getRandomChoice(PROMPT_CLUE_SELECTION_VOICE_LINES);
+                    voiceLine = getRandomChoiceNoRepeat(PROMPT_CLUE_SELECTION_VOICE_LINES);
                 }
             }
             break;
@@ -112,16 +112,16 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                 }
 
                 if (session.getCurrentClue()?.isAllPlayClue()) {
-                    voiceLine = getRandomChoice(ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
+                    voiceLine = getRandomChoiceNoRepeat(ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
                 }
                 else {
-                    voiceLine = getRandomChoice(TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
+                    voiceLine = getRandomChoiceNoRepeat(TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
                 }
             }
             break;
         case VoiceLineType.ShowCorrectAnswer:
             {
-                voiceLine = getRandomChoice(DISPLAY_CORRECT_ANSWER_VOICE_LINES);
+                voiceLine = getRandomChoiceNoRepeat(DISPLAY_CORRECT_ANSWER_VOICE_LINES);
             }
             break;
     }

@@ -11,6 +11,27 @@ export function getRandomChoice<Type>(a: Type[]) {
     return a[Math.floor(Math.random() * a.length)];
 }
 
+const lastChoiceIndices = new WeakMap<unknown[], number>();
+
+export function getRandomChoiceNoRepeat<Type>(a: Type[]) {
+    if (!a.length) {
+        throw new Error("getRandomChoiceNoRepeat: empty input");
+    }
+
+    const lastIndex = lastChoiceIndices.get(a);
+
+    let index = Math.floor(Math.random() * a.length);
+    if (a.length > 1 && lastIndex !== undefined) {
+        index = Math.floor(Math.random() * (a.length - 1));
+        if (index >= lastIndex) {
+            index++;
+        }
+    }
+
+    lastChoiceIndices.set(a, index);
+    return a[index];
+}
+
 export function getWeightedRandomNum(distribution: Object) {
     return parseInt(getWeightedRandomKey(distribution));
 }
