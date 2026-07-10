@@ -1,6 +1,6 @@
 
 import {
-    AttemptReconnectResult, ClientSocket, ClientSocketCallback, getEnumSize, HostServerSocket, LeaderboardType,
+    AttemptReconnectResult, ClientSocket, ClientSocketCallback, getEnumSize, getSortedSessionPlayerIDs, HostServerSocket, LeaderboardType,
     ServerSocket, ServerSocketMessage, SessionAnnouncement, SessionState, SessionTimeoutType, TriviaGameSettingsPreset, VoiceLineType,
     VoiceType
 } from "jparty-shared";
@@ -267,7 +267,7 @@ export async function updateLeaderboard(sessionName: string) {
     const moneyEarned = Object.values(session.players).reduce((total, player) => total + Math.max(player.score, 0), 0);
     await recordLeaderboardGameStats(moneyEarned);
 
-    for (const playerID in session.players) {
+    for (const playerID of getSortedSessionPlayerIDs(session.players)) {
         const player = session.players[playerID];
         if (!player || !player.qualifiesForLeaderboard()) {
             continue;

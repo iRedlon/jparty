@@ -40,8 +40,8 @@ export function sendAnalyticsEvent(event: AnalyticsEvent, sessionName: string, p
         }]
     });
 
-    debugLog(LogCategory.Analytics, `sending analytics event: ${event}`, LogVerbosity.Verbose);
-    debugLog(LogCategory.Analytics, body, LogVerbosity.VeryVerbose);
+    debugLog(LogCategory.Telemetry, `sending telemetry event: ${event}`, LogVerbosity.Verbose);
+    debugLog(LogCategory.Telemetry, body, LogVerbosity.VeryVerbose);
 
     fetch(`${GA_ENDPOINT}?measurement_id=${measurementID}&api_secret=${apiSecret}`, { method: "POST", body }).catch(e => console.error(e));
 }

@@ -8,12 +8,38 @@
     overflow: auto;
 }
 
+#lobby-center-column {
+    max-height: 100vh;
+    overflow-y: auto;
+    padding-right: 7px;
+    padding-bottom: 7px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+#lobby-center-column::-webkit-scrollbar {
+    display: none;
+}
+
 #joined-players-box {
     margin-right: 2em;
 }
 
+#joined-players-list-box {
+    max-height: 30em;
+    overflow-y: auto;
+    padding-bottom: 6px;
+}
+
 #leaderboard-box {
     margin-left: 2em;
+}
+
+/* should be tall enough to show the top 5 leaderboard spots */
+#leaderboard-players-box {
+    height: 26em;
+    overflow-y: auto;
+    padding-bottom: 6px;
 }
 
 /* logo box anims */

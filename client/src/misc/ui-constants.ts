@@ -1,13 +1,12 @@
 
 import { FeedbackType, SessionAnnouncement, TriviaClueBonus, TriviaRoundType } from "jparty-shared";
 
-// all of these are stored in the window's localStorage object for this browser session
 export enum LocalStorageKey {
     ClientID = "clientID",
     IsPlayer = "isPlayer",
     SessionName = "sessionName",
     CategoryIndex = "categoryIndex", // this was the last category index selected by this player
-    BackgroundTheme = "backgroundTheme", // the background color theme chosen from the appearance menu
+    BackgroundTheme = "backgroundTheme",
 }
 
 // z-index values for UI components
@@ -20,7 +19,7 @@ export enum Layer {
 }
 
 export const SOURCE_CODE_LINK = "https://github.com/iRedlon/jparty";
-export const BUY_ME_A_COFFEE_LINK = "https://buymeacoffee.com/YOUR_USERNAME";
+export const DONATION_LINK = "https://paypal.me/iredlon";
 export const PATCH_NOTES_LINK = "https://github.com/iRedlon/jparty/blob/main/documentation/patch-notes.md";
 export const KNOWN_ISSUES_LINK = "https://github.com/iRedlon/jparty/blob/main/documentation/known-issues.md";
 
@@ -48,9 +47,9 @@ export const TRIVIA_CLUE_BONUS_DESCRIPTIONS: Record<TriviaClueBonus, string> = {
 
 export const SESSION_ANNOUNCEMENT_MESSAGES: Record<SessionAnnouncement, string> = {
     [SessionAnnouncement.StartGame]: "The game is starting!",
-    [SessionAnnouncement.ClueBonusWager]: "Clue bonus: wager!",
-    [SessionAnnouncement.ClueBonusAllWager]: "Clue bonus: all wager!",
-    [SessionAnnouncement.ClueBonusAllPlay]: "Clue bonus: all play!",
+    [SessionAnnouncement.ClueBonusWager]: "You get to wager!",
+    [SessionAnnouncement.ClueBonusAllWager]: "This is your last chance to wager!",
+    [SessionAnnouncement.ClueBonusAllPlay]: "Everyone gets to respond!",
     [SessionAnnouncement.FinalClue]: "This is the final clue for this round!",
     [SessionAnnouncement.StartRound]: "A new round is starting!",
     [SessionAnnouncement.StartFinalRound]: "The final round is starting!",

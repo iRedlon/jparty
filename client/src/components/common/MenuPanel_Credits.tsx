@@ -11,7 +11,7 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 
-import { BUY_ME_A_COFFEE_LINK, SOURCE_CODE_LINK } from "../../misc/ui-constants";
+import { DONATION_LINK, SOURCE_CODE_LINK } from "../../misc/ui-constants";
 
 type CreditRowProps = {
   label: string;
@@ -114,7 +114,7 @@ export default function MenuPanel_Credits() {
                 <Text>
                   Data Stream of Consciousness - Aldous Ichnite
                   <br />
-                  Free Music Archive (CC BY-NC)
+                  (Free Music Archive CC BY-NC)
                 </Text>
               </CreditRow>
 
@@ -131,10 +131,10 @@ export default function MenuPanel_Credits() {
 
             <Stack spacing={2} align="center" textAlign="center" pt={1}>
               <Link
-                href={BUY_ME_A_COFFEE_LINK}
+                href={DONATION_LINK}
                 isExternal
-                bg="#FFDD00"
-                color="black"
+                bg="#0070BA"
+                color="white"
                 fontWeight="bold"
                 px={5}
                 py={2.5}
@@ -142,7 +142,7 @@ export default function MenuPanel_Credits() {
                 boxShadow="sm"
                 _hover={{ textDecoration: "none", boxShadow: "md", transform: "translateY(-1px)" }}
               >
-                Buy me a coffee
+                Donate on PayPal
               </Link>
 
               <Text fontSize="xs" color={muted} maxW="sm">

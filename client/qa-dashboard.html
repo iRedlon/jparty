@@ -62,6 +62,7 @@
 
     .topbar button.secondary { background: #3a3f5c; }
     .topbar button:hover { filter: brightness(1.15); }
+    .topbar button.cheat { background: #7a3fa8; }
     .topbar .hint { color: #6b7090; margin-left: auto; }
 
     main {
@@ -103,6 +104,16 @@
 
     .panel-bar button:hover { color: #fff; }
 
+    .panel-bar button.cheat {
+        background: #7a3fa8;
+        color: #fff;
+        border-radius: 4px;
+        padding: 0.1em 0.5em;
+        font-size: 0.85em;
+    }
+
+    .panel-bar button.cheat:hover { filter: brightness(1.15); }
+
     .frame-wrap { overflow: hidden; background: #000; }
     .frame-wrap iframe { border: 0; display: block; transform-origin: top left; background: #000; }
 
@@ -117,13 +128,16 @@
 </head>
 <body>
     <div class="topbar">
-        <span class="logo">jparty QA</span>
+        <span class="logo">jparty QA dashboard</span>
         <span id="session-label" title="click to copy">waiting for session&hellip;</span>
         <label>players <input id="player-count" type="number" min="1" max="12"></label>
         <label>size <input id="player-scale" type="range" min="0.5" max="1" step="0.05"></label>
+        <label>host font px <input id="host-font-size" type="number" min="8" max="48"></label>
+        <label>player font px <input id="player-font-size" type="number" min="8" max="48"></label>
         <button id="add-player">+ player</button>
         <button id="reset" class="secondary">reset all</button>
-        <span class="hint">audio blocked? click inside the host panel once</span>
+        <button id="cheat-skip-round-2" class="cheat" title="cheat: skip the game to round 2">skip to round 2</button>
+        <button id="cheat-skip-round-3" class="cheat" title="cheat: skip the game to round 3">skip to round 3</button>
     </div>
 
     <main>
@@ -151,12 +165,38 @@
     const scaleInput = $("#player-scale");
     const hostFrame = $("#host-frame");
     const hostFrameWrap = $("#host-frame-wrap");
+    const hostFontInput = $("#host-font-size");
+    const playerFontInput = $("#player-font-size");
 
     countInput.value = localStorage.getItem("jparty-qa-player-count") || "3";
     scaleInput.value = localStorage.getItem("jparty-qa-player-scale") || "0.8";
+    hostFontInput.value = localStorage.getItem("jparty-qa-host-font-size") || "16";
+    playerFontInput.value = localStorage.getItem("jparty-qa-player-font-size") || "16";
 
     let sessionName = "";
     let playerSeq = 0;
+
+    function sendFontSize(frame, input) {
+        if (frame.contentWindow) {
+            frame.contentWindow.postMessage({ type: "jparty-qa-font-size", fontSizePx: parseFloat(input.value) || 0 }, location.origin);
+        }
+    }
+
+    function sendCheat(frame, cheat) {
+        if (frame.contentWindow) {
+            frame.contentWindow.postMessage({ type: "jparty-qa-cheat", cheat: cheat }, location.origin);
+        }
+    }
+
+    function applyHostFontSize() {
+        sendFontSize(hostFrame, hostFontInput);
+        localStorage.setItem("jparty-qa-host-font-size", hostFontInput.value);
+    }
+
+    function applyPlayerFontSizes() {
+        document.querySelectorAll("#players .panel iframe").forEach((frame) => sendFontSize(frame, playerFontInput));
+        localStorage.setItem("jparty-qa-player-font-size", playerFontInput.value);
+    }
 
     function playerURL(name, clientID, rejoin) {
         const params = new URLSearchParams({ qa: "player", session: sessionName, name: name, clientid: clientID });
@@ -191,6 +231,16 @@
         const spacer = document.createElement("span");
         spacer.className = "spacer";
 
+        const addMoneyBtn = document.createElement("button");
+        addMoneyBtn.textContent = "+ money";
+        addMoneyBtn.className = "cheat";
+        addMoneyBtn.title = "cheat: give this player $100";
+
+        const subtractMoneyBtn = document.createElement("button");
+        subtractMoneyBtn.textContent = "- money";
+        subtractMoneyBtn.className = "cheat";
+        subtractMoneyBtn.title = "cheat: take $100 from this player";
+
         const reconnectBtn = document.createElement("button");
         reconnectBtn.textContent = "⟳";
         reconnectBtn.title = "reload this player and reconnect to the session";
@@ -199,7 +249,7 @@
         closeBtn.textContent = "✕";
         closeBtn.title = "remove this player";
 
-        bar.append(label, spacer, reconnectBtn, closeBtn);
+        bar.append(label, spacer, addMoneyBtn, subtractMoneyBtn, reconnectBtn, closeBtn);
 
         const wrap = document.createElement("div");
         wrap.className = "frame-wrap";
@@ -214,6 +264,9 @@
         panel.append(bar, wrap);
         playersEl.appendChild(panel);
 
+        frame.addEventListener("load", () => sendFontSize(frame, playerFontInput));
+        addMoneyBtn.addEventListener("click", () => sendCheat(frame, "cheat_add_money"));
+        subtractMoneyBtn.addEventListener("click", () => sendCheat(frame, "cheat_subtract_money"));
         reconnectBtn.addEventListener("click", () => { frame.src = playerURL(name, clientID, true); });
         closeBtn.addEventListener("click", () => panel.remove());
 
@@ -274,7 +327,12 @@
 
     $("#add-player").addEventListener("click", addPlayer);
     $("#reset").addEventListener("click", () => location.reload());
+    $("#cheat-skip-round-2").addEventListener("click", () => sendCheat(hostFrame, "cheat_skip_to_round_2"));
+    $("#cheat-skip-round-3").addEventListener("click", () => sendCheat(hostFrame, "cheat_skip_to_round_3"));
     scaleInput.addEventListener("input", applyPlayerScale);
+    hostFontInput.addEventListener("input", applyHostFontSize);
+    playerFontInput.addEventListener("input", applyPlayerFontSizes);
+    hostFrame.addEventListener("load", applyHostFontSize);
     countInput.addEventListener("change", () => localStorage.setItem("jparty-qa-player-count", countInput.value));
     sessionLabel.addEventListener("click", () => { if (sessionName) navigator.clipboard.writeText(sessionName); });
     window.addEventListener("resize", applyHostScale);

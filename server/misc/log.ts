@@ -6,16 +6,16 @@ dotenv.config();
 
 // label for easier log searching
 export enum LogCategory {
-    Server,
-    ClientConnection,
-    Analytics,
-    TriviaDatabase,
-    Buzz,
-    ClueDecision,
-    Email,
-    Voice,
-    Leaderboard,
-    Timeout
+    Server = "server",
+    ClientConnection = "client_connection",
+    Telemetry = "telemetry",
+    TriviaDatabase = "trivia_db",
+    Buzz = "buzz",
+    ClueDecision = "clue_decision",
+    Email = "email",
+    Voice = "voice",
+    Leaderboard = "leaderboard",
+    Timeout = "timeout"
 }
 
 export enum LogVerbosity {
@@ -38,7 +38,7 @@ export function debugLog(category: LogCategory, message: any, verbosity: LogVerb
         console.dir(message, { depth: null });
     }
     else {
-        console.log(formatDebugLog(`[${LogCategory[category].toLowerCase()}] ${message}`));
+        console.log(formatDebugLog(`[${category}] ${message}`));
     }
 }
 
@@ -46,5 +46,5 @@ export function formatDebugLog(message: string) {
     // don't log a timestamp in production, that environment logs a timestamp already
     const timestamp = (process.env.NODE_ENV === "production") ? "" : `(${getTimeStamp()}) `;
 
-    return `${timestamp}[jparty-server]: ${message}`;
+    return `${timestamp}: ${message}`;
 }

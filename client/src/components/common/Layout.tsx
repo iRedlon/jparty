@@ -10,7 +10,7 @@ import HostLayout from "../host/HostLayout";
 import PlayerLayout from "../player/PlayerLayout";
 import { getClientID, joinSessionName } from "../../misc/client-utils";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
-import { isQAPlayer, updateQASessionName } from "../../misc/qa-mode";
+import { isQAPlayer, updateQASessionName } from "../../misc/qa-dashboard";
 import { socket } from "../../misc/socket";
 import { LocalStorageKey } from "../../misc/ui-constants";
 

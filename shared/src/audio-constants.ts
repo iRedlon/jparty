@@ -4,10 +4,12 @@ import { TriviaClueDecision } from "./trivia-game-constants";
 
 // this estimate is quite generous. the client will always tell the server to cancel the timeout early once its utterance is complete anyway
 // that is to say, as long as we don't underestimate the voice duration, the timing will always be as smooth as it can possibly be
+// the base covers TTS stream startup latency, which happens after the server's timer has already started
+export const ESTIMATE_VOICE_DURATION_BASE_MS = 2500;
 export const ESTIMATE_VOICE_DURATION_MS_PER_CHARACTER = 120;
 
 export function getVoiceDurationMs(text: string) {
-    return text.length * ESTIMATE_VOICE_DURATION_MS_PER_CHARACTER;
+    return ESTIMATE_VOICE_DURATION_BASE_MS + (text.length * ESTIMATE_VOICE_DURATION_MS_PER_CHARACTER);
 }
 
 export enum VolumeType {
@@ -28,7 +30,8 @@ export enum AudioType {
     ClueResponseSubmitted,
     WagerResponseSubmitted,
     CorrectDecision,
-    IncorrectDecision
+    IncorrectDecision,
+    ClueSelected
 }
 
 export enum VoiceType {
@@ -59,7 +62,8 @@ export enum VoiceLineVariable {
     ClueSelectorName = "{clueSelectorName}",
     SpotlightResponderName = "{spotlightResponderName}",
     LeaderName = "{leaderName}",
-    LeaderScore = "{leaderScore}"
+    LeaderScore = "{leaderScore}",
+    ClaimedLeaderboardSpot = "{claimedLeaderboardSpot}"
 }
 
 export const WELCOME_VOICE_LINES = [
@@ -135,6 +139,13 @@ export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, strin
         `Your j-party champion is ${VoiceLineVariable.LeaderName}. You rock! Thanks for playing!`
     ]
 };
+
+export const LEADERBOARD_GAME_OVER_VOICE_LINES = [
+    `Congratulations ${VoiceLineVariable.LeaderName}! You're a j-party champion, and you claimed ${VoiceLineVariable.ClaimedLeaderboardSpot}. Thanks for playing!`,
+    `Well played ${VoiceLineVariable.LeaderName}! You won, and you claimed ${VoiceLineVariable.ClaimedLeaderboardSpot}! Thanks for playing!`,
+    `${VoiceLineVariable.LeaderName} won the game and claimed ${VoiceLineVariable.ClaimedLeaderboardSpot}! Great work! Thanks for playing!`,
+    `Your j-party champion is ${VoiceLineVariable.LeaderName}, and they claimed ${VoiceLineVariable.ClaimedLeaderboardSpot}. You rock! Thanks for playing!`
+];
 
 export const PROMPT_CLUE_SELECTION_VOICE_LINES = [
     `Make a selection ${VoiceLineVariable.ClueSelectorName}.`,

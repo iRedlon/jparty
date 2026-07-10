@@ -1,17 +1,11 @@
 
 import { Box, Stack, Text } from "@chakra-ui/react";
-import { getOrdinalString, getSortedSessionPlayerIDs, LeaderboardType, SocketID } from "jparty-shared";
+import { getSortedSessionPlayerIDs, LEADERBOARD_TYPE_DISPLAY_NAMES, SocketID } from "jparty-shared";
 import { useContext } from "react";
 import { PiCrownSimpleFill } from "react-icons/pi";
 
 import { LayoutContext } from "../common/Layout";
 import { formatDollarValue, getScoreFontSize } from "../../misc/client-utils";
-
-const LEADERBOARD_TYPE_DISPLAY_NAMES: Record<LeaderboardType, string> = {
-    [LeaderboardType.AllTime]: "all time",
-    [LeaderboardType.Monthly]: "monthly",
-    [LeaderboardType.Weekly]: "weekly"
-};
 
 export default function HostScoreboard() {
     const context = useContext(LayoutContext);
@@ -42,6 +36,11 @@ export default function HostScoreboard() {
                                             {(index === 0 && player.score > 0) && <PiCrownSimpleFill />}
                                         </Box>
                                         <b>{player.name}</b>
+                                        {player.claimedLeaderboardSpot && (
+                                            <Text fontSize={"0.6em"} alignSelf={"center"}>
+                                                (claimed #{player.claimedLeaderboardSpot.spot} on the {LEADERBOARD_TYPE_DISPLAY_NAMES[player.claimedLeaderboardSpot.type]} leaderboard)
+                                            </Text>
+                                        )}
                                     </Stack>
                                 </Box>
 
@@ -52,25 +51,6 @@ export default function HostScoreboard() {
                                 </Box>
                             </Stack>
                         </Box>
-
-                        {/* claimed leaderboard spots */}
-                        {Object.keys(player.claimedLeaderboardSpots ?? {}).length > 0 && (
-                            <Box className={"child-box"} height={"7em"} paddingLeft={"1em"} paddingRight={"1em"}
-                                display={"flex"} flexDirection={"column"} justifyContent={"center"}>
-                                {Object.values(LeaderboardType).map((type) => {
-                                    const claimedSpot = player.claimedLeaderboardSpots?.[type];
-                                    if (!claimedSpot) {
-                                        return null;
-                                    }
-
-                                    return (
-                                        <Text key={type} textAlign={"left"} whiteSpace={"nowrap"} fontSize={"1.1em"}>
-                                            claimed the <b>{getOrdinalString(claimedSpot)}</b> spot on the <b>{LEADERBOARD_TYPE_DISPLAY_NAMES[type]}</b> leaderboard
-                                        </Text>
-                                    );
-                                })}
-                            </Box>
-                        )}
                     </Stack>
                 );
             })}

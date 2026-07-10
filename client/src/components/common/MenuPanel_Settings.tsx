@@ -24,6 +24,14 @@ import { useContext, useState } from "react";
 
 import { LayoutContext } from "./Layout";
 import { getVolume, updateVolume } from "../../misc/audio";
+import {
+  BACKGROUND_THEME_DISPLAY_NAMES,
+  BACKGROUND_THEME_SWATCHES,
+  BackgroundTheme,
+  getBackgroundTheme,
+  updateBackgroundTheme,
+} from "../../misc/background-theme";
+import { leaveQASession } from "../../misc/qa-dashboard";
 import { socket } from "../../misc/socket";
 import { LocalStorageKey } from "../../misc/ui-constants";
 
@@ -37,6 +45,7 @@ export function emitLeaveSession(isPlayer: boolean) {
     localStorage.removeItem(LocalStorageKey.SessionName);
   }
 
+  leaveQASession();
   location.reload();
 }
 
@@ -63,6 +72,13 @@ export default function MenuPanel_Settings({
   const [soundEffectsVolume, setSoundEffectsVolume] = useState(
     getVolume(VolumeType.SoundEffects) * VOLUME_STATE_MULTIPLIER
   );
+
+  const [backgroundTheme, setBackgroundTheme] = useState(getBackgroundTheme());
+
+  const selectBackgroundTheme = (newTheme: BackgroundTheme) => {
+    setBackgroundTheme(newTheme);
+    updateBackgroundTheme(newTheme);
+  };
 
   const updateVolumeState = (volumeType: VolumeType, volume: number) => {
     switch (volumeType) {
@@ -271,6 +287,59 @@ export default function MenuPanel_Settings({
                 </Box>
               </Box>
             )}
+
+            {/* Background theme */}
+            <Box
+              bg={cardBg}
+              borderWidth="1px"
+              borderColor={borderColor}
+              borderRadius="2xl"
+              boxShadow="md"
+            >
+              <Box px={{ base: 4, md: 5 }} py={{ base: 3, md: 4 }}>
+                <Heading size="md">Background theme</Heading>
+              </Box>
+
+              <Divider />
+
+              <Box px={{ base: 4, md: 5 }} py={{ base: 4, md: 5 }}>
+                <Wrap spacing={5} justify="center">
+                  {Object.values(BackgroundTheme).map((themeOption) => (
+                    <WrapItem key={themeOption}>
+                      <Stack spacing={2} align="center">
+                        <Box
+                          as="button"
+                          onClick={() => selectBackgroundTheme(themeOption)}
+                          height="4.5em"
+                          width="4.5em"
+                          borderRadius="xl"
+                          background={BACKGROUND_THEME_SWATCHES[themeOption]}
+                          outline={
+                            backgroundTheme === themeOption
+                              ? "3px solid"
+                              : "1px solid"
+                          }
+                          outlineColor={
+                            backgroundTheme === themeOption
+                              ? "blue.400"
+                              : borderColor
+                          }
+                          outlineOffset="2px"
+                        />
+                        <Text
+                          fontSize="sm"
+                          fontWeight={
+                            backgroundTheme === themeOption ? "bold" : "normal"
+                          }
+                        >
+                          {BACKGROUND_THEME_DISPLAY_NAMES[themeOption]}
+                        </Text>
+                      </Stack>
+                    </WrapItem>
+                  ))}
+                </Wrap>
+              </Box>
+            </Box>
           </Stack>
         </Box>
       </Flex>

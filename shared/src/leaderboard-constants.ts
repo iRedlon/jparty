@@ -9,6 +9,17 @@ export enum LeaderboardType {
     Weekly = "weekly"
 }
 
+export const LEADERBOARD_TYPE_DISPLAY_NAMES: Record<LeaderboardType, string> = {
+    [LeaderboardType.AllTime]: "all time",
+    [LeaderboardType.Monthly]: "monthly",
+    [LeaderboardType.Weekly]: "weekly"
+};
+
+export interface ClaimedLeaderboardSpot {
+    type: LeaderboardType;
+    spot: number;
+}
+
 // DO NOT TOUCH: leaderboard database relies on this schema signature
 export interface LeaderboardPlayerSchema {
     name: string;

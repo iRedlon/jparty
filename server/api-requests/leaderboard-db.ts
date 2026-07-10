@@ -15,7 +15,7 @@ const client: MongoClient | undefined = process.env.MONGO_CONNECTION_STRING ? ne
 const useFakeLeaderboard = !!process.env.DEBUG_MODE || !client;
 
 function createFakeLeaderboard(): LeaderboardPlayers {
-    return PLACEHOLDER_LEADERBOARD_PLAYERS.slice(0, 3).map(schema => ({ ...schema }));
+    return PLACEHOLDER_LEADERBOARD_PLAYERS.slice(0, 5).map(schema => ({ ...schema }));
 }
 
 const fakeLeaderboards: Record<LeaderboardType, LeaderboardPlayers> = {
@@ -96,9 +96,15 @@ export async function addNewLeaderboardPlayer(player: Player, sessionName?: stri
     const monthlySpot = await updateLeaderboard(LeaderboardType.Monthly, newLeaderboardPlayer, sessionName);
     const weeklySpot = await updateLeaderboard(LeaderboardType.Weekly, newLeaderboardPlayer, sessionName);
 
-    if (allTimeSpot) player.claimedLeaderboardSpots[LeaderboardType.AllTime] = allTimeSpot;
-    if (monthlySpot) player.claimedLeaderboardSpots[LeaderboardType.Monthly] = monthlySpot;
-    if (weeklySpot) player.claimedLeaderboardSpots[LeaderboardType.Weekly] = weeklySpot;
+    if (allTimeSpot) {
+        player.claimedLeaderboardSpot = { type: LeaderboardType.AllTime, spot: allTimeSpot };
+    }
+    else if (monthlySpot) {
+        player.claimedLeaderboardSpot = { type: LeaderboardType.Monthly, spot: monthlySpot };
+    }
+    else if (weeklySpot) {
+        player.claimedLeaderboardSpot = { type: LeaderboardType.Weekly, spot: weeklySpot };
+    }
 }
 
 async function updateLeaderboard(type: LeaderboardType, newLeaderboardPlayer: LeaderboardPlayerSchema, sessionName?: string): Promise<number | undefined> {

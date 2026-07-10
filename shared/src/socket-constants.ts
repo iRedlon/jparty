@@ -99,6 +99,13 @@ export class ServerSocketMessage {
     }
 }
 
+export enum CheatSocket {
+    AddMoney = "cheat_add_money",
+    SubtractMoney = "cheat_subtract_money",
+    SkipToRound2 = "cheat_skip_to_round_2",
+    SkipToRound3 = "cheat_skip_to_round_3"
+}
+
 export enum FeedbackType {
     Bug,
     TriviaData,

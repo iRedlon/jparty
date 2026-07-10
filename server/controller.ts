@@ -3,7 +3,7 @@ import compression from "compression";
 import dotenv from "dotenv";
 import express from "express";
 import { createServer } from "http";
-import { ClientSocket, ClientSocketCallback, Feedback, HostSocket, PlayerSocket, ReservedEvent, ServerSocket } from "jparty-shared";
+import { CheatSocket, ClientSocket, ClientSocketCallback, Feedback, HostSocket, PlayerSocket, ReservedEvent, ServerSocket } from "jparty-shared";
 import path from "path";
 import { Server, Socket } from "socket.io";
 import { fileURLToPath } from "url";
@@ -12,6 +12,7 @@ import { handleSubmitFeedback } from "./api-requests/feedback.js";
 import { streamVoiceAudio } from "./api-requests/tts.js";
 //import { cleanupTriviaData } from "./api-requests/trivia-db.js";
 import { debugLog, LogCategory, LogVerbosity } from "./misc/log.js";
+import handleCheatEvent from "./session/handle-cheat-event.js";
 import handleHostEvent from "./session/handle-host-event.js";
 import handlePlayerEvent from "./session/handle-player-event.js";
 import { handleAttemptReconnect, handleDisconnect, sessions } from "./session/session-utils.js";
@@ -32,9 +33,9 @@ app.use(compression());
 let dirname = path.dirname(fileURLToPath(import.meta.url));
 app.use(express.static(path.join(dirname, "../../client/build")));
 
-// QA dashboard
+// serve the QA dashboard
 if (process.env.DEBUG_MODE) {
-    app.get("/qa", (_req, res) => res.sendFile(path.join(dirname, "../../client/qa.html")));
+    app.get("/qa", (_req, res) => res.sendFile(path.join(dirname, "../../client/qa-dashboard.html")));
 }
 
 app.get("/api/voice", streamVoiceAudio);
@@ -72,6 +73,14 @@ io.on(ReservedEvent.Connection, (socket: Socket) => {
     socket.onAny((event: string, ...args: any[]) => {
         if (Object.values(ClientSocket).includes(event as ClientSocket)) {
             // handled above
+            return;
+        }
+
+        if (Object.values(CheatSocket).includes(event as CheatSocket)) {
+            if (process.env.DEBUG_MODE) {
+                handleCheatEvent(socket, event as CheatSocket);
+            }
+
             return;
         }
 

@@ -82,7 +82,7 @@ Environment variables are set by a .env file at the roots of the server and clie
 - And these on server:
   - Enables debug logging which includes some extra info like the position of clue bonuses, outgoing API requests, etc.
   - Forced clue decisions by responding with the desired response. A response may be "correct", "incorrect", or "detail"
-  - Serves the QA dashboard at /qa: a tool that runs a host screen and any number of auto-joined players together in a single tab (see [client/qa.html](../client/qa.html) and [qa-mode](../client/src/misc/qa-mode.ts))
+  - Serves the QA dashboard at /qa: a tool that runs a host screen and any number of auto-joined players together in a single tab (see [client/qa-dashboard.html](../client/qa-dashboard.html) and [qa-dashboard](../client/src/misc/qa-dashboard.ts)). It comes with a few useful cheats e.g. add/subtract money, skip to a certain round
 
 ## _[Host Voice](../client/src/misc/audio.ts)_
 - Voice lines are spoken aloud by the host computer throughout the game. Most importantly, this voice reads out the clues but also filler lines like "correct" or "that's a bonus, you get to wager, etc."

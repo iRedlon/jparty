@@ -1,9 +1,10 @@
 
 import {
     ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES, AudioType, CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES,
-    DISPLAY_CORRECT_ANSWER_VOICE_LINES, getRandomChoiceNoRepeat, HostServerSocket, PROMPT_CLUE_SELECTION_VOICE_LINES, READ_CLUE_SELECTION_VOICE_LINE,
+    DISPLAY_CORRECT_ANSWER_VOICE_LINES, getOrdinalString, getRandomChoiceNoRepeat, HostServerSocket, LEADERBOARD_GAME_OVER_VOICE_LINES,
+    LEADERBOARD_TYPE_DISPLAY_NAMES, PROMPT_CLUE_SELECTION_VOICE_LINES, READ_CLUE_SELECTION_VOICE_LINE,
     READ_FIRST_CATEGORY_NAME_VOICE_LINES, READ_LAST_CATEGORY_NAME_VOICE_LINES, READ_MIDDLE_CATEGORY_NAME_VOICE_LINES,
-    SESSION_ANNOUNCEMENT_VOICE_LINES, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable, WELCOME_VOICE_LINES,
+    SESSION_ANNOUNCEMENT_VOICE_LINES, SessionAnnouncement, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable, WELCOME_VOICE_LINES,
 } from "jparty-shared";
 
 import { getSession } from "./session-utils.js";
@@ -62,7 +63,12 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                     break;
                 }
 
-                voiceLine = getRandomChoiceNoRepeat(SESSION_ANNOUNCEMENT_VOICE_LINES[session.currentAnnouncement]);
+                if ((session.currentAnnouncement === SessionAnnouncement.GameOver) && session.getCurrentLeader()?.claimedLeaderboardSpot) {
+                    voiceLine = getRandomChoiceNoRepeat(LEADERBOARD_GAME_OVER_VOICE_LINES);
+                }
+                else {
+                    voiceLine = getRandomChoiceNoRepeat(SESSION_ANNOUNCEMENT_VOICE_LINES[session.currentAnnouncement]);
+                }
             }
             break;
         case VoiceLineType.PromptClueSelection:
@@ -163,6 +169,11 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
     if (leader) {
         voiceLine = voiceLine.replace(VoiceLineVariable.LeaderName, leader.name);
         voiceLine = voiceLine.replace(VoiceLineVariable.LeaderScore, `${leader.score} dollars`);
+
+        const claimedSpot = leader.claimedLeaderboardSpot;
+        if (claimedSpot) {
+            voiceLine = voiceLine.replace(VoiceLineVariable.ClaimedLeaderboardSpot, `the ${getOrdinalString(claimedSpot.spot)} spot on the ${LEADERBOARD_TYPE_DISPLAY_NAMES[claimedSpot.type]} leaderboard`);
+        }
     }
 
     voiceLine = formatSpokenVoiceLine(voiceLine, type);

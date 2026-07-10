@@ -116,7 +116,7 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
     }
 }
 
-function recursiveReadCategoryName(sessionName: string) {
+export function recursiveReadCategoryName(sessionName: string) {
     let session = getSession(sessionName);
     if (!session) {
         return;
@@ -264,6 +264,7 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
 
     session.selectClue(categoryIndex, clueIndex);
     io.in(sessionName).emit(ServerSocket.SelectClue, categoryIndex, clueIndex);
+    playAudio(sessionName, AudioType.ClueSelected);
 
     const handleSelectClueInternal = () => {
         let session = getSession(sessionName);
@@ -689,7 +690,7 @@ function finishRevealClueDecision(sessionName: string, showCorrectAnswer: boolea
     emitStateUpdate(sessionName);
 }
 
-function finishRound(sessionName: string) {
+async function finishRound(sessionName: string) {
     let session = getSession(sessionName);
     if (!session) {
         return;
@@ -710,6 +711,8 @@ function finishRound(sessionName: string) {
             game_duration_sec: session.getGameDurationSec(),
             session_duration_sec: session.getSessionDurationSec()
         });
+
+        await updateLeaderboard(sessionName);
     }
 
     showAnnouncement(sessionName, announcement, () => {
@@ -721,7 +724,6 @@ function finishRound(sessionName: string) {
         emitTriviaRoundUpdate(sessionName);
 
         if (session.state === SessionState.GameOver) {
-            updateLeaderboard(sessionName);
             return;
         }
 

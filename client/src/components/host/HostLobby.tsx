@@ -2,11 +2,11 @@
 import { ExternalLinkIcon, RepeatIcon } from "@chakra-ui/icons";
 import { Box, Button, Divider, Heading, Input, Link, ListItem, Stack, Text, Tooltip, UnorderedList } from "@chakra-ui/react";
 import {
-    getSortedSessionPlayerIDs, HostServerSocket, HostSocket, LeaderboardPlayers, LeaderboardPlayerSchema, LeaderboardStatsSchema, LeaderboardType,
+    getSortedSessionPlayerIDs, HostSocket, LeaderboardPlayers, LeaderboardPlayerSchema, LeaderboardStatsSchema, LeaderboardType,
     Player, SocketID, TriviaGameSettingsPreset
 } from "jparty-shared";
 import { QRCodeSVG } from "qrcode.react";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
 
 import { LayoutContext } from "../common/Layout";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
@@ -15,7 +15,6 @@ import { socket } from "../../misc/socket";
 import { LocalStorageKey, PATCH_NOTES_LINK } from "../../misc/ui-constants";
 
 import "../../style/components/HostLobby.css";
-import { addMockSocketEventHandler } from "../../misc/mock-socket";
 
 function JoinedPlayerBox(player: Player) {
     return (
@@ -58,47 +57,30 @@ interface HostLobbyProps {
     allTimeLeaderboardStats: LeaderboardStatsSchema | undefined;
     monthlyLeaderboardStats: LeaderboardStatsSchema | undefined;
     weeklyLeaderboardStats: LeaderboardStatsSchema | undefined;
+    gameSettingsPreset: TriviaGameSettingsPreset;
+    setGameSettingsPreset: Function;
+    gamePreviewCategoryNames: string[] | undefined;
+    setGamePreviewCategoryNames: Function;
 }
 
 export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboardPlayers, weeklyLeaderboardPlayers,
-    allTimeLeaderboardStats, monthlyLeaderboardStats, weeklyLeaderboardStats }: HostLobbyProps) {
+    allTimeLeaderboardStats, monthlyLeaderboardStats, weeklyLeaderboardStats,
+    gameSettingsPreset, setGameSettingsPreset, gamePreviewCategoryNames, setGamePreviewCategoryNames }: HostLobbyProps) {
     const joinedPlayersBoxRef = useRef(null);
 
     const context = useContext(LayoutContext);
     const [spectateSessionName, setSpectateSessionName] = useState("");
-    const [gameSettingsPreset, setGameSettingsPreset] = useState(TriviaGameSettingsPreset.Normal);
-    const [gamePreviewCategoryNames, setGamePreviewCategoryNames] = useState<string[] | undefined>(undefined);
     const [currentLeaderboardType, setCurrentLeaderboardType] = useState(LeaderboardType.AllTime);
 
-    useEffect(() => {
-        socket.on(HostServerSocket.UpdateGameSettingsPreset, handleUpdateGameSettingsPreset);
-        socket.on(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
+    const handleSelectGameSettingsPreset = (preset: TriviaGameSettingsPreset) => {
+        socket.emit(HostSocket.UpdateGameSettingsPreset, preset);
 
-        addMockSocketEventHandler(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
-
-        return () => {
-            socket.off(HostServerSocket.UpdateGameSettingsPreset, handleUpdateGameSettingsPreset);
-            socket.off(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
-
-            addMockSocketEventHandler(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
-        }
-    }, []);
-
-    const handleUpdateGameSettingsPreset = (preset: TriviaGameSettingsPreset, fromServer?: boolean) => {
-        if (!fromServer) {
-            socket.emit(HostSocket.UpdateGameSettingsPreset, preset);
-
-            if (gameSettingsPreset === TriviaGameSettingsPreset.Custom && !confirm("Are you sure? Your custom game settings will be lost")) {
-                return;
-            }
+        if (gameSettingsPreset === TriviaGameSettingsPreset.Custom && !confirm("Are you sure? Your custom game settings will be lost")) {
+            return;
         }
 
         setGameSettingsPreset(preset);
         setGamePreviewCategoryNames(undefined);
-    }
-
-    const handleUpdateGamePreview = (categoryNames: string[]) => {
-        setGamePreviewCategoryNames(categoryNames);
     }
 
     const emitGenerateGamePreview = () => {
@@ -145,15 +127,17 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
     return (
         <Stack direction={"row"}>
             <Box ref={joinedPlayersBoxRef} id={"joined-players-box"} className={"box side-box"}>
-                <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>joined players</Heading>
-                {sortedSessionPlayerIDs.map((playerID: SocketID) => {
-                    return JoinedPlayerBox(context.sessionPlayers[playerID]);
-                })}
+                <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>players</Heading>
+                <Box id={"joined-players-list-box"}>
+                    {sortedSessionPlayerIDs.map((playerID: SocketID) => {
+                        return JoinedPlayerBox(context.sessionPlayers[playerID]);
+                    })}
+                </Box>
             </Box>
 
-            <Stack direction={"column"}>
+            <Stack id={"lobby-center-column"} direction={"column"}>
                 <Box id={"logo-box"} className={"box"} padding={"2em"}>
-                    <Heading fontFamily={"logo"} fontSize={"4em"}>jparty.io</Heading>
+                    <Heading fontFamily={"logo"} fontSize={"4em"}>jparty</Heading>
                     {<Link href={PATCH_NOTES_LINK} isExternal>
                         <i><u>version 1.1 patch notes</u></i> <ExternalLinkIcon mx={"2px"} />
                     </Link>}
@@ -191,18 +175,17 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                     </Box>
                 </Box>
 
-                <Box marginTop={"0.5em"} marginBottom={"0.5em"} />
+                <Box marginTop={"0.2em"} marginBottom={"0.2em"} />
 
                 <Box id={"game-settings-preset-box"} className={"box"} padding={"1.5em"}>
-                    <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"} marginBottom={"0.25em"}>game presets</Heading>
+                    <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>category preview</Heading>
 
-                    <Stack direction={"column"}>
+                    <Stack direction={"row"} justifyContent={"center"} marginTop={"0.5em"} marginBottom={"0.5em"}>
                         <Tooltip label={"standard rules. counts for public leaderboard"} placement={"top"}>
                             <Button
                                 isDisabled={context.isSpectator}
-                                onClick={() => handleUpdateGameSettingsPreset(TriviaGameSettingsPreset.Normal)}
-                                colorScheme={"blue"} variant={gameSettingsPreset === TriviaGameSettingsPreset.Normal ? "solid" : "outline"}
-                                marginLeft={"auto"} marginRight={"auto"}>
+                                onClick={() => handleSelectGameSettingsPreset(TriviaGameSettingsPreset.Normal)}
+                                colorScheme={"blue"} variant={gameSettingsPreset === TriviaGameSettingsPreset.Normal ? "solid" : "outline"}>
                                 normal mode
                             </Button>
                         </Tooltip>
@@ -210,44 +193,35 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                         <Tooltip label={"shorter, easier game. more clue bonuses"} placement={"top"}>
                             <Button
                                 isDisabled={context.isSpectator}
-                                onClick={() => handleUpdateGameSettingsPreset(TriviaGameSettingsPreset.Party)}
-                                colorScheme={"blue"} variant={gameSettingsPreset === TriviaGameSettingsPreset.Party ? "solid" : "outline"}
-                                marginLeft={"auto"} marginRight={"auto"}>
+                                onClick={() => handleSelectGameSettingsPreset(TriviaGameSettingsPreset.Party)}
+                                colorScheme={"blue"} variant={gameSettingsPreset === TriviaGameSettingsPreset.Party ? "solid" : "outline"}>
                                 party mode
                             </Button>
                         </Tooltip>
-
-                        {/* <Tooltip label={"use the menu to make a custom game"} placement={"top"}>
-                            <Button
-                                isDisabled={context.isSpectator || (gameSettingsPreset !== TriviaGameSettingsPreset.Custom)}
-                                colorScheme={"blue"} variant={gameSettingsPreset === TriviaGameSettingsPreset.Custom ? "solid" : "outline"}
-                                marginLeft={"auto"} marginRight={"auto"}>
-                                custom mode
-                            </Button>
-                        </Tooltip> */}
                     </Stack>
 
-                    <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
+                    <Box width={"21em"} height={"4.5em"} marginLeft={"auto"} marginRight={"auto"} marginTop={"0.5em"} marginBottom={"0.5em"} 
+                        display={"flex"} justifyContent={"center"} alignItems={"center"}>
+                        {gamePreviewCategoryNames ? (
+                            <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} gap={"1em"}>
+                                <UnorderedList justifyContent={"center"} listStyleType={"none"} margin={0} width={"10em"}>
+                                    {gamePreviewCategoryNames.slice(0, 3).map((categoryName, index) => (
+                                        <ListItem key={`game-preview-category-${index}`} noOfLines={1}>{categoryName}</ListItem>
+                                    ))}
+                                </UnorderedList>
 
-                    <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>category preview</Heading>
-                    {gamePreviewCategoryNames ? (
-                        <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} gap={"1em"}>
-                            <UnorderedList justifyContent={"center"} listStyleType={"none"} margin={0}>
-                                {gamePreviewCategoryNames.slice(0, 3).map((categoryName, index) => (
-                                    <ListItem key={`game-preview-category-${index}`}>{categoryName}</ListItem>
-                                ))}
-                            </UnorderedList>
+                                <Divider orientation={"vertical"} height={"4em"} />
 
-                            <UnorderedList justifyContent={"center"} listStyleType={"none"} margin={0}>
-                                {gamePreviewCategoryNames.slice(3).map((categoryName, index) => (
-                                    <ListItem key={`game-preview-category-${index}`}>{categoryName}</ListItem>
-                                ))}
-                            </UnorderedList>
-                        </Stack>
-                        
-                    ) : (
-                        <Text><i>generating trivia...</i></Text>
-                    )}
+                                <UnorderedList justifyContent={"center"} listStyleType={"none"} margin={0} width={"10em"}>
+                                    {gamePreviewCategoryNames.slice(3).map((categoryName, index) => (
+                                        <ListItem key={`game-preview-category-${index}`} noOfLines={1}>{categoryName}</ListItem>
+                                    ))}
+                                </UnorderedList>
+                            </Stack>
+                        ) : (
+                            <Text><i>generating trivia...</i></Text>
+                        )}
+                    </Box>
 
                     <Button
                         isDisabled={context.isSpectator || !gamePreviewCategoryNames}
@@ -263,7 +237,7 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                     <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>leaderboard</Heading>
                 </Tooltip>
 
-                <Stack direction={"row"} justifyContent={"center"}>
+                <Stack direction={"row"} justifyContent={"center"} marginTop={"0.75em"}>
                     <Button
                         paddingLeft={"0.5em"} paddingRight={"0.5em"}
                         onClick={() => setCurrentLeaderboardType(LeaderboardType.AllTime)}
@@ -293,7 +267,9 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                     </Box>
                 )}
 
-                {leaderboardPlayers?.map((leaderboardPlayer, index) => LeaderboardPlayerBox(currentLeaderboardType, leaderboardPlayer, index))}
+                <Box id={"leaderboard-players-box"}>
+                    {leaderboardPlayers?.map((leaderboardPlayer, index) => LeaderboardPlayerBox(currentLeaderboardType, leaderboardPlayer, index))}
+                </Box>
             </Box>
         </Stack>
     );

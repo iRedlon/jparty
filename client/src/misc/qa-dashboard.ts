@@ -1,4 +1,6 @@
 
+import { CheatSocket } from "jparty-shared";
+
 import { LocalStorageKey } from "./ui-constants";
 
 const qaParams = new URLSearchParams(window.location.search);
@@ -9,6 +11,18 @@ export const isQAPlayer = qaRole === "player";
 export const isQAMode = isQAHost || isQAPlayer;
 export const qaSessionName = qaParams.get("session") || "";
 export const qaPlayerName = qaParams.get("name") || "";
+
+export function leaveQASession() {
+    if (!isQAMode) {
+        return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    params.delete("session");
+    params.delete("name");
+    params.delete("rejoin");
+    window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
+}
 
 export function updateQASessionName(sessionName: string) {
     if (isQAHost && (window.parent !== window)) {
@@ -63,6 +77,25 @@ if (isQAMode) {
     if (qaClientID) {
         fakeLocalStorageRecord[LocalStorageKey.ClientID] = qaClientID;
     }
+
+    window.addEventListener("message", (event) => {
+        if (event.origin !== window.location.origin) {
+            return;
+        }
+
+        const data = event.data;
+        if (!data) {
+            return;
+        }
+
+        if (data.type === "jparty-qa-font-size") {
+            document.documentElement.style.fontSize = (data.fontSizePx > 0) ? `${data.fontSizePx}px` : "";
+        }
+
+        if ((data.type === "jparty-qa-cheat") && Object.values(CheatSocket).includes(data.cheat)) {
+            import("./socket").then(({ socket }) => socket.emit(data.cheat));
+        }
+    });
 
     if (isQAPlayer && qaSessionName && (qaParams.get("rejoin") === "1")) {
         fakeLocalStorageRecord[LocalStorageKey.SessionName] = qaSessionName;

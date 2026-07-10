@@ -486,6 +486,7 @@ export class Session {
         switch (timeoutType) {
             case SessionTimeoutType.ReadingCategoryName:
             case SessionTimeoutType.Announcement:
+            case SessionTimeoutType.ReadingClueSelection:
                 {
                     durationMs = getVoiceDurationMs(this.currentVoiceLine);
                 }

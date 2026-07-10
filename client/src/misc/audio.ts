@@ -16,6 +16,7 @@ import ClueResponseSubmittedMP3 from "../assets/clue-response-submitted.mp3";
 import WagerResponseSubmittedMP3 from "../assets/wager-response-submitted.mp3";
 import CorrectDecisionMP3 from "../assets/correct-decision.mp3";
 //import IncorrectDecisionMP3 from "../assets/incorrect-decision.mp3";
+import ClueSelectedMP3 from "../assets/clue-selected.mp3";
 
 const musicAudios: { [key in AudioType]?: HTMLAudioElement } = {
     [AudioType.LobbyMusic]: new Audio(LobbyMusicMP3),
@@ -46,6 +47,7 @@ const soundEffectAudios: { [key in AudioType]?: HTMLAudioElement } = {
     [AudioType.WagerResponseSubmitted]: new Audio(WagerResponseSubmittedMP3),
     [AudioType.CorrectDecision]: new Audio(CorrectDecisionMP3),
     //[AudioType.IncorrectDecision]: new Audio(IncorrectDecisionMP3)
+    [AudioType.ClueSelected]: new Audio(ClueSelectedMP3),
 };
 
 const DEFAULT_VOLUME = 1;
@@ -144,6 +146,12 @@ export function playAudio(audioType: AudioType) {
 
     const soundEffectAudio = soundEffectAudios[audioType];
     if (soundEffectAudio) {
+        // correct decision sound effect should take priority over any other that might be playing right now
+        if (audioType === AudioType.CorrectDecision) {
+            soundEffectAudios[AudioType.ClueResponseSubmitted]?.pause();
+            soundEffectAudios[AudioType.WagerResponseSubmitted]?.pause();
+        }
+
         soundEffectAudio.currentTime = 0;
         soundEffectAudio.play();
     }
@@ -222,12 +230,6 @@ export function playOpenAIVoice(voiceType: VoiceType, voiceLine: string) {
     audio.volume = getModVolume(VolumeType.Voice);
     audio.play().catch(e => console.error(`audio playback failed: ${e.message}`));
 
-    audio.onloadedmetadata = () => {
-        if (Number.isFinite(audio.duration)) {
-            socket.emit(HostSocket.UpdateVoiceDuration, voiceLine, audio.duration);
-        }
-    }
-
     audio.onended = () => {
         socket.emit(HostSocket.UpdateVoiceDuration, voiceLine, 0);
     }
@@ -259,7 +261,7 @@ export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string
 
     utterance.volume = getModVolume(VolumeType.Voice);
     utterance.voice = voice;
-    utterance.rate = 1.5;
+    utterance.rate = 1.3;
     utterance.onstart = () => {
         utteranceStarted = true;
         clearInterval(utteranceStartedInterval);

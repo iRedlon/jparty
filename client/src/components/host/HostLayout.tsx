@@ -1,6 +1,6 @@
 
 import { Box, Center, Flex } from "@chakra-ui/react";
-import { AudioType, HostServerSocket, LeaderboardPlayers, LeaderboardStatsSchema, LeaderboardType, SessionAnnouncement, SessionState, TriviaClueBonus, VoiceType } from "jparty-shared";
+import { AudioType, HostServerSocket, LeaderboardPlayers, LeaderboardStatsSchema, LeaderboardType, SessionAnnouncement, SessionState, TriviaClueBonus, TriviaGameSettingsPreset, VoiceType } from "jparty-shared";
 import { useContext, useEffect, useRef, useState } from "react";
 import { GoMute } from "react-icons/go";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
@@ -48,6 +48,8 @@ export default function HostLayout() {
     const [numSubmittedResponders, setNumSubmittedResponders] = useState(0);
     const [numResponders, setNumResponders] = useState(0);
     const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
+    const [gameSettingsPreset, setGameSettingsPreset] = useState(TriviaGameSettingsPreset.Normal);
+    const [gamePreviewCategoryNames, setGamePreviewCategoryNames] = useState<string[] | undefined>();
 
     useEffect(() => {
         window.speechSynthesis.getVoices();
@@ -60,6 +62,8 @@ export default function HostLayout() {
         socket.on(HostServerSocket.HideAnnouncement, handleHideAnnouncement);
         socket.on(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         socket.on(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
+        socket.on(HostServerSocket.UpdateGameSettingsPreset, handleServerUpdateGameSettingsPreset);
+        socket.on(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
 
         addMockSocketEventHandler(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
         addMockSocketEventHandler(HostServerSocket.UpdateLeaderboardStats, handleUpdateLeaderboardStats);
@@ -69,6 +73,7 @@ export default function HostLayout() {
         addMockSocketEventHandler(HostServerSocket.HideAnnouncement, handleHideAnnouncement);
         addMockSocketEventHandler(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         addMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
+        addMockSocketEventHandler(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
 
         return () => {
             socket.off(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
@@ -79,6 +84,8 @@ export default function HostLayout() {
             socket.off(HostServerSocket.HideAnnouncement, handleHideAnnouncement);
             socket.off(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
             socket.off(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
+            socket.off(HostServerSocket.UpdateGameSettingsPreset, handleServerUpdateGameSettingsPreset);
+            socket.off(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
 
             removeMockSocketEventHandler(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
             removeMockSocketEventHandler(HostServerSocket.UpdateLeaderboardStats, handleUpdateLeaderboardStats);
@@ -88,6 +95,7 @@ export default function HostLayout() {
             removeMockSocketEventHandler(HostServerSocket.HideAnnouncement, handleHideAnnouncement);
             removeMockSocketEventHandler(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
             removeMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
+            removeMockSocketEventHandler(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
         }
     }, []);
 
@@ -155,6 +163,15 @@ export default function HostLayout() {
         }
     }
 
+    const handleServerUpdateGameSettingsPreset = (preset: TriviaGameSettingsPreset) => {
+        setGameSettingsPreset(preset);
+        setGamePreviewCategoryNames(undefined);
+    }
+
+    const handleUpdateGamePreview = (categoryNames: string[]) => {
+        setGamePreviewCategoryNames(categoryNames);
+    }
+
     const handlePlayAudio = (audioType: AudioType) => {
         playAudio(audioType);
     }
@@ -213,7 +230,9 @@ export default function HostLayout() {
                     weeklyLeaderboardPlayers={weeklyLeaderboardPlayers}
                     allTimeLeaderboardStats={allTimeLeaderboardStats}
                     monthlyLeaderboardStats={monthlyLeaderboardStats}
-                    weeklyLeaderboardStats={weeklyLeaderboardStats} />, HostComponentState.Lobby] :
+                    weeklyLeaderboardStats={weeklyLeaderboardStats}
+                    gameSettingsPreset={gameSettingsPreset} setGameSettingsPreset={setGameSettingsPreset}
+                    gamePreviewCategoryNames={gamePreviewCategoryNames} setGamePreviewCategoryNames={setGamePreviewCategoryNames} />, HostComponentState.Lobby] :
                 [<></>, HostComponentState.None];
         }
 

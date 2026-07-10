@@ -5,11 +5,13 @@ import { loadSlim } from "@tsparticles/slim";
 import { useEffect, useState } from "react";
 
 import {
-    BACKGROUND_THEME_CHANGE_EVENT, BACKGROUND_THEME_COLORS, BackgroundTheme, getBackgroundTheme, KALEIDOSCOPE_PARTICLE_COLORS
+    BACKGROUND_THEME_CHANGE_EVENT, BACKGROUND_THEME_COLORS, BackgroundTheme, getBackgroundTheme
 } from "../../misc/background-theme";
 
 export default function Background() {
     const [theme, setTheme] = useState(getBackgroundTheme());
+
+    const isKaleidoscope = theme === BackgroundTheme.Kaleidoscope;
 
     useEffect(() => {
         initParticlesEngine(async (engine) => {
@@ -23,79 +25,70 @@ export default function Background() {
         return () => window.removeEventListener(BACKGROUND_THEME_CHANGE_EVENT, handleThemeChange);
     }, []);
 
-    const isKaleidoscope = theme === BackgroundTheme.Kaleidoscope;
     const themeColors = BACKGROUND_THEME_COLORS[theme];
 
     return (
-        <Particles
-            key={theme}
-            id={"tsparticles"}
-            className={isKaleidoscope ? "kaleidoscope-background" : undefined}
-            options={{
-                fpsLimit: 120,
-                background: {
-                    color: {
-                        value: isKaleidoscope ? "transparent" : themeColors.backgroundColor,
+        <div className={isKaleidoscope ? "kaleidoscope-background" : undefined}>
+            <Particles
+                key={theme}
+                id={"tsparticles"}
+                options={{
+                    fpsLimit: 120,
+                    background: {
+                        color: {
+                            value: isKaleidoscope ? "transparent" : themeColors.backgroundColor,
+                        },
                     },
-                },
-                particles: {
-                    number: {
-                        // make density consistent on any screen size
-                        value: 16,
-                        density: {
-                            enable: true,
-                            width: 1920,
-                            height: 1080
-                        }
-                    },
-                    color: isKaleidoscope ? {
-                        value: KALEIDOSCOPE_PARTICLE_COLORS,
-                        animation: {
-                            h: {
+                    particles: {
+                        number: {
+                            value: isKaleidoscope ? 0 : 16,
+                            density: {
                                 enable: true,
-                                speed: 10
+                                width: 1920,
+                                height: 1080
+                            }
+                        },
+                        color: {
+                            value: themeColors.accentColor,
+                        },
+                        shape: {
+                            type: "square",
+                        },
+                        move: {
+                            direction: "none",
+                            enable: true,
+                            outModes: {
+                                default: "out",
+                            },
+                            speed: 2,
+                            straight: false
+                        },
+                        size: {
+                            value: {
+                                min: 150,
+                                max: 200,
+                            },
+                            animation: {
+                                startValue: "random",
+                                enable: true,
+                                speed: 20
+                            }
+                        },
+                        opacity: {
+                            value: {
+                                min: 0.3,
+                                max: 0.5,
+                            },
+                            animation: {
+                                startValue: "random",
+                                enable: true,
+                                speed: 0.2
                             }
                         }
-                    } : {
-                        value: themeColors.accentColor,
                     },
-                    shape: {
-                        type: "square",
-                    },
-                    move: {
-                        direction: "none",
-                        enable: true,
-                        outModes: {
-                            default: "out",
-                        },
-                        speed: 2,
-                        straight: false
-                    },
-                    size: {
-                        value: {
-                            min: 150,
-                            max: 200,
-                        },
-                        animation: {
-                            startValue: "random",
-                            enable: true,
-                            speed: 20
-                        }
-                    },
-                    opacity: {
-                        value: {
-                            min: 0.3,
-                            max: 0.5,
-                        },
-                        animation: {
-                            startValue: "random",
-                            enable: true,
-                            speed: 0.2
-                        }
-                    }
-                },
-                detectRetina: true
-            }}
-        />
+                    detectRetina: true
+                }}
+            />
+        </div>
     )
 };

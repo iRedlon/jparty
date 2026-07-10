@@ -1,5 +1,5 @@
 
-import "./misc/qa-mode";
+import "./misc/qa-dashboard";
 
 import { ChakraProvider } from "@chakra-ui/react";
 import React from "react";
