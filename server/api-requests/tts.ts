@@ -13,6 +13,9 @@ if (process.env.USE_OPENAI_TTS && !process.env.OPENAI_SECRET_KEY) {
     throw new Error(formatDebugLog("USE_OPENAI_TTS is enabled without an OPENAI_SECRET_KEY"));
 }
 
+const TTS_MODEL = "gpt-4o-mini-tts";
+const TTS_VOICE_INSTRUCTIONS = "You are the host of a TV trivia game show. Speak briskly and confidently, putting emphasis on the important words.";
+
 export function shouldStreamVoiceAudio(voiceType: VoiceType) {
     if (!process.env.USE_OPENAI_TTS) {
         return false;
@@ -29,7 +32,6 @@ export async function streamVoiceAudio(req: Request, res: Response) {
 
     // only stream a voice line that this session is actually trying to speak right now
     const session = getSession(sessionName);
-
     if (!session || !voiceLine || (voiceLine !== session.currentVoiceLine) || !shouldStreamVoiceAudio(voiceType)) {
         res.sendStatus(204);
         return;
@@ -47,10 +49,11 @@ export async function streamVoiceAudio(req: Request, res: Response) {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "tts-1",
+                model: TTS_MODEL,
                 voice: (voiceType === VoiceType.ModernFeminine) ? "nova" : "echo",
                 input: voiceLine,
-                response_format: "mp3"
+                instructions: TTS_VOICE_INSTRUCTIONS,
+                response_format: "wav"
             })
         });
 
@@ -63,7 +66,7 @@ export async function streamVoiceAudio(req: Request, res: Response) {
 
         debugLog(LogCategory.Voice, `streaming TTS audio from OpenAI for voice type: ${voiceType}`, LogVerbosity.Verbose);
 
-        res.setHeader("Content-Type", "audio/mpeg");
+        res.setHeader("Content-Type", "audio/wav");
 
         const audioStream = Readable.fromWeb(response.body as any);
 

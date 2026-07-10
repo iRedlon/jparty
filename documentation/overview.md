@@ -46,10 +46,10 @@ Environment variables are set by a .env file at the roots of the server and clie
 ## _[Logging](../server/misc/log.ts)_
 - All server logging flows through a single custom function: "debugLog". This is so that each log can be labelled by the system its a part of (i.e. connection, clue decision, game generation) and can be chosen to be logged or not depending on the current log level (which is ultimately set by an environment variable: LOG_LEVEL)
 
-## _[Analytics](../server/misc/analytics.ts)_
+## _[Telemetry](../server/misc/telemetry.ts)_
 - Custom game events are sent server-side to a separate Google Analytics property using the Measurement Protocol
 - Each session is reported as a distinct GA "user", so "active users" really means "active sessions"
-- Analytics are disabled entirely when the GA environment variables are unset. Note that new event params must also be registered as custom dimensions in GA before they'll show up in reports
+- Telemetry is disabled entirely when the GA environment variables are unset. Note that new event params must also be registered as custom dimensions in GA before they'll show up in reports
 
 ## _[Trivia Database](../server/api-requests/generate-trivia-game.ts)_
 - jparty has its own database for trivia clues. It's organized as follows: category type -> categories -> clue difficulty -> clues

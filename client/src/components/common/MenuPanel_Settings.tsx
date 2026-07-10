@@ -122,7 +122,7 @@ export default function MenuPanel_Settings({
               px={{ base: 4, md: 5 }}
               py={{ base: 3, md: 4 }}
             >
-              {context.sessionName ? (
+              {context.sessionName && (
                 <Stack spacing={3}>
                   <Text>
                     You are in session: <b>{context.sessionName}</b>
@@ -139,10 +139,6 @@ export default function MenuPanel_Settings({
                     Leave session
                   </Button>
                 </Stack>
-              ) : (
-                context.isPlayer && (
-                  <Text color={muted}>Join a session to adjust settings</Text>
-                )
               )}
             </Box>
 

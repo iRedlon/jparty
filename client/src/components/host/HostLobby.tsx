@@ -185,6 +185,7 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                             <Button
                                 isDisabled={context.isSpectator}
                                 onClick={() => handleSelectGameSettingsPreset(TriviaGameSettingsPreset.Normal)}
+                                size={"sm"}
                                 colorScheme={"blue"} variant={gameSettingsPreset === TriviaGameSettingsPreset.Normal ? "solid" : "outline"}>
                                 normal mode
                             </Button>
@@ -194,6 +195,7 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                             <Button
                                 isDisabled={context.isSpectator}
                                 onClick={() => handleSelectGameSettingsPreset(TriviaGameSettingsPreset.Party)}
+                                size={"sm"}
                                 colorScheme={"blue"} variant={gameSettingsPreset === TriviaGameSettingsPreset.Party ? "solid" : "outline"}>
                                 party mode
                             </Button>
@@ -262,8 +264,8 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
 
                 {currentLeaderboardStats && (
                     <Box marginTop={"0.5em"}>
-                        <Text><i>games played: {currentLeaderboardStats.gamesPlayed}</i></Text>
-                        <Text><i>money earned: {formatDollarValue(currentLeaderboardStats.moneyEarned)}</i></Text>
+                        <Text><i>{currentLeaderboardStats.gamesPlayed} games played</i></Text>
+                        <Text><i>{formatDollarValue(currentLeaderboardStats.moneyEarned)} total earnings</i></Text>
                     </Box>
                 )}
 

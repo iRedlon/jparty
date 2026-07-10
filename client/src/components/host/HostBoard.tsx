@@ -1,5 +1,5 @@
 
-import { Box, Button, Heading, SimpleGrid } from "@chakra-ui/react";
+import { Box, Button, Flex, Heading } from "@chakra-ui/react";
 import { HostServerSocket, SessionState, TriviaRound } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
 
@@ -65,16 +65,9 @@ export default function HostBoard({ triviaRound }: HostBoardProps) {
     const boardPanelWidth = `${100 / numCategories}vw`;
 
     const BoardPanel = (content: any, categoryIndex: number, panelIndex: number) => {
-        // give every other category column a different class so they can be animated differently
-        const isEvenCategoryIndex = (categoryIndex % 2) === 0;
-
-        const isVisible = readingCategoryNames ? (readingCategoryIndex >= categoryIndex) : true;
-        const className = isVisible ? `board-panel-wrapper ${isEvenCategoryIndex ? "even" : "odd"}` : "";
-
         return (
             <Box
-                visibility={isVisible ? "visible" : "hidden"}
-                key={`category-${categoryIndex}-${panelIndex}`} className={className}
+                key={`category-${categoryIndex}-${panelIndex}`} className={"board-panel-wrapper"}
                 height={boardPanelHeight} width={boardPanelWidth}>
 
                 <Box onClick={() => handleDebugCommand(DebugCommand.SelectClue, categoryIndex, panelIndex - 1)} className={"board-panel box"}>
@@ -96,24 +89,32 @@ export default function HostBoard({ triviaRound }: HostBoardProps) {
                 )
             } */}
 
-            <SimpleGrid columns={numCategories}>
-                {[...Array(numPanels)].map((_, panelIndex) => {
+            <Flex>
+                {[...Array(numCategories)].map((_, categoryIndex) => {
+                    const triviaCategory = triviaRound.categories[categoryIndex];
+
+                    // give every other category column a different class so they can be animated differently
+                    const isEvenCategoryIndex = (categoryIndex % 2) === 0;
+                    const isVisible = readingCategoryNames ? (readingCategoryIndex >= categoryIndex) : true;
+
                     return (
-                        [...Array(numCategories)].map((_, categoryIndex) => {
-                            const triviaCategory = triviaRound.categories[categoryIndex];
+                        <Box key={`category-${categoryIndex}`} visibility={isVisible ? "visible" : "hidden"}
+                            className={`board-column ${isEvenCategoryIndex ? "even" : "odd"}${isVisible ? " visible" : ""}`}>
 
-                            // the first panel is the top of this category's column, which displays the category name
-                            if (panelIndex === 0) {
-                                return BoardPanel(triviaCategory.completed ? "" : triviaCategory.name, categoryIndex, panelIndex);
-                            }
+                            {[...Array(numPanels)].map((_, panelIndex) => {
+                                // the first panel is the top of this category's column, which displays the category name
+                                if (panelIndex === 0) {
+                                    return BoardPanel(triviaCategory.completed ? "" : triviaCategory.name, categoryIndex, panelIndex);
+                                }
 
-                            const triviaClue = triviaCategory.clues[panelIndex - 1];
+                                const triviaClue = triviaCategory.clues[panelIndex - 1];
 
-                            return BoardPanel(triviaClue.completed ? "" : formatDollarValue(triviaClue.value), categoryIndex, panelIndex);
-                        })
-                    )
+                                return BoardPanel(triviaClue.completed ? "" : formatDollarValue(triviaClue.value), categoryIndex, panelIndex);
+                            })}
+                        </Box>
+                    );
                 })}
-            </SimpleGrid>
+            </Flex>
         </>
     );
 }

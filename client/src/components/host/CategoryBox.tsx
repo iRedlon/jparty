@@ -19,7 +19,8 @@ export default function CategoryBox({ triviaCategory, triviaClue }: CategoryBoxP
     }
 
     return (
-        <Box id={"category-box"} className={"box"} padding={"1em"} onClick={() => handleDebugCommand(DebugCommand.UpdateSessionState, SessionState.PromptClueSelection)}>
+        <Box id={"category-box"} className={"box"} padding={"1em"} width={"fit-content"} marginLeft={"auto"} marginRight={"auto"}
+            onClick={() => handleDebugCommand(DebugCommand.UpdateSessionState, SessionState.PromptClueSelection)}>
             <Heading size={"lg"} fontFamily={"clue"}>{triviaCategory.name.toUpperCase()} {clueValueString}</Heading>
 
             <Heading size={"sm"} fontFamily={"clue"}>

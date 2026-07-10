@@ -285,8 +285,21 @@ export function updateVoiceDuration(sessionName: string, voiceLine: string, dura
         return;
     }
 
+    if (!durationMs) {
+        session.currentVoiceLineFinished = true;
+    }
+
     if (session.currentAnnouncement !== undefined) {
-        restartTimeout(sessionName, SessionTimeoutType.Announcement, durationMs);
+        const minRemainingMs = Session.MIN_ANNOUNCEMENT_DURATION_MS - session.getTimeoutElapsedMs(SessionTimeoutType.Announcement);
+        restartTimeout(sessionName, SessionTimeoutType.Announcement, Math.max(durationMs, minRemainingMs, 0));
+    }
+
+    if (session.timeoutInfo[SessionTimeoutType.ReadingClueDecision]) {
+        const revealedAllPlayDecisions = session.getCurrentClue()?.isAllPlayClue() && session.displayingCorrectAnswer;
+        const readingPadMs = revealedAllPlayDecisions ? Session.ALL_PLAY_DECISION_READING_PAD_MS : 0;
+        const minRemainingMs = session.getRevealClueDecisionDurationMs() - session.getTimeoutElapsedMs(SessionTimeoutType.ReadingClueDecision);
+
+        restartTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, Math.max(durationMs + readingPadMs, minRemainingMs, 0));
     }
 
     switch (session.state) {

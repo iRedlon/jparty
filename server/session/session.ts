@@ -57,7 +57,7 @@ export class Session {
     // keep this in memory so we can clear out sessions that have been idle for too long
     lastUpdatedTimeMs: number;
 
-    // analytics bookkeeping
+    // telemetry bookkeeping
     creationTimeMs: number;
     gameStartTimeMs: number;
     gameCount: number;
@@ -82,6 +82,7 @@ export class Session {
     displayingCorrectAnswer: boolean;
     voiceType: VoiceType;
     currentVoiceLine: string;
+    currentVoiceLineFinished: boolean;
 
     // clue selection info
     gameStarterID: SocketID;
@@ -121,6 +122,7 @@ export class Session {
         this.responseWindowOpenTimeMs = 0;
         this.displayingCorrectAnswer = false;
         this.currentVoiceLine = "";
+        this.currentVoiceLineFinished = true;
 
         this.gameStarterID = "";
         this.previousClueSelectorClientID = "";
@@ -455,6 +457,12 @@ export class Session {
     // we should never need to fall back on this but just in case...
     static DEFAULT_TIMEOUT_DURATION_MS = 3000;
 
+    // announcements animate in and out of frame. never let one end before it's had real time on screen, even if its voice line finished quickly
+    static MIN_ANNOUNCEMENT_DURATION_MS = 3000;
+
+    // an all play reveal puts everyone's decisions on screen at once. this warrants extra reading time
+    static ALL_PLAY_DECISION_READING_PAD_MS = 2000;
+
     static TOSSUP_WINDOW_DURATION_MS = 750;
 
     // response windows adjust for latency by opening and closing a bit later than reality
@@ -485,10 +493,14 @@ export class Session {
 
         switch (timeoutType) {
             case SessionTimeoutType.ReadingCategoryName:
-            case SessionTimeoutType.Announcement:
             case SessionTimeoutType.ReadingClueSelection:
                 {
                     durationMs = getVoiceDurationMs(this.currentVoiceLine);
+                }
+                break;
+            case SessionTimeoutType.Announcement:
+                {
+                    durationMs = Math.max(getVoiceDurationMs(this.currentVoiceLine), Session.MIN_ANNOUNCEMENT_DURATION_MS);
                 }
                 break;
             case SessionTimeoutType.ReadingClue:
@@ -523,7 +535,11 @@ export class Session {
                 break;
             case SessionTimeoutType.ReadingClueDecision:
                 {
-                    durationMs = this.triviaGame.settings.revealDecisionDurationSec * 1000;
+                    durationMs = this.getRevealClueDecisionDurationMs();
+
+                    if (!this.currentVoiceLineFinished) {
+                        durationMs = Math.max(durationMs, getVoiceDurationMs(this.currentVoiceLine));
+                    }
                 }
                 break;
         }
@@ -533,6 +549,23 @@ export class Session {
         }
 
         return durationMs;
+    }
+
+    getRevealClueDecisionDurationMs() {
+        if (!this.triviaGame) {
+            return Session.DEFAULT_TIMEOUT_DURATION_MS;
+        }
+
+        return this.triviaGame.settings.revealDecisionDurationSec * 1000;
+    }
+
+    getTimeoutElapsedMs(timeoutType: SessionTimeoutType) {
+        const timeoutInfo = this.timeoutInfo[timeoutType];
+        if (!timeoutInfo) {
+            return 0;
+        }
+
+        return Math.max(Date.now() - (timeoutInfo.endTimeMs - timeoutInfo.durationMs), 0);
     }
 
     getTimeoutDisplayWindowMs(timeoutType: SessionTimeoutType) {
@@ -593,6 +626,7 @@ export class Session {
 
     setCurrentVoiceLine(voiceLine: string) {
         this.currentVoiceLine = voiceLine;
+        this.currentVoiceLineFinished = false;
     }
 
     // ======================

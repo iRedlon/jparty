@@ -208,7 +208,16 @@ function getSpeechSynthesisVoice(voiceType: VoiceType) {
 // only one voice line should ever be playing at a time. whenever a new one starts, whatever is in progress gets cut off
 let currentVoiceAudio: HTMLAudioElement | undefined;
 
+const SPEECH_SYNTHESIS_START_DELAY_MS = 1000;
+
+let speechSynthesisStartTimeout: NodeJS.Timeout | undefined;
+
 function stopVoiceInProgress() {
+    if (speechSynthesisStartTimeout) {
+        clearTimeout(speechSynthesisStartTimeout);
+        speechSynthesisStartTimeout = undefined;
+    }
+
     if (currentVoiceAudio) {
         currentVoiceAudio.pause();
         URL.revokeObjectURL(currentVoiceAudio.src);
@@ -245,7 +254,12 @@ let utteranceStartedInterval: NodeJS.Timeout;
 
 const MAX_UTTERANCE_RETRIES = 3;
 
-export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string, retryCount: number = 0) {
+export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string) {
+    stopVoiceInProgress();
+    speechSynthesisStartTimeout = setTimeout(() => playSpeechSynthesisVoiceInternal(voiceType, voiceLine), SPEECH_SYNTHESIS_START_DELAY_MS);
+}
+
+function playSpeechSynthesisVoiceInternal(voiceType: VoiceType, voiceLine: string, retryCount: number = 0) {
     const voice = getSpeechSynthesisVoice(voiceType);
     if (!voice) {
         return;
@@ -279,7 +293,7 @@ export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string
         if (!utteranceStarted) {
             // utterances randomly fail to start once in a while... not much I can do about an external API so just manually solving this
             // by recursing in order to retry the failed voice line
-            playSpeechSynthesisVoice(voiceType, voiceLine, retryCount + 1);
+            playSpeechSynthesisVoiceInternal(voiceType, voiceLine, retryCount + 1);
         }
     }, 500);
 

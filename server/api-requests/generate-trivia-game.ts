@@ -66,17 +66,21 @@ async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSet
 
     categorySchema.name = formatText(categorySchema.name);
 
+    const likelyToBeImageClue = (clue: string) => {
+        const imageClueKeywords = ["seen here", "pictured here", "featured here", "shown here"];
+        return imageClueKeywords.some(keyword => clue.toLowerCase().includes(keyword));
+    }
+
+    for (let difficulty = TriviaClueDifficulty.Easiest; difficulty <= TriviaClueDifficulty.Hardest; difficulty++) {
+        categorySchema.clues[difficulty] = (categorySchema.clues[difficulty] || []).filter((clueSchema: TriviaClueSchema) => !likelyToBeImageClue(clueSchema.question));
+    }
+
     let triviaCategory = new TriviaCategory(categorySettings, categorySchema);
 
     // generate a clue for each difficulty in the rolled order
     let clueIndex = 0;
     let usedClueIDs = new Set<number>();
     let usedAnswers = new Set<string>();
-
-    const likelyToBeImageClue = (clue: string) => {
-        const imageClueKeywords = ["seen here", "pictured here", "featured here", "shown here"];
-        return imageClueKeywords.some(keyword => clue.toLowerCase().includes(keyword));
-    }
 
     const isDuplicateAnswer = (answer: string) => {
         const answerInCategoryName = triviaCategory.name.toLowerCase().includes(answer.toLowerCase());
@@ -92,14 +96,19 @@ async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSet
         }
 
         const clueDifficulty = clueDifficultyOrder[clueIndex];
-        let clueSchema: TriviaClueSchema = getRandomChoice<TriviaClueSchema>(categorySchema.clues[clueDifficulty]);
-        
+        const possibleClues = categorySchema.clues[clueDifficulty];
+
+        if (!possibleClues.length) {
+            throw new Error(formatDebugLog("ran out of usable clues for a category"));
+        }
+
+        let clueSchema: TriviaClueSchema = getRandomChoice<TriviaClueSchema>(possibleClues);
+
         let attempts = 0;
 
         // ensure category doesn't have two clues with the same answer
-        // also do a naive check to make sure it's not an image clue
-        while ((isDuplicateAnswer(clueSchema.answer) || likelyToBeImageClue(clueSchema.question)) && attempts < 10) {
-            clueSchema = getRandomChoice<TriviaClueSchema>(categorySchema.clues[clueDifficulty]);
+        while (isDuplicateAnswer(clueSchema.answer) && attempts < 10) {
+            clueSchema = getRandomChoice<TriviaClueSchema>(possibleClues);
             attempts++;
         }
 

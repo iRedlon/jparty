@@ -14,7 +14,7 @@ export const BACKGROUND_THEME_DISPLAY_NAMES: Record<BackgroundTheme, string> = {
     [BackgroundTheme.Blue]: "Blue",
     [BackgroundTheme.Red]: "Red",
     [BackgroundTheme.Green]: "Green",
-    [BackgroundTheme.Kaleidoscope]: "Kaleidoscope"
+    [BackgroundTheme.Kaleidoscope]: "Rainbow"
 }
 
 interface BackgroundThemeColors {

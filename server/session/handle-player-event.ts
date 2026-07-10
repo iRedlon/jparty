@@ -6,7 +6,7 @@ import {
 import { Socket } from "socket.io";
 
 import { playAudio, playVoiceLine } from "./audio.js";
-import { AnalyticsEvent, sendAnalyticsEvent } from "../misc/analytics.js";
+import { TelemetryEvent, sendTelemetryEvent } from "../misc/telemetry.js";
 import {
     emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, handleDisconnect, joinSession,
     restartTimeout, showAnnouncement, startPositionChangeAnimation, startTimeout, stopTimeout, updateLeaderboard
@@ -41,7 +41,7 @@ function handleConnect(socket: Socket, sessionName: string, clientID: string, pl
     session.connectPlayer(socket.id, clientID, playerName);
     joinSession(socket, sessionName);
 
-    sendAnalyticsEvent(AnalyticsEvent.PlayerJoined, sessionName, { player_name: playerName });
+    sendTelemetryEvent(TelemetryEvent.PlayerJoined, sessionName, { player_name: playerName });
 
     // reset both session and player name
     callback(true, true);
@@ -55,7 +55,7 @@ function handleLeaveSession(socket: Socket, sessionName: string) {
 
     const player = session.players[socket.id];
     if (player) {
-        sendAnalyticsEvent(AnalyticsEvent.PlayerLeft, sessionName, { player_name: player.name });
+        sendTelemetryEvent(TelemetryEvent.PlayerLeft, sessionName, { player_name: player.name });
     }
 
     handleDisconnect(socket);
@@ -101,7 +101,7 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
     session.gameStartTimeMs = Date.now();
     session.gameCount++;
 
-    sendAnalyticsEvent(AnalyticsEvent.GameStarted, sessionName, {
+    sendTelemetryEvent(TelemetryEvent.GameStarted, sessionName, {
         num_players: session.getConnectedPlayerIDs().length,
         session_duration_sec: session.getSessionDurationSec(),
         session_game_count: session.gameCount
@@ -521,7 +521,7 @@ async function batchRevealClueDecision(sessionName: string, decisionsPromise: Pr
         const decisionInfo = responder?.clueDecisionInfo;
 
         if (responder && decisionInfo) {
-            sendAnalyticsEvent(AnalyticsEvent.ClueDecision, sessionName, {
+            sendTelemetryEvent(TelemetryEvent.ClueDecision, sessionName, {
                 player_name: responder.name,
                 player_answer: decisionInfo.response,
                 clue: decisionInfo.clue.question,
@@ -584,7 +584,7 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
 
     // "needs more detail" isn't a final decision. this responder is about to respond again and will get a real decision then
     if (responder && decisionInfo && (decision !== TriviaClueDecision.NeedsMoreDetail)) {
-        sendAnalyticsEvent(AnalyticsEvent.ClueDecision, sessionName, {
+        sendTelemetryEvent(TelemetryEvent.ClueDecision, sessionName, {
             player_name: responder.name,
             player_answer: decisionInfo.response,
             clue: decisionInfo.clue.question,
@@ -706,7 +706,7 @@ async function finishRound(sessionName: string) {
         announcement = SessionAnnouncement.GameOver;
         playAudio(sessionName, AudioType.LongApplause);
 
-        sendAnalyticsEvent(AnalyticsEvent.GameFinished, sessionName, {
+        sendTelemetryEvent(TelemetryEvent.GameFinished, sessionName, {
             num_players: session.getConnectedPlayerIDs().length,
             game_duration_sec: session.getGameDurationSec(),
             session_duration_sec: session.getSessionDurationSec()
@@ -767,7 +767,7 @@ function handleResponseWindowArrived(socket: Socket, sessionName: string, timeou
 
     debugLog(LogCategory.Timeout, `(${player.name}) received ${SessionTimeoutType[timeoutType]} with ${slackMs}ms of slack time remaining`, LogVerbosity.VeryVerbose);
 
-    sendAnalyticsEvent(AnalyticsEvent.ResponseWindowArrived, sessionName, {
+    sendTelemetryEvent(TelemetryEvent.ResponseWindowArrived, sessionName, {
         player_name: player.name,
         timeout_type: SessionTimeoutType[timeoutType],
         response_window_arrival_slack_ms: slackMs

@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import { LeaderboardPlayers, LeaderboardPlayerSchema, LeaderboardStatsSchema, LeaderboardType, NUM_LEADERBOARD_SPOTS, PLACEHOLDER_LEADERBOARD_PLAYERS, Player } from "jparty-shared";
 import { MongoClient } from "mongodb";
 
-import { AnalyticsEvent, sendAnalyticsEvent } from "../misc/analytics";
+import { TelemetryEvent, sendTelemetryEvent } from "../misc/telemetry";
 import { debugLog, LogCategory, LogVerbosity } from "../misc/log";
 
 const MONGO_LEADERBOARD_DB_NAME = "leaderboard";
@@ -153,7 +153,7 @@ async function updateLeaderboard(type: LeaderboardType, newLeaderboardPlayer: Le
 
         const leaderboardSpot = leaderboardPlayerSchemas.length - newPlayerIndex;
 
-        sendAnalyticsEvent(AnalyticsEvent.LeaderboardChange, sessionName, {
+        sendTelemetryEvent(TelemetryEvent.LeaderboardChange, sessionName, {
             player_name: newLeaderboardPlayer.name,
             leaderboard_type: type,
             leaderboard_spot: leaderboardSpot,

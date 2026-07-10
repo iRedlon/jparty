@@ -1,7 +1,7 @@
 
 import { debugLog, LogCategory, LogVerbosity } from "./log.js";
 
-export enum AnalyticsEvent {
+export enum TelemetryEvent {
     GameStarted = "game_started",
     GameFinished = "game_finished",
     PlayerJoined = "player_joined",
@@ -15,11 +15,11 @@ const GA_ENDPOINT = "https://www.google-analytics.com/mp/collect";
 
 const MAX_PARAM_VALUE_LENGTH = 100;
 
-export function sendAnalyticsEvent(event: AnalyticsEvent, sessionName: string, params: Record<string, string | number> = {}) {
+export function sendTelemetryEvent(event: TelemetryEvent, sessionName: string, params: Record<string, string | number> = {}) {
     const measurementID = process.env.GA_MEASUREMENT_ID;
     const apiSecret = process.env.GA_API_SECRET;
 
-    // leaving these unset disables analytics entirely
+    // leaving these unset disables telemetry entirely
     if (!measurementID || !apiSecret) {
         return;
     }
