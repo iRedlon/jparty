@@ -97,7 +97,7 @@ const baseVolumes: { [key in VolumeType]?: number } = {
 
 // override per-track if a particular mp3 is unusually loud or quiet
 const baseVolumeOverrides: { [key in AudioType]?: number } = {
-    [AudioType.GameMusic]: 0.075,
+    [AudioType.GameMusic]: 0.05625,
     [AudioType.CorrectDecision]: 0.2,
     [AudioType.IncorrectDecision]: 0.2
 };

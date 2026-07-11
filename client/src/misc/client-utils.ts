@@ -31,3 +31,9 @@ export function getClientID() {
 
 // session name prefilled by scanning the host lobby QR code (e.g. jparty.io/?join=abcde)
 export const joinSessionName = new URLSearchParams(window.location.search).get("join") || "";
+
+if (joinSessionName) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("join");
+    history.replaceState(null, "", url);
+}

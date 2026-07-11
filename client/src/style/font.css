@@ -5,7 +5,7 @@
 
 .logo-text {
     font-family: "logo" !important;
-    letter-spacing: 0.05em; /* tweak here */
+    letter-spacing: 0.05em;
 }
 
 @font-face {

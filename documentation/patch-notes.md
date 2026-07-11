@@ -17,8 +17,8 @@
 
 ### New visuals and sounds
 - New background theme options in the settings menu
-- Slight menu redesign across the board
-- New music for the lobby
+- Slight UI changes across the board i.e. new font and menu style
+- New music on lobby and during game
 - New sound effects for selecting clues, buzzing in, submitting responses and wagers, and clue decisions
 
 ---
@@ -46,6 +46,7 @@
 
 ### Everything else
 - Custom games are temporarily unavailable while they get reworked; the normal and party presets remain
+- Lots and lots of small bug fixes
 
 ## _Version 1.0, a total remake of the former jeoparty.io_
 

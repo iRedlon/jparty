@@ -62,6 +62,20 @@
     }
 }
 
+#category-box,
+#question-box,
+#logo-box,
+#game-settings-preset-box,
+#leaderboard-box,
+#joined-players-box,
+#game-over-box,
+#responder-info-box,
+.announcement-box,
+.scoreboard-player-box,
+.timer-wrapper {
+    will-change: transform;
+}
+
 /* I miss playing Kahoot... */
 @keyframes kaleidoscope-cycle {
     0% { background-color: #c8518b; }

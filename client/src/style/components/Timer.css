@@ -22,6 +22,12 @@
     width: 100%;
 }
 
+#timer .logo-text {
+    letter-spacing: 0;
+    line-height: 1;
+    transform: translateY(0.05em);
+}
+
 /* timer anims */
 
 .timer-appear .timer-wrapper,

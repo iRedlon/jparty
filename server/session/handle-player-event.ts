@@ -450,7 +450,6 @@ function handleSubmitResponse(socket: Socket, sessionName: string) {
 
     // finish the response window early if we aren't waiting for any more submissions
     if (numSubmittedResponders >= numResponders) {
-        playAudio(sessionName, (session.state === SessionState.WagerResponse) ? AudioType.WagerResponseSubmitted : AudioType.ClueResponseSubmitted);
         finishResponseWindow(sessionName);
     }
 }
@@ -471,6 +470,7 @@ async function finishResponseWindow(sessionName: string) {
     switch (session.state) {
         case SessionState.ClueResponse:
             {
+                playAudio(sessionName, AudioType.ClueResponseSubmitted);
                 session.finishClueResponseWindow();
                 emitStateUpdate(sessionName);
 
@@ -494,6 +494,7 @@ async function finishResponseWindow(sessionName: string) {
             break;
         case SessionState.WagerResponse:
             {
+                playAudio(sessionName, AudioType.WagerResponseSubmitted);
                 readClue(sessionName);
                 emitStateUpdate(sessionName);
             }

@@ -208,6 +208,12 @@ export default function MenuPanel_Settings({
                         <SliderThumb outline="gray solid 1px" />
                       </Slider>
 
+                      <Text mt={3} fontSize="sm" color={muted}>
+                        <i>
+                          "Modern" voices stream OpenAI text-to-speech. "Classic" voices use your browser's built-in screen reader
+                        </i>
+                      </Text>
+
                       <Box
                         mt={3}
                         bg={subtleBg}
