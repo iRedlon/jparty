@@ -138,6 +138,7 @@
         <button id="reset" class="secondary">reset all</button>
         <button id="cheat-skip-round-2" class="cheat" title="cheat: skip the game to round 2">skip to round 2</button>
         <button id="cheat-skip-round-3" class="cheat" title="cheat: skip the game to round 3">skip to round 3</button>
+        <button id="cheat-skip-timeout" class="cheat" title="cheat: skip the active timeout as though it expired naturally">skip timeout</button>
     </div>
 
     <main>
@@ -155,6 +156,7 @@
 (function () {
     const HOST_W = 1280, HOST_H = 720;
     const PLAYER_W = 375, PLAYER_H = 640;
+    const LAG_INCREMENT_MS = 250;
 
     const $ = (selector) => document.querySelector(selector);
     const uid = () => Math.random().toString(36).slice(2, 10);
@@ -185,6 +187,12 @@
     function sendCheat(frame, cheat) {
         if (frame.contentWindow) {
             frame.contentWindow.postMessage({ type: "jparty-qa-cheat", cheat: cheat }, location.origin);
+        }
+    }
+
+    function sendLag(frame, lagMs) {
+        if (frame.contentWindow) {
+            frame.contentWindow.postMessage({ type: "jparty-qa-lag", lagMs: lagMs }, location.origin);
         }
     }
 
@@ -241,6 +249,16 @@
         subtractMoneyBtn.className = "cheat";
         subtractMoneyBtn.title = "cheat: take $100 from this player";
 
+        const addLagBtn = document.createElement("button");
+        addLagBtn.textContent = "+ lag";
+        addLagBtn.className = "cheat";
+        addLagBtn.title = "cheat: add 250ms of simulated lag to this player";
+
+        const subtractLagBtn = document.createElement("button");
+        subtractLagBtn.textContent = "- lag";
+        subtractLagBtn.className = "cheat";
+        subtractLagBtn.title = "cheat: remove 250ms of simulated lag from this player";
+
         const reconnectBtn = document.createElement("button");
         reconnectBtn.textContent = "⟳";
         reconnectBtn.title = "reload this player and reconnect to the session";
@@ -249,7 +267,7 @@
         closeBtn.textContent = "✕";
         closeBtn.title = "remove this player";
 
-        bar.append(label, spacer, addMoneyBtn, subtractMoneyBtn, reconnectBtn, closeBtn);
+        bar.append(label, spacer, addMoneyBtn, subtractMoneyBtn, addLagBtn, subtractLagBtn, reconnectBtn, closeBtn);
 
         const wrap = document.createElement("div");
         wrap.className = "frame-wrap";
@@ -264,9 +282,26 @@
         panel.append(bar, wrap);
         playersEl.appendChild(panel);
 
-        frame.addEventListener("load", () => sendFontSize(frame, playerFontInput));
+        let lagMs = 0;
+
+        function updateLag(deltaMs) {
+            lagMs = Math.max(0, lagMs + deltaMs);
+            label.textContent = lagMs ? (name + " (" + lagMs + "ms lag)") : name;
+            sendLag(frame, lagMs);
+        }
+
+        frame.addEventListener("load", () => {
+            sendFontSize(frame, playerFontInput);
+
+            if (lagMs) {
+                sendLag(frame, lagMs);
+            }
+        });
+
         addMoneyBtn.addEventListener("click", () => sendCheat(frame, "cheat_add_money"));
         subtractMoneyBtn.addEventListener("click", () => sendCheat(frame, "cheat_subtract_money"));
+        addLagBtn.addEventListener("click", () => updateLag(LAG_INCREMENT_MS));
+        subtractLagBtn.addEventListener("click", () => updateLag(-LAG_INCREMENT_MS));
         reconnectBtn.addEventListener("click", () => { frame.src = playerURL(name, clientID, true); });
         closeBtn.addEventListener("click", () => panel.remove());
 
@@ -329,6 +364,7 @@
     $("#reset").addEventListener("click", () => location.reload());
     $("#cheat-skip-round-2").addEventListener("click", () => sendCheat(hostFrame, "cheat_skip_to_round_2"));
     $("#cheat-skip-round-3").addEventListener("click", () => sendCheat(hostFrame, "cheat_skip_to_round_3"));
+    $("#cheat-skip-timeout").addEventListener("click", () => sendCheat(hostFrame, "cheat_skip_timeout"));
     scaleInput.addEventListener("input", applyPlayerScale);
     hostFontInput.addEventListener("input", applyHostFontSize);
     playerFontInput.addEventListener("input", applyPlayerFontSizes);

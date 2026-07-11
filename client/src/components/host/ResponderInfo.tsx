@@ -18,15 +18,18 @@ interface ResponderInfoProps {
     numResponders?: number
 }
 
-function getCorrectResponderNamesFontSize(numNames: number) {
-    if (numNames <= 3) {
+function getCorrectResponderNamesFontSize(namesString: string) {
+    if (namesString.length <= 25) {
+        return "2em";
+    }
+    else if (namesString.length <= 45) {
+        return "1.75em";
+    }
+    else if (namesString.length <= 60) {
         return "1.5em";
     }
-    else if (numNames <= 6) {
-        return "1.25em";
-    }
 
-    return "1em";
+    return "1.25em";
 }
 
 export default function ResponderInfo({ triviaClue, responder, responseType, showClueDecision, numSubmittedResponders, numResponders }: ResponderInfoProps) {
@@ -64,15 +67,16 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
                 .map(player => player.name.toUpperCase());
 
             const numCorrectResponders = correctResponderNames.length;
+            const responderNamesString = correctResponderNames.slice(0, 3).join(", ") + ((numCorrectResponders > 3) ? ", and others..." : "");
 
             responderInfoState = "all-play-results";
             responderInfoBox = (
                 <Box className={"box"} padding={"1em"} width={"30vw"} height={"7em"} marginLeft={"auto"} marginRight={"auto"}>
                     {numCorrectResponders ? (
-                        <Stack direction={"column"} spacing={"0.25em"} overflow={"hidden"}>
-                            <Text><b>{(numCorrectResponders === 1) ? "1 CORRECT RESPONSE" : `${numCorrectResponders} CORRECT RESPONSES`}</b></Text>
-                            <Text fontSize={getCorrectResponderNamesFontSize(numCorrectResponders)} noOfLines={2}>
-                                <i>{correctResponderNames.join(", ")}</i>
+                        <Stack direction={"column"} spacing={"0.25em"} height={"100%"} overflow={"hidden"}>
+                            <Text fontSize={"1.5em"} flexShrink={0}><b>{(numCorrectResponders === 1) ? "1 CORRECT RESPONSE" : `${numCorrectResponders} CORRECT RESPONSES`}</b></Text>
+                            <Text fontSize={getCorrectResponderNamesFontSize(responderNamesString)} minHeight={0} overflow={"hidden"}>
+                                <i>{responderNamesString}</i>
                             </Text>
                         </Stack>
                     ) : (
@@ -125,10 +129,10 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
                         </CSSTransition>
                     </SwitchTransition>
 
-                    <Box className={"box"} padding={"1em"} width={"25vw"} height={"7em"}>
+                    <Box className={"box"} padding={"1em"} width={"30vw"} height={"7em"}>
                         {
                             responder && (
-                                <Stack direction={"column"} paddingRight={"1em"} overflow={"hidden"}>
+                                <Stack direction={"column"} paddingLeft={"0.5em"} marginLeft={"-0.5em"} paddingRight={"1em"} overflow={"hidden"}>
                                     <Box textAlign={"left"}>
                                         <b>{responder.name.toUpperCase()}</b>
                                     </Box>

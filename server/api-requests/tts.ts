@@ -13,8 +13,7 @@ if (process.env.USE_OPENAI_TTS && !process.env.OPENAI_SECRET_KEY) {
     throw new Error(formatDebugLog("USE_OPENAI_TTS is enabled without an OPENAI_SECRET_KEY"));
 }
 
-const TTS_MODEL = "gpt-4o-mini-tts";
-const TTS_VOICE_INSTRUCTIONS = "You are the host of a TV trivia game show. Speak briskly and confidently, putting emphasis on the important words.";
+const TTS_MODEL = "tts-1";
 
 export function shouldStreamVoiceAudio(voiceType: VoiceType) {
     if (!process.env.USE_OPENAI_TTS) {
@@ -52,7 +51,6 @@ export async function streamVoiceAudio(req: Request, res: Response) {
                 model: TTS_MODEL,
                 voice: (voiceType === VoiceType.ModernFeminine) ? "nova" : "echo",
                 input: voiceLine,
-                instructions: TTS_VOICE_INSTRUCTIONS,
                 response_format: "wav"
             })
         });

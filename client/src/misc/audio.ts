@@ -52,6 +52,14 @@ const soundEffectAudios: { [key in AudioType]?: HTMLAudioElement } = {
 
 const DEFAULT_VOLUME = 1;
 
+const baseVolumeModifiers: { [key in AudioType]?: number } = {
+    [AudioType.GameMusic]: 0.5
+};
+
+function getBaseVolumeModifier(audioType: AudioType) {
+    return baseVolumeModifiers[audioType] ?? 1;
+}
+
 export function getVolume(volumeType: VolumeType) {
     const volume = parseFloat(localStorage.getItem(volumeType) || `${DEFAULT_VOLUME}`);
     if (isNaN(volume)) {
@@ -69,7 +77,7 @@ export function getModVolume(volumeType: VolumeType) {
 function applyMusicVolume(audioType: AudioType) {
     const musicAudio = musicAudios[audioType];
     if (musicAudio) {
-        musicAudio.volume = getModVolume(VolumeType.Music) * (musicFadeLevels[audioType] ?? 0);
+        musicAudio.volume = getModVolume(VolumeType.Music) * getBaseVolumeModifier(audioType) * (musicFadeLevels[audioType] ?? 0);
     }
 }
 
@@ -115,8 +123,12 @@ export function updateVolume(volumeType: VolumeType, volume: number) {
         applyMusicVolume(parseInt(audioTypeKey) as AudioType);
     }
 
-    for (const audio of Object.values(soundEffectAudios)) {
-        audio.volume = getModVolume(VolumeType.SoundEffects);
+    for (const audioTypeKey of Object.keys(soundEffectAudios)) {
+        const audioType = parseInt(audioTypeKey) as AudioType;
+        const audio = soundEffectAudios[audioType];
+        if (audio) {
+            audio.volume = getModVolume(VolumeType.SoundEffects) * getBaseVolumeModifier(audioType);
+        }
     }
 }
 
@@ -275,7 +287,7 @@ function playSpeechSynthesisVoiceInternal(voiceType: VoiceType, voiceLine: strin
 
     utterance.volume = getModVolume(VolumeType.Voice);
     utterance.voice = voice;
-    utterance.rate = 1.3;
+    utterance.rate = 1.2;
     utterance.onstart = () => {
         utteranceStarted = true;
         clearInterval(utteranceStartedInterval);

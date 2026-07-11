@@ -81,6 +81,7 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
         case DebugCommand.UpdateSessionState:
             {
                 emitMockSocketEvent(ServerSocket.UpdateSessionState, ...args);
+                emitMockSocketEvent(HostServerSocket.RevealClueDecision, args[0] === SessionState.ReadingClueDecision);
             }
             break;
         case DebugCommand.UpdatePlayerState:

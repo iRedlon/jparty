@@ -13,6 +13,7 @@
     margin-right: auto;
     padding: 1em;
     height: 5em;
+    width: fit-content;
     min-width: 25vw;
     display: flex;
     justify-content: center;

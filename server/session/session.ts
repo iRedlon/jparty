@@ -861,6 +861,7 @@ export class Session {
 
     readClue() {
         this.state = SessionState.ReadingClue;
+        this.setPlayersIdle();
     }
 
     displayTossupClue() {

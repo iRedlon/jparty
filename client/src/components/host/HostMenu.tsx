@@ -90,19 +90,18 @@ export default function HostMenu() {
       <Modal motionPreset={"none"} isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent
-          overflow={"auto"}
           height={"80vh"}
           minWidth={"60vw"}
           marginTop={"auto"}
           marginBottom={"auto"}
         >
           <ModalCloseButton zIndex={Layer.Middle} />
-          <ModalBody>
-            <Tabs>
-              <TabList overflowX={"auto"} overflowY={"hidden"}>
+          <ModalBody overflow={"hidden"}>
+            <Tabs display={"flex"} flexDirection={"column"} height={"100%"}>
+              <TabList flexShrink={0} overflowX={"auto"} overflowY={"hidden"}>
                 {menuTabs}
               </TabList>
-              <TabPanels>{menuPanels}</TabPanels>
+              <TabPanels overflowY={"auto"} minHeight={0} sx={{ scrollbarGutter: "stable" }}>{menuPanels}</TabPanels>
             </Tabs>
           </ModalBody>
         </ModalContent>

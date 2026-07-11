@@ -92,14 +92,16 @@ async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSet
 
     while (triviaCategory.clues.length < roundSettings.numClues) {
         if (++pickAttempts > maxPickAttempts) {
-            throw new Error(formatDebugLog("failed to pick enough unique clues for a category"));
+            debugLog(LogCategory.TriviaDatabase, `failed to pick enough unique clues for "${triviaCategory.name}", trying a different category`, LogVerbosity.Verbose);
+            return;
         }
 
         const clueDifficulty = clueDifficultyOrder[clueIndex];
         const possibleClues = categorySchema.clues[clueDifficulty];
 
         if (!possibleClues.length) {
-            throw new Error(formatDebugLog("ran out of usable clues for a category"));
+            debugLog(LogCategory.TriviaDatabase, `ran out of usable clues for "${triviaCategory.name}", trying a different category`, LogVerbosity.Verbose);
+            return;
         }
 
         let clueSchema: TriviaClueSchema = getRandomChoice<TriviaClueSchema>(possibleClues);
@@ -181,6 +183,10 @@ async function generateTriviaRound(gameSettings: TriviaGameSettings, roundSettin
         }
         catch (e) {
             throw e;
+        }
+
+        if (!triviaCategory) {
+            continue;
         }
 
         if (usedCategoryIDs.includes(triviaCategory.id)) {

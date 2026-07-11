@@ -78,6 +78,30 @@ if (isQAMode) {
         fakeLocalStorageRecord[LocalStorageKey.ClientID] = qaClientID;
     }
 
+    let qaLagMs = 0;
+
+    function wrapWithQALag(fn: Function) {
+        return (...args: any[]) => {
+            if (qaLagMs > 0) {
+                setTimeout(() => fn(...args), qaLagMs);
+            }
+            else {
+                fn(...args);
+            }
+        };
+    }
+
+    function applyQALag(socket: any, lagMs: number) {
+        qaLagMs = Math.max(lagMs || 0, 0);
+
+        if (!socket.qaLagWrapped) {
+            socket.qaLagWrapped = true;
+            socket.emit = wrapWithQALag(socket.emit.bind(socket));
+            socket.onevent = wrapWithQALag(socket.onevent.bind(socket));
+            socket.onack = wrapWithQALag(socket.onack.bind(socket));
+        }
+    }
+
     window.addEventListener("message", (event) => {
         if (event.origin !== window.location.origin) {
             return;
@@ -94,6 +118,10 @@ if (isQAMode) {
 
         if ((data.type === "jparty-qa-cheat") && Object.values(CheatSocket).includes(data.cheat)) {
             import("./socket").then(({ socket }) => socket.emit(data.cheat));
+        }
+
+        if (data.type === "jparty-qa-lag") {
+            import("./socket").then(({ socket }) => applyQALag(socket, data.lagMs));
         }
     });
 

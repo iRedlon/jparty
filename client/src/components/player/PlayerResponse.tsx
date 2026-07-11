@@ -39,7 +39,8 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
                 break;
             case SessionState.WagerResponse:
                 {
-                    setResponse(player.responses[PlayerResponseType.Wager] + "");
+                    const wager = player.responses[PlayerResponseType.Wager];
+                    setResponse(wager ? wager + "" : "");
                 }
                 break;
         }

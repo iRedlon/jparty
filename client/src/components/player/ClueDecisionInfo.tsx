@@ -1,6 +1,6 @@
 
 import { Box, Button, Text } from "@chakra-ui/react";
-import { MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD, Player, PlayerSocket, SocketID, TriviaClueDecision, TriviaClueDecisionInfo } from "jparty-shared";
+import { MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD, Player, PlayerSocket, SocketID, TriviaClueBonus, TriviaClueDecision, TriviaClueDecisionInfo } from "jparty-shared";
 import { useContext } from "react";
 
 import { LayoutContext } from "../common/Layout";
@@ -54,7 +54,7 @@ export default function ClueDecisionInfo({ playerID }: ClueDecisionInfoProps) {
     const numRequiredVoters = getNumRequiredVoters(Object.keys(context.sessionPlayers).length);
 
     const hasVotedToReverseDecision = info.reversalVoterIDs.includes(socket.id || "");
-    const canVoteToReverseDecision = !hasVotedToReverseDecision && (info.decision !== TriviaClueDecision.NeedsMoreDetail) && !info.isReversal;
+    const canVoteToReverseDecision = !hasVotedToReverseDecision && (info.decision !== TriviaClueDecision.NeedsMoreDetail) && !info.isReversal && (info.clue.bonus !== TriviaClueBonus.AllWager);
 
     return (
         <Box key={player.clientID} className={"child-box"} padding={"0.5em"} margin={"0.5em"}>

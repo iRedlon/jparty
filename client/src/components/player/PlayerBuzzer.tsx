@@ -10,6 +10,7 @@ import "react-awesome-button/dist/styles.css";
 import "../../style/components/PlayerBuzzer.css";
 
 let buzzerOpenClientTimeMs = 0;
+export let buzzerUnmountTimeMs = 0;
 
 socket.on(ServerSocket.StartTimeout, (timeoutType: SessionTimeoutType, openTimeMs: number, _closeTimeMs: number) => {
     if (timeoutType === SessionTimeoutType.BuzzWindow) {
@@ -28,6 +29,12 @@ function attemptBuzz() {
 
 export default function PlayerBuzzer() {
     const [armed, setArmed] = useState(Date.now() >= buzzerOpenClientTimeMs);
+
+    useEffect(() => {
+        return () => {
+            buzzerUnmountTimeMs = Date.now();
+        };
+    }, []);
 
     useEffect(() => {
         if (armed) {
