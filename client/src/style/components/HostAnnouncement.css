@@ -5,9 +5,9 @@
 }
 
 #desktop-announcement-box {
-    height: 30em;
-    width: 30em;
-    padding: 5em;
+    width: fit-content;
+    aspect-ratio: 1 / 1;
+    padding: 3em;
 }
 
 /* announcement-box anims */

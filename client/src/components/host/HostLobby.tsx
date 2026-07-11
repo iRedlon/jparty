@@ -24,7 +24,7 @@ function JoinedPlayerBox(player: Player) {
             </Box>
 
             <Box className={"child-box"} height={"4em"} width={"8em"} overflow={"hidden"} display={"flex"} justifyContent={"center"} alignItems={"center"} padding={"0.5em"}>
-                <Text fontSize={"1.5em"} lineHeight={"1em"}><b>{player.name}</b></Text>
+                <Text fontSize={"2em"} lineHeight={"1em"}><b>{player.name}</b></Text>
             </Box>
         </Stack>
     );
@@ -127,7 +127,7 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
     return (
         <Stack direction={"row"}>
             <Box ref={joinedPlayersBoxRef} id={"joined-players-box"} className={"box side-box"}>
-                <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>players</Heading>
+                <Heading size={"sm"} className={"logo-text"} fontSize={"2em"}>players</Heading>
                 <Box id={"joined-players-list-box"}>
                     {sortedSessionPlayerIDs.map((playerID: SocketID) => {
                         return JoinedPlayerBox(context.sessionPlayers[playerID]);
@@ -137,7 +137,7 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
 
             <Stack id={"lobby-center-column"} direction={"column"}>
                 <Box id={"logo-box"} className={"box"} padding={"2em"}>
-                    <Heading fontFamily={"logo"} fontSize={"4em"}>jparty</Heading>
+                    <Heading className={"logo-text"} fontSize={"4em"}>jparty!</Heading>
                     {<Link href={PATCH_NOTES_LINK} isExternal>
                         <i><u>version 1.1 patch notes</u></i> <ExternalLinkIcon mx={"2px"} />
                     </Link>}
@@ -147,7 +147,7 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                     <Box>
                         join on your phone with session name:
                         <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} gap={"1em"}>
-                            <Heading fontFamily={"logo"} fontSize={"3em"} marginBottom={"-0.1em"}>{context.sessionName}</Heading>
+                            <Heading className={"logo-text"} fontSize={"3em"} marginBottom={"-0.1em"}>{context.sessionName}</Heading>
                             <Divider orientation={"vertical"} height={"4em"} />
                             {context.sessionName && (
                                 <QRCodeSVG value={`${window.location.origin}/?join=${context.sessionName}`} marginSize={1} style={{ width: "5em", height: "5em" }} />
@@ -178,7 +178,7 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                 <Box marginTop={"0.2em"} marginBottom={"0.2em"} />
 
                 <Box id={"game-settings-preset-box"} className={"box"} padding={"1.5em"}>
-                    <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>category preview</Heading>
+                    <Heading size={"sm"} className={"logo-text"} fontSize={"2em"}>category preview</Heading>
 
                     <Stack direction={"row"} justifyContent={"center"} marginTop={"0.5em"} marginBottom={"0.5em"}>
                         <Tooltip label={"standard rules. counts for public leaderboard"} placement={"top"}>
@@ -236,7 +236,7 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
 
             <Box id={"leaderboard-box"} className={"box side-box"}>
                 <Tooltip placement={"top"}>
-                    <Heading size={"sm"} fontFamily={"logo"} fontSize={"1.5em"}>leaderboard</Heading>
+                    <Heading size={"sm"} className={"logo-text"} fontSize={"2em"}>leaderboard</Heading>
                 </Tooltip>
 
                 <Stack direction={"row"} justifyContent={"center"} marginTop={"0.75em"}>

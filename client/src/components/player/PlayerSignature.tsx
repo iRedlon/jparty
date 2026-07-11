@@ -78,7 +78,7 @@ export default function PlayerSignature({ player, setIsEditingSignature }: Playe
 
     return (
         <Box className={"mobile-box"} padding={"1em"}>
-            <Heading fontFamily={"logo"} fontSize={"3em"}>jparty</Heading>
+            <Heading className={"logo-text"} fontSize={"3em"}>jparty!</Heading>
             <Button onClick={() => setIsEditingSignature(false)} size={"sm"} margin={"0.5em"}>
                 back to scoreboard
             </Button>

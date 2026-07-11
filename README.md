@@ -1,5 +1,5 @@
 
-# [jparty - _a couch co-op trivia game show_](https://jparty.io)
+# [jparty! - _a free-to-play couch co-op trivia game_](https://jparty.io)
 
 ## [Patch Notes](documentation/patch-notes.md)
 ## [Known Issues](documentation/known-issues.md)
@@ -37,6 +37,9 @@ npm run prod
 -- open the client
 start-process "https://localhost:3000"
 
+-- open the QA dashboard
+start-process "https://localhost:3000/qa"
+
 -- test a disconnected client with hot reloading (i.e. for iterating UI design)
 cd client; npm run debug
 ```
@@ -44,7 +47,7 @@ cd client; npm run debug
 # License and Disclaimer
 This project is open source under the [MIT License](LICENSE)
 
-jparty is a free, fan-made trivia game. It is not affiliated with, endorsed by, or sponsored by Jeopardy Productions, Inc. or Sony
+jparty! is fan-made. It is not affiliated with, endorsed by, or sponsored by Jeopardy Productions, Inc. or Sony
 Pictures Entertainment. _Jeopardy!_ is a registered trademark of Jeopardy Productions, Inc. The MIT License covers the code in this
 repository only; third-party assets (such as trivia clue data and music) remain subject to their own terms, as listed in the in-game
 credits

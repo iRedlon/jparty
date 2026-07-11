@@ -109,18 +109,14 @@ export default function MenuPanel_Credits() {
                   Jeopardy Theme Song Remix - Attic Stein
                 </Text>
 
-                <br />
-
                 <Text>
-                  Data Stream of Consciousness - Aldous Ichnite
-                  <br />
-                  (Free Music Archive CC BY-NC)
+                  Music by Alex Morgan from Pixabay
                 </Text>
               </CreditRow>
 
               <CreditRow label="Fonts" isLast>
                 <Text>
-                  SquareFont (Bou Fonts)
+                  Bringbold Nineties (Zarma Type)
                   <br />
                   Rheiborn Sans (Bartosz Wesolek)
                   <br />
@@ -146,7 +142,7 @@ export default function MenuPanel_Credits() {
               </Link>
 
               <Text fontSize="xs" color={muted} maxW="sm">
-                 jparty will always be 100% free. Donations help pay for the cost of web hosting and API usage
+                 jparty! will always be 100% free. Donations help pay for the cost of web hosting and API usage
               </Text>
             </Stack>
           </Stack>

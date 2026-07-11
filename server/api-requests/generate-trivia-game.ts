@@ -1,12 +1,12 @@
 
 import {
-    CLUE_DIFFICULTY_DISTRIBUTIONS, DEFAULT_CATEGORY_TYPE_DISTRIBUTION,
+    CLUE_DIFFICULTY_DISTRIBUTIONS,
     getEnumSize, getRandomChoice, getRandomNum, getWeightedRandomNum,
     RATED_CLUE_BONUS_POSITION_DISTRIBUTION, RATED_CLUE_DIFFICULTY_ORDER, TriviaCategory, TriviaCategorySettings, TriviaCategoryType,
     TriviaClueBonus, TriviaClue, TriviaClueDifficulty, TriviaCluePosition, TriviaClueSchema, TriviaGame, TriviaGameSettings, TriviaRoundSettings, TriviaRound,
 } from "jparty-shared";
 
-import { getRandomCategorySchema } from "./trivia-db.js";
+import { getCategoryTypeCandidateCount, getRandomCategorySchema } from "./trivia-db.js";
 import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 import { formatText } from "../misc/text-utils.js";
 
@@ -36,6 +36,10 @@ An array storing the increasing order of clue difficulties that will appear in a
 */
 function rollClueDifficultyOrder(gameSettings: TriviaGameSettings, roundSettings: TriviaRoundSettings): TriviaClueDifficulty[] {
     if (gameSettings.getRating().isRated) {
+        if (roundSettings.numClues === 1) {
+            return [getRandomChoice([TriviaClueDifficulty.Normal, TriviaClueDifficulty.Hard])];
+        }
+
         return RATED_CLUE_DIFFICULTY_ORDER;
     }
 
@@ -130,28 +134,19 @@ async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSet
     return triviaCategory;
 }
 
-function rollCategoryTypeOrder(roundSettings: TriviaRoundSettings) {
-    // the combined probability of all banned category types should be redistributed evenly across the remaining types
-    // i.e. if we have { 0: 0.25, 1: 0.25, 2: 0.25, 3: 0.25 }, banning 0 and 1 would yield { 0: 0, 1: 0, 2: 0.5, 3: 0.5 }
-    let categoryTypeDistribution = { ...DEFAULT_CATEGORY_TYPE_DISTRIBUTION };
-    let totalBannedProbability = 0;
+async function rollCategoryTypeOrder(gameSettings: TriviaGameSettings, roundSettings: TriviaRoundSettings) {
+    // weight each category type by the size of its candidate pool so that every category in the
+    // database has an equal chance of being selected
+    let categoryTypeDistribution: Record<number, number> = {};
 
-    for (const categoryType of roundSettings.bannedCategoryTypes) {
-        // we prevent a banned type from being selected by settings its probability to 0
-        categoryTypeDistribution[categoryType] = 0;
-        totalBannedProbability += DEFAULT_CATEGORY_TYPE_DISTRIBUTION[categoryType] || 0;
-    }
-
-    const redistributedProbability = totalBannedProbability / (getEnumSize(TriviaCategoryType) - roundSettings.bannedCategoryTypes.length);
-
-    for (const categoryType in categoryTypeDistribution) {
-        const type = parseInt(categoryType) as TriviaCategoryType;
-
+    for (let type = 0; type < getEnumSize(TriviaCategoryType); type++) {
         if (roundSettings.bannedCategoryTypes.includes(type)) {
+            // we prevent a banned type from being selected by setting its weight to 0
+            categoryTypeDistribution[type] = 0;
             continue;
         }
 
-        categoryTypeDistribution[type] += redistributedProbability;
+        categoryTypeDistribution[type] = await getCategoryTypeCandidateCount(type, gameSettings.minClueYear);
     }
 
     let categoryTypeOrder: TriviaCategoryType[] = [];
@@ -165,7 +160,7 @@ function rollCategoryTypeOrder(roundSettings: TriviaRoundSettings) {
 async function generateTriviaRound(gameSettings: TriviaGameSettings, roundSettings: TriviaRoundSettings, deadlineMs: number) {
     let triviaRound = new TriviaRound(roundSettings, []);
 
-    const categoryTypeOrder = rollCategoryTypeOrder(roundSettings);
+    const categoryTypeOrder = await rollCategoryTypeOrder(gameSettings, roundSettings);
 
     // generate a category for each type that was rolled above
     let categoryIndex = 0;

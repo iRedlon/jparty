@@ -81,6 +81,15 @@ function getCandidateCategoryIDs(type: TriviaCategoryType, minYear: number, minR
     return idsPromise;
 }
 
+export async function getCategoryTypeCandidateCount(type: TriviaCategoryType, minYear: number) {
+    if (!client) {
+        return 1;
+    }
+
+    const candidateIDs = await getCandidateCategoryIDs(type, minYear, 1);
+    return candidateIDs.length;
+}
+
 export async function getRandomCategorySchema(type: TriviaCategoryType, minYear: number, clueDifficultyOrder: TriviaClueDifficulty[]) {
     // no database means no real trivia. serve test data instead
     if (!client) {

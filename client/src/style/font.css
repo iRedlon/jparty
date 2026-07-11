@@ -1,6 +1,11 @@
 @font-face {
     font-family: "logo";
-    src: url("../fonts/square.ttf");
+    src: url("../fonts/bringbold-nineties.ttf");
+}
+
+.logo-text {
+    font-family: "logo" !important;
+    letter-spacing: 0.05em; /* tweak here */
 }
 
 @font-face {

@@ -64,7 +64,7 @@ export default function Timer() {
             <Box ref={timerRef}>
                 <Box id={isMobile ? "mobile-timer-wrapper" : "desktop-timer-wrapper"} className={`timer-wrapper ${isMobile ? "mobile-box" : "box"}`} zIndex={Layer.Top}>
                     <Box id={"timer"}>
-                        <Text fontFamily={"logo"} fontSize={isMobile ? "2em" : "4em"}>{getTimeRemainingSec()}</Text>
+                        <Text className={"logo-text"} fontSize={isMobile ? "2em" : "4em"}>{getTimeRemainingSec()}</Text>
                     </Box>
                 </Box>
             </Box>

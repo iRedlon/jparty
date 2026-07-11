@@ -102,7 +102,7 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
 
                 return (
                     <Box className={"mobile-box"} padding={"2em"}>
-                        <Heading size={"sm"} fontFamily={"logo"}>you may wager up to {formatDollarValue(player.maxWager)}</Heading>
+                        <Heading size={"lg"} className={"logo-text"}>you may wager up to {formatDollarValue(player.maxWager)}</Heading>
                         <Input
                             ref={inputRef}
                             onChange={(e) => emitUpdateResponse(e.target.value)}
@@ -119,7 +119,7 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
             {
                 return (
                     <Box className={"mobile-box"} padding={"2em"}>
-                        <Heading size={"sm"} fontFamily={"logo"}>enter your response</Heading>
+                        <Heading size={"lg"} className={"logo-text"}>enter your response</Heading>
                         <Input ref={inputRef} marginTop={"0.5em"} value={response} onChange={(e) => emitUpdateResponse(e.target.value)} isDisabled={!windowOpen} />
                         <Button onClick={emitSubmitResponse} isDisabled={!windowOpen || !response} colorScheme={"blue"} marginTop={"1em"}>submit response</Button>
                     </Box>

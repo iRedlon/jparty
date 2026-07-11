@@ -6,7 +6,7 @@ import { LocalStorageKey } from "./ui-constants";
 
 import GameMusicMP3 from "../assets/game-music.mp3";
 import LobbyMusicMP3 from "../assets/lobby-music.mp3";
-import ThinkingMusicMP3 from "../assets/thinking-music.mp3";
+//import ThinkingMusicMP3 from "../assets/thinking-music.mp3";
 
 import BuzzWindowTimeoutMP3 from "../assets/buzz-window-timeout.mp3";
 import ApplauseMP3 from "../assets/applause.mp3";
@@ -15,13 +15,13 @@ import BuzzMP3 from "../assets/buzz.mp3";
 import ClueResponseSubmittedMP3 from "../assets/clue-response-submitted.mp3";
 import WagerResponseSubmittedMP3 from "../assets/wager-response-submitted.mp3";
 import CorrectDecisionMP3 from "../assets/correct-decision.mp3";
-//import IncorrectDecisionMP3 from "../assets/incorrect-decision.mp3";
+import IncorrectDecisionMP3 from "../assets/incorrect-decision.mp3";
 import ClueSelectedMP3 from "../assets/clue-selected.mp3";
 
 const musicAudios: { [key in AudioType]?: HTMLAudioElement } = {
     [AudioType.LobbyMusic]: new Audio(LobbyMusicMP3),
     [AudioType.GameMusic]: new Audio(GameMusicMP3),
-    [AudioType.ThinkingMusic]: new Audio(ThinkingMusicMP3)
+    //[AudioType.ThinkingMusic]: new Audio(ThinkingMusicMP3)
 };
 
 const MUSIC_FADE_IN_DURATION_MS = 800;
@@ -37,6 +37,42 @@ const musicFadeLevels: { [key in AudioType]?: number } = {
 let currentMusicAudioType: AudioType | undefined;
 let musicFadeInterval: NodeJS.Timeout | undefined;
 
+let musicPlaying = false;
+const muteStateListeners = new Set<(muted: boolean) => void>();
+
+function recomputeMusicPlaying() {
+    const anyPlaying = Object.values(musicAudios).some((audio) => !!audio && !audio.paused);
+    if (anyPlaying === musicPlaying) {
+        return;
+    }
+
+    musicPlaying = anyPlaying;
+    muteStateListeners.forEach((listener) => listener(!musicPlaying));
+}
+
+for (const audio of Object.values(musicAudios)) {
+    if (!audio) {
+        continue;
+    }
+
+    audio.addEventListener("playing", recomputeMusicPlaying);
+    audio.addEventListener("pause", recomputeMusicPlaying);
+    audio.addEventListener("ended", recomputeMusicPlaying);
+}
+
+export function isAudioMuted() {
+    return !musicPlaying;
+}
+
+export function subscribeToMuteState(listener: (muted: boolean) => void) {
+    muteStateListeners.add(listener);
+    listener(!musicPlaying);
+
+    return () => {
+        muteStateListeners.delete(listener);
+    };
+}
+
 // sound FX
 const soundEffectAudios: { [key in AudioType]?: HTMLAudioElement } = {
     [AudioType.BuzzWindowTimeout]: new Audio(BuzzWindowTimeoutMP3),
@@ -46,19 +82,44 @@ const soundEffectAudios: { [key in AudioType]?: HTMLAudioElement } = {
     [AudioType.ClueResponseSubmitted]: new Audio(ClueResponseSubmittedMP3),
     [AudioType.WagerResponseSubmitted]: new Audio(WagerResponseSubmittedMP3),
     [AudioType.CorrectDecision]: new Audio(CorrectDecisionMP3),
-    //[AudioType.IncorrectDecision]: new Audio(IncorrectDecisionMP3)
+    //[AudioType.IncorrectDecision]: new Audio(IncorrectDecisionMP3),
     [AudioType.ClueSelected]: new Audio(ClueSelectedMP3),
 };
 
-const DEFAULT_VOLUME = 1;
+const NEUTRAL_VOLUME = 0.5;
+const DEFAULT_VOLUME = NEUTRAL_VOLUME;
 
-const baseVolumeModifiers: { [key in AudioType]?: number } = {
-    [AudioType.GameMusic]: 0.5
+const baseVolumes: { [key in VolumeType]?: number } = {
+    [VolumeType.Music]: 0.5,
+    [VolumeType.SoundEffects]: 0.75,
+    [VolumeType.Voice]: 0.75
 };
 
-function getBaseVolumeModifier(audioType: AudioType) {
-    return baseVolumeModifiers[audioType] ?? 1;
+// override per-track if a particular mp3 is unusually loud or quiet
+const baseVolumeOverrides: { [key in AudioType]?: number } = {
+    [AudioType.GameMusic]: 0.075,
+    [AudioType.CorrectDecision]: 0.2,
+    [AudioType.IncorrectDecision]: 0.2
+};
+
+function getBaseVolume(audioType: AudioType) {
+    const override = baseVolumeOverrides[audioType];
+    if (override !== undefined) {
+        return override;
+    }
+
+    if (musicAudios[audioType]) {
+        return baseVolumes[VolumeType.Music] ?? 1;
+    }
+
+    if (soundEffectAudios[audioType]) {
+        return baseVolumes[VolumeType.SoundEffects] ?? 1;
+    }
+
+    return 1;
 }
+
+let currentVoiceAudio: HTMLAudioElement | undefined;
 
 export function getVolume(volumeType: VolumeType) {
     const volume = parseFloat(localStorage.getItem(volumeType) || `${DEFAULT_VOLUME}`);
@@ -69,15 +130,28 @@ export function getVolume(volumeType: VolumeType) {
     return volume;
 }
 
-export function getModVolume(volumeType: VolumeType) {
-    const volume = getVolume(volumeType);
-    return volume * getVolume(VolumeType.Master);
+function getVolumeGain(volumeType: VolumeType) {
+    return getVolume(volumeType) / NEUTRAL_VOLUME;
+}
+
+function clampVolume(volume: number) {
+    return Math.max(0, Math.min(1, volume));
+}
+
+function getEffectiveVolume(volumeType: VolumeType, baseVolume: number) {
+    return clampVolume(baseVolume * getVolumeGain(volumeType) * getVolumeGain(VolumeType.Master));
+}
+
+function applyVoiceVolume() {
+    if (currentVoiceAudio) {
+        currentVoiceAudio.volume = getEffectiveVolume(VolumeType.Voice, baseVolumes[VolumeType.Voice] ?? 1);
+    }
 }
 
 function applyMusicVolume(audioType: AudioType) {
     const musicAudio = musicAudios[audioType];
     if (musicAudio) {
-        musicAudio.volume = getModVolume(VolumeType.Music) * getBaseVolumeModifier(audioType) * (musicFadeLevels[audioType] ?? 0);
+        musicAudio.volume = getEffectiveVolume(VolumeType.Music, getBaseVolume(audioType) * (musicFadeLevels[audioType] ?? 0));
     }
 }
 
@@ -127,9 +201,11 @@ export function updateVolume(volumeType: VolumeType, volume: number) {
         const audioType = parseInt(audioTypeKey) as AudioType;
         const audio = soundEffectAudios[audioType];
         if (audio) {
-            audio.volume = getModVolume(VolumeType.SoundEffects) * getBaseVolumeModifier(audioType);
+            audio.volume = getEffectiveVolume(VolumeType.SoundEffects, getBaseVolume(audioType));
         }
     }
+
+    applyVoiceVolume();
 }
 
 // make sure all of our audios default to this client's current volume settings
@@ -146,7 +222,7 @@ export function playAudio(audioType: AudioType) {
             applyMusicVolume(audioType);
 
             musicAudio.loop = true;
-            musicAudio.play();
+            musicAudio.play().catch(() => recomputeMusicPlaying());
         }
 
         if (!musicFadeInterval) {
@@ -217,9 +293,6 @@ function getSpeechSynthesisVoice(voiceType: VoiceType) {
     return voices[0];
 }
 
-// only one voice line should ever be playing at a time. whenever a new one starts, whatever is in progress gets cut off
-let currentVoiceAudio: HTMLAudioElement | undefined;
-
 const SPEECH_SYNTHESIS_START_DELAY_MS = 1000;
 
 let speechSynthesisStartTimeout: NodeJS.Timeout | undefined;
@@ -248,7 +321,7 @@ export function playOpenAIVoice(voiceType: VoiceType, voiceLine: string) {
 
     currentVoiceAudio = audio;
 
-    audio.volume = getModVolume(VolumeType.Voice);
+    applyVoiceVolume();
     audio.play().catch(e => console.error(`audio playback failed: ${e.message}`));
 
     audio.onended = () => {
@@ -285,9 +358,9 @@ function playSpeechSynthesisVoiceInternal(voiceType: VoiceType, voiceLine: strin
 
     const utterance = new SpeechSynthesisUtterance(voiceLine);
 
-    utterance.volume = getModVolume(VolumeType.Voice);
+    utterance.volume = getEffectiveVolume(VolumeType.Voice, baseVolumes[VolumeType.Voice] ?? 1);
     utterance.voice = voice;
-    utterance.rate = 1.2;
+    utterance.rate = 1;
     utterance.onstart = () => {
         utteranceStarted = true;
         clearInterval(utteranceStartedInterval);

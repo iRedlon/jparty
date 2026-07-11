@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>jparty QA</title>
+<title>jparty! QA</title>
 
 <style>
     :root { color-scheme: dark; }
@@ -82,6 +82,11 @@
         flex: none;
     }
 
+    .panel-scale {
+        transform-origin: top left;
+        width: max-content;
+    }
+
     .panel-bar {
         display: flex;
         align-items: center;
@@ -128,7 +133,7 @@
 </head>
 <body>
     <div class="topbar">
-        <span class="logo">jparty QA dashboard</span>
+        <span class="logo">jparty! QA dashboard</span>
         <span id="session-label" title="click to copy">waiting for session&hellip;</span>
         <label>players <input id="player-count" type="number" min="1" max="12"></label>
         <label>size <input id="player-scale" type="range" min="0.5" max="1" step="0.05"></label>
@@ -279,7 +284,12 @@
         frame.src = playerURL(name, clientID, false);
 
         wrap.appendChild(frame);
-        panel.append(bar, wrap);
+
+        const scaleBox = document.createElement("div");
+        scaleBox.className = "panel-scale";
+        scaleBox.append(bar, wrap);
+
+        panel.append(scaleBox);
         playersEl.appendChild(panel);
 
         let lagMs = 0;
@@ -288,6 +298,9 @@
             lagMs = Math.max(0, lagMs + deltaMs);
             label.textContent = lagMs ? (name + " (" + lagMs + "ms lag)") : name;
             sendLag(frame, lagMs);
+
+            // the label width may have changed, so recompute the panel footprint
+            applyPlayerScale();
         }
 
         frame.addEventListener("load", () => {
@@ -349,12 +362,12 @@
         const scale = parseFloat(scaleInput.value) || 0.8;
 
         document.querySelectorAll("#players .panel").forEach((panel) => {
-            const frame = panel.querySelector("iframe");
-            frame.style.transform = "scale(" + scale + ")";
+            const scaleBox = panel.querySelector(".panel-scale");
+            scaleBox.style.transform = "scale(" + scale + ")";
 
-            const wrap = panel.querySelector(".frame-wrap");
-            wrap.style.width = (PLAYER_W * scale) + "px";
-            wrap.style.height = (PLAYER_H * scale) + "px";
+            // shrink the panel's footprint (its bordered window) to match the scaled content so panels pack tighter
+            panel.style.width = (scaleBox.offsetWidth * scale) + "px";
+            panel.style.height = (scaleBox.offsetHeight * scale) + "px";
         });
 
         localStorage.setItem("jparty-qa-player-scale", scaleInput.value);

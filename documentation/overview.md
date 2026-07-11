@@ -8,7 +8,7 @@ A high level description of this codebase. Linked files/folders lead to relevant
 - The shared directory contains the "shared project" (jparty-shared); written in node typescript; contains enums/classes/types/etc. that are shared by both the server and client projects. Both projects utilize the shared project in the form of a local npm dependency
 
 ## _Environment Variables_
-Environment variables are set by a .env file at the roots of the server and client projects. Copy from [server example](.env.example) or [this example](documentation/overview.md) and fill out variables as needed. Setting these variables isn't a requirement; if none are set: trivia games use test data and other APIs like clue decisions and host voice are disabled
+Environment variables are set by a .env file at the roots of the server and client projects. Copy from [server example](../.env.example) or [client example](../client/.env.example) and fill out variables as needed. Setting these variables isn't a requirement; if none are set: trivia games use test data and other APIs like clue decisions and host voice are disabled
 
 ## _[Sessions](../server/session/session.ts)_
 - A "session" is an object that stores all of the relevant data for a particular game session. This includes client info for hosts and players, its current trivia game, and most importantly: its state
@@ -87,7 +87,7 @@ Environment variables are set by a .env file at the roots of the server and clie
 ## _[Host Voice](../client/src/misc/audio.ts)_
 - Voice lines are spoken aloud by the host computer throughout the game. Most importantly, this voice reads out the clues but also filler lines like "correct" or "that's a bonus, you get to wager, etc."
 - There are two TTS systems in use in jparty: the first is API-requested OpenAI TTS with a very realistic sounding voice. This service costs money per request and is enabled/disabled with an environment variable
-- OpenAI TTS audio is streamed to the host through the server (see [tts.ts](../server/api-requests/tts.ts)), so playback can begin before the whole file is generated. The server also caches the audio for repeated voice lines (welcomes, announcements, etc.) to save time and API usage
+- OpenAI TTS audio is streamed to the host through the server (see [tts.ts](../server/api-requests/tts.ts)), so playback can begin before the whole file is generated
 - The second is the built-in browser screen reader. This TTS is actually pretty good in terms of pronunciation, but is still very robotic. We support it because it's free and not API requested so if the API needs to be disabled or is otherwise not working for any reason: we can easily fall back on the screen reader
 - Many timers in the game rely on the TTS system (i.e. when reading out the clue, we need to trigger the next state change once it's done being read aloud) but for various reasons, it's difficult to tell exactly how long a voice line will take to say out loud
 - To solve this, we start the timer with an educated estimate that's intentionally generous. Then, once we have more info about exactly how long it will take to be spoken, we update the timer by cancelling it and restarting it with our new duration. These timers are always hidden from players so the mid-timer duration update isn't noticeable

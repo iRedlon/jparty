@@ -35,7 +35,7 @@ export default function PlayerScoreboard() {
 
     return (
         <>
-            <Heading size={"sm"} fontFamily={"logo"} marginTop={"0.5em"}>scoreboard</Heading>
+            <Heading size={"md"} className={"logo-text"} marginTop={"0.5em"}>scoreboard</Heading>
 
             <Stack direction={"column"} gap={"1em"} alignItems={"center"} marginTop={"0.5em"}>
                 {sortedSessionPlayerIDs.map((playerID: SocketID, index: number) => {
@@ -86,7 +86,7 @@ export default function PlayerScoreboard() {
                 clueDecisionInfoArray.length > 0 && (
                     <>
                         <Box margin={"1em"} />
-                        <Heading size={"sm"} fontFamily={"logo"}>recent decisions</Heading>
+                        <Heading size={"md"} className={"logo-text"}>recent decisions</Heading>
 
                         <Stack direction={"column"} gap={0}>
                             {clueDecisionInfoArray}

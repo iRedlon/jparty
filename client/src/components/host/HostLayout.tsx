@@ -15,7 +15,7 @@ import Announcement from "./HostAnnouncement";
 import { LayoutContext } from "../common/Layout";
 import ServerMessageAlert from "../common/ServerMessage";
 import Timer from "../common/Timer";
-import { playAudio, playOpenAIVoice, playSpeechSynthesisVoice } from "../../misc/audio";
+import { playAudio, playOpenAIVoice, playSpeechSynthesisVoice, subscribeToMuteState, isAudioMuted } from "../../misc/audio";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
 import { Layer } from "../../misc/ui-constants";
@@ -36,7 +36,7 @@ export default function HostLayout() {
     const sessionStateRef = useRef(null);
 
     const context = useContext(LayoutContext);
-    const [isMuted, setIsMuted] = useState(true);
+    const [isMuted, setIsMuted] = useState(isAudioMuted());
     const [allTimeLeaderboardPlayers, setAllTimeLeaderboardPlayers] = useState<LeaderboardPlayers | undefined>();
     const [monthlyLeaderboardPlayers, setMonthlyLeaderboardPlayers] = useState<LeaderboardPlayers | undefined>();
     const [weeklyLeaderboardPlayers, setWeeklyLeaderboardPlayers] = useState<LeaderboardPlayers | undefined>();
@@ -99,18 +99,22 @@ export default function HostLayout() {
         }
     }, []);
 
+    // keep the mute icon in sync with whether audio is actually playing, so it can never be stuck blinking while sound plays
+    useEffect(() => {
+        return subscribeToMuteState(setIsMuted);
+    }, []);
+
     const getMusicAudioType = () => {
         if (context.sessionState === SessionState.Lobby) {
             return AudioType.LobbyMusic;
         }
 
-        // play "thinking music" when responding to an all wager clue
-        if ((context.sessionState === SessionState.ClueResponse) && (context.categoryIndex >= 0) && (context.clueIndex >= 0)) {
-            const triviaClue = context.triviaRound?.categories[context.categoryIndex]?.clues[context.clueIndex];
-            if (triviaClue?.bonus === TriviaClueBonus.AllWager) {
-                return AudioType.ThinkingMusic;
-            }
-        }
+        // if ((context.sessionState === SessionState.ClueResponse) && (context.categoryIndex >= 0) && (context.clueIndex >= 0)) {
+        //     const triviaClue = context.triviaRound?.categories[context.categoryIndex]?.clues[context.clueIndex];
+        //     if (triviaClue?.bonus === TriviaClueBonus.AllWager) {
+        //         return AudioType.ThinkingMusic;
+        //     }
+        // }
 
         return AudioType.GameMusic;
     }
@@ -208,12 +212,8 @@ export default function HostLayout() {
         setShowCorrectAnswer(showCorrectAnswer);
     }
 
-    const toggleMute = (isMuted: boolean) => {
-        setIsMuted(isMuted);
-
-        if (!isMuted) {
-            playAudio(getMusicAudioType());
-        }
+    const handleUserInteraction = () => {
+        playAudio(getMusicAudioType());
     }
 
     // returns both the JSX component and a state representing the specific component that was returned
@@ -277,7 +277,7 @@ export default function HostLayout() {
     const [HostComponent, componentState] = getHostComponent();
 
     return (
-        <Box onClick={() => toggleMute(false)} overflow={"hidden"}>
+        <Box onClick={handleUserInteraction} overflow={"hidden"}>
             <Box id={"mute-icon-box"}>
                 {isMuted && (<GoMute size={"4em"} color={"white"} />)}
             </Box>

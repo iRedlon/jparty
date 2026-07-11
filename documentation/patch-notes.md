@@ -16,10 +16,10 @@
 ---
 
 ### New visuals and sounds
-- New "appearance" menu tab to change the background theme
+- New background theme options in the settings menu
 - Slight menu redesign across the board
-- New music for the lobby and when waiting for the response of an all wager clue
-- New sound effects for buzzing in, submitting responses and wagers, and clue decisions
+- New music for the lobby
+- New sound effects for selecting clues, buzzing in, submitting responses and wagers, and clue decisions
 
 ---
 
@@ -30,6 +30,7 @@
 ---
 
 ### Player UX improvements
+- The lobby now shows a QR code that players can scan to join
 - Clue selection now uses a single tap instead of double tap
 - The keyboard opens automatically when a player is selected to respond
 - All play clues now reveal the names of everyone who responded correctly instead of reading each one out one by one

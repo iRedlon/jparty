@@ -48,7 +48,7 @@ export default function PlayerLobby() {
 
     return (
         <Box className={"mobile-box"} padding={"1em"}>
-            <Heading fontSize={"3em"} fontFamily={"logo"}>JPARTY</Heading>
+            <Heading fontSize={"3em"} className={"logo-text"}>jparty!</Heading>
             {isMobile && "host a session by going to jparty.io on your computer"}
 
             <Box margin={"0.5em"} />

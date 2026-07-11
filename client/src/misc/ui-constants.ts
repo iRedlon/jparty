@@ -48,11 +48,11 @@ export const TRIVIA_CLUE_BONUS_DESCRIPTIONS: Record<TriviaClueBonus, string> = {
 export const SESSION_ANNOUNCEMENT_MESSAGES: Record<SessionAnnouncement, string> = {
     [SessionAnnouncement.StartGame]: "The game is starting!",
     [SessionAnnouncement.ClueBonusWager]: "You get to wager!",
-    [SessionAnnouncement.ClueBonusAllWager]: "This is your last chance to wager!",
+    [SessionAnnouncement.ClueBonusAllWager]: "Get ready to wager!",
     [SessionAnnouncement.ClueBonusAllPlay]: "Everyone gets to respond!",
     [SessionAnnouncement.FinalClue]: "This is the final clue for this round!",
     [SessionAnnouncement.StartRound]: "A new round is starting!",
-    [SessionAnnouncement.StartFinalRound]: "The final round is starting!",
+    [SessionAnnouncement.StartFinalRound]: "This is the final clue for the game!",
     [SessionAnnouncement.GameOver]: "Game over!"
 }
 

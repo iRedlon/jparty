@@ -98,7 +98,7 @@ export default function PlayerClueSelection() {
 
     return (
         <Box className={"mobile-box"} padding={"1em"}>
-            <Heading size={"sm"} fontFamily={"logo"}>tap to select a clue</Heading>
+            <Heading size={"lg"} className={"logo-text"}>tap to select a clue</Heading>
 
             <Stack direction={"column"} marginTop={"1em"} gap={"1em"} fontFamily={"board"}>
                 <Stack direction={"row"} justifyContent={"center"} alignItems={"center"}>

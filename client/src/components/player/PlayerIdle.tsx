@@ -47,7 +47,7 @@ export default function PlayerIdle({ setIsEditingSignature, promptStartGame }: P
 
     return (
         <Box className={"mobile-box"} padding={"1em"} marginLeft={"auto"} marginRight={"auto"}>
-            <Heading fontSize={"3em"} fontFamily={"logo"}>jparty</Heading>
+            <Heading fontSize={"3em"} className={"logo-text"}>jparty!</Heading>
 
             <Button onClick={handleEditSignature} size={"sm"} margin={"0.5em"}>edit signature</Button><br />
             

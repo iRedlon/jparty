@@ -67,9 +67,11 @@ export enum VoiceLineVariable {
 }
 
 export const WELCOME_VOICE_LINES = [
-    "Welcome to j-party! The game is starting.",
+    "Welcome to j-party! Let's begin.",
     "It's time to play j-party! Let's get started.",
-    "Welcome to j-party! Let's get right into it."
+    "Welcome to j-party! Let's get right into it.",
+    "Welcome to j-party! Let's get started.",
+    "This is j-party! Let's get started.",
 ];
 
 export const READ_FIRST_CATEGORY_NAME_VOICE_LINES = [
@@ -95,42 +97,43 @@ export const READ_LAST_CATEGORY_NAME_VOICE_LINES = [
 
 export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, string[]> = {
     [SessionAnnouncement.StartGame]: [
-        `Welcome to j-party! Start us off ${VoiceLineVariable.ClueSelectorName}.`,
-        `Welcome to j-party! Get us started ${VoiceLineVariable.ClueSelectorName}.`,
-        `The game is starting! ${VoiceLineVariable.ClueSelectorName} will start the round off.`,
-        `Let's get started! Select a clue ${VoiceLineVariable.ClueSelectorName}.`
+        // WELCOME_VOICE_LINES is responsible for this
     ],
     [SessionAnnouncement.ClueBonusWager]: [
-        `That's a bonus! ${VoiceLineVariable.ClueSelectorName} gets to wager on: "${VoiceLineVariable.CategoryName}"!`, 
-        `${VoiceLineVariable.ClueSelectorName} found a wager bonus in: "${VoiceLineVariable.CategoryName}"!`,
-        `Get ready to make a wager on: "${VoiceLineVariable.CategoryName}". Good luck ${VoiceLineVariable.ClueSelectorName}.`
+        `${VoiceLineVariable.ClueSelectorName} gets to wager on "${VoiceLineVariable.CategoryName}"!`, 
+        `${VoiceLineVariable.ClueSelectorName} found a wager bonus in "${VoiceLineVariable.CategoryName}"!`,
+        `Get ready to make a wager on "${VoiceLineVariable.CategoryName}". Good luck ${VoiceLineVariable.ClueSelectorName}.`,
+        `You get to wager on this one ${VoiceLineVariable.ClueSelectorName}. Good luck.`,
+        `You get to wager on this one ${VoiceLineVariable.ClueSelectorName}. Go ahead.`,
+        `${VoiceLineVariable.ClueSelectorName} found a wager bonus. Best of luck.`
     ],
     [SessionAnnouncement.ClueBonusAllWager]: [
-        `Everyone gets to wager. The category is: "${VoiceLineVariable.CategoryName}."`, 
-        `Everyone can wager on this clue. The category is going to be: "${VoiceLineVariable.CategoryName}."`,
-        `This is an all wager. The category is: ${VoiceLineVariable.CategoryName}.`
+        `Get ready to wager on the final clue. The category will be: "${VoiceLineVariable.CategoryName}".`,
+        `It's time to wager on the final clue. The category is going to be: "${VoiceLineVariable.CategoryName}".`,
+        `Get ready to wager. The category of the final clue will be: "${VoiceLineVariable.CategoryName}".`
     ],
     [SessionAnnouncement.ClueBonusAllPlay]: [
-        `This is a bonus! Everyone gets to respond in the category: "${VoiceLineVariable.CategoryName}"`,
+        `All play! Everyone gets to respond in the category: "${VoiceLineVariable.CategoryName}"`,
         `You found an all play for: "${VoiceLineVariable.CategoryName}"! Everyone can respond.`,
         `That's an all play! Everyone get ready to respond in: "${VoiceLineVariable.CategoryName}"`
     ],
     [SessionAnnouncement.FinalClue]: [
-        "This is the final clue for this round!",
+        "This is the final clue of the round!",
         "This round is almost over. One more clue to go!",
         "Here comes the final clue in the round.",
         "One clue to go."
     ],
     [SessionAnnouncement.StartRound]: [
-        `${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}. Good luck in the next round!`, 
-        `Good round everyone. ${VoiceLineVariable.LeaderName} has the lead. Let's move on to round ${VoiceLineVariable.RoundNumber}.`, 
-        `Round ${VoiceLineVariable.RoundNumber} is coming up. Let's find out if anyone can take the lead from ${VoiceLineVariable.LeaderName}.`,
+        `${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}. Good luck in the next round!`,
+        `Good round everyone. ${VoiceLineVariable.LeaderName} has the lead. Let's move on.`, 
+        `Well done. Round ${VoiceLineVariable.RoundNumber} is coming up.`,
         `Well played everyone. Round ${VoiceLineVariable.RoundNumber} is next. Good luck!`
     ],
     [SessionAnnouncement.StartFinalRound]: [
-        `This is the final round! ${VoiceLineVariable.LeaderName} is the one to beat.`,
-        `Here comes the final round! This is your last chance to overtake ${VoiceLineVariable.LeaderName}.`,
-        `This is the last round! ${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}.`
+        `This is the final clue! ${VoiceLineVariable.LeaderName} has the lead.`,
+        `Here comes the final clue! ${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}.`,
+        `This is the last clue! ${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}.`,
+        `This is the last clue of the game! ${VoiceLineVariable.LeaderName} is on top with ${VoiceLineVariable.LeaderScore}.`
     ],
     [SessionAnnouncement.GameOver]: [
         `Congratulations ${VoiceLineVariable.LeaderName}! You're a j-party champion. Thanks for playing!`,
@@ -152,7 +155,8 @@ export const PROMPT_CLUE_SELECTION_VOICE_LINES = [
     `${VoiceLineVariable.ClueSelectorName} controls the board.`,
     `It's up to you ${VoiceLineVariable.ClueSelectorName}.`,
     `Go ahead ${VoiceLineVariable.ClueSelectorName}`,
-    `Where are we headed ${VoiceLineVariable.ClueSelectorName}?`
+    `Where are we headed ${VoiceLineVariable.ClueSelectorName}?`,
+    `Where to next ${VoiceLineVariable.ClueSelectorName}?`
 ];
 
 export const READ_CLUE_SELECTION_VOICE_LINE = `${VoiceLineVariable.CategoryName} for ${VoiceLineVariable.ClueValue}`;
@@ -160,7 +164,7 @@ export const READ_CLUE_SELECTION_VOICE_LINE = `${VoiceLineVariable.CategoryName}
 export const CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES = [
     `Nice work ${VoiceLineVariable.ClueSelectorName}, you cleared that whole category. Where to next?`,
     `You got every clue in that category ${VoiceLineVariable.ClueSelectorName}. The board is still yours.`,
-    `${VoiceLineVariable.CategoryName} was just swept by ${VoiceLineVariable.ClueSelectorName}. Well done! It's your choice.`
+    `${VoiceLineVariable.ClueSelectorName} swept ${VoiceLineVariable.CategoryName}. Well done! It's still your choice.`
 ];
 
 export const TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES: Record<TriviaClueDecision, string[]> = {
@@ -171,11 +175,11 @@ export const TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES: Record<TriviaClueDecision,
         `You got it ${VoiceLineVariable.SpotlightResponderName}.`,
         "That's the answer.",
         "That was it.",
-        "That's right",
-        "Yep."
+        "That's right.",
+        "You got it.",
     ],
     [TriviaClueDecision.Incorrect]: [
-        "Incorrect!",
+        "Incorrect.",
         "Sorry, no.", 
         "That isn't it.",
         "No, I'm sorry.",
@@ -186,7 +190,7 @@ export const TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES: Record<TriviaClueDecision,
         `Needs more detail. Try again ${VoiceLineVariable.SpotlightResponderName}.`, 
         "Could you be more specific?",
         "Could you add some detail?",
-        `Could you please clarify ${VoiceLineVariable.SpotlightResponderName}?`,
+        `Could you please clarify, ${VoiceLineVariable.SpotlightResponderName}?`,
     ]
 };
 
