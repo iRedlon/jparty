@@ -5,11 +5,12 @@ import { loadSlim } from "@tsparticles/slim";
 import { useEffect, useState } from "react";
 
 import {
-    BACKGROUND_THEME_CHANGE_EVENT, BACKGROUND_THEME_COLORS, BackgroundTheme, getBackgroundTheme
+    BACKGROUND_THEME_CHANGE_EVENT, BACKGROUND_THEME_COLORS, BackgroundTheme, getBackgroundParticlesEnabled, getBackgroundTheme
 } from "../../misc/background-theme";
 
 export default function Background() {
     const [theme, setTheme] = useState(getBackgroundTheme());
+    const [particlesEnabled, setParticlesEnabled] = useState(getBackgroundParticlesEnabled());
 
     const isKaleidoscope = theme === BackgroundTheme.Kaleidoscope;
 
@@ -19,7 +20,11 @@ export default function Background() {
             await loadTextShape(engine);
         });
 
-        const handleThemeChange = () => setTheme(getBackgroundTheme());
+        const handleThemeChange = () => {
+            setTheme(getBackgroundTheme());
+            setParticlesEnabled(getBackgroundParticlesEnabled());
+        };
+
         window.addEventListener(BACKGROUND_THEME_CHANGE_EVENT, handleThemeChange);
 
         return () => window.removeEventListener(BACKGROUND_THEME_CHANGE_EVENT, handleThemeChange);
@@ -28,20 +33,22 @@ export default function Background() {
     const themeColors = BACKGROUND_THEME_COLORS[theme];
 
     return (
-        <div className={isKaleidoscope ? "kaleidoscope-background" : undefined}>
-            <Particles
+        <div className={isKaleidoscope ? "kaleidoscope-background" : "solid-background"}
+            style={isKaleidoscope ? undefined : { backgroundColor: themeColors.backgroundColor }}>
+
+            {!isKaleidoscope && particlesEnabled && <Particles
                 key={theme}
                 id={"tsparticles"}
                 options={{
                     fpsLimit: 120,
                     background: {
                         color: {
-                            value: isKaleidoscope ? "transparent" : themeColors.backgroundColor,
+                            value: themeColors.backgroundColor,
                         },
                     },
                     particles: {
                         number: {
-                            value: isKaleidoscope ? 0 : 16,
+                            value: 16,
                             density: {
                                 enable: true,
                                 width: 1920,
@@ -88,7 +95,7 @@ export default function Background() {
                     },
                     detectRetina: true
                 }}
-            />
+            />}
         </div>
     )
 };

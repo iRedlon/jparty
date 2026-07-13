@@ -1,6 +1,6 @@
 
 import { Box, Center, Flex } from "@chakra-ui/react";
-import { AudioType, HostServerSocket, LeaderboardPlayers, LeaderboardStatsSchema, LeaderboardType, SessionAnnouncement, SessionState, TriviaClueBonus, TriviaGameSettingsPreset, VoiceType } from "jparty-shared";
+import { AudioType, HostServerSocket, LeaderboardPlayers, LeaderboardStatsSchema, LeaderboardType, ServerSocket, SessionAnnouncement, SessionState, SessionTimeoutType, TriviaClueBonus, TriviaGameSettingsPreset, VoiceType } from "jparty-shared";
 import { useContext, useEffect, useRef, useState } from "react";
 import { GoMute } from "react-icons/go";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
@@ -17,7 +17,7 @@ import ServerMessageAlert from "../common/ServerMessage";
 import Timer from "../common/Timer";
 import { playAudio, playOpenAIVoice, playSpeechSynthesisVoice, subscribeToMuteState, isAudioMuted } from "../../misc/audio";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
-import { socket } from "../../misc/socket";
+import { estimateClientTimeMs, socket } from "../../misc/socket";
 import { Layer } from "../../misc/ui-constants";
 
 import "../../style/components/HostLayout.css";
@@ -50,6 +50,8 @@ export default function HostLayout() {
     const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
     const [gameSettingsPreset, setGameSettingsPreset] = useState(TriviaGameSettingsPreset.Normal);
     const [gamePreviewCategoryNames, setGamePreviewCategoryNames] = useState<string[] | undefined>();
+    const [responseWindowOpenTimeMs, setResponseWindowOpenTimeMs] = useState<number | undefined>();
+    const [responseWindowOpen, setResponseWindowOpen] = useState(false);
 
     useEffect(() => {
         window.speechSynthesis.getVoices();
@@ -64,6 +66,8 @@ export default function HostLayout() {
         socket.on(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
         socket.on(HostServerSocket.UpdateGameSettingsPreset, handleServerUpdateGameSettingsPreset);
         socket.on(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
+        socket.on(ServerSocket.StartTimeout, handleStartTimeout);
+        socket.on(ServerSocket.StopTimeout, handleStopTimeout);
 
         addMockSocketEventHandler(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
         addMockSocketEventHandler(HostServerSocket.UpdateLeaderboardStats, handleUpdateLeaderboardStats);
@@ -74,6 +78,7 @@ export default function HostLayout() {
         addMockSocketEventHandler(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         addMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
         addMockSocketEventHandler(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
+        addMockSocketEventHandler(ServerSocket.StartTimeout, handleStartTimeout);
 
         return () => {
             socket.off(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
@@ -86,6 +91,8 @@ export default function HostLayout() {
             socket.off(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
             socket.off(HostServerSocket.UpdateGameSettingsPreset, handleServerUpdateGameSettingsPreset);
             socket.off(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
+            socket.off(ServerSocket.StartTimeout, handleStartTimeout);
+            socket.off(ServerSocket.StopTimeout, handleStopTimeout);
 
             removeMockSocketEventHandler(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
             removeMockSocketEventHandler(HostServerSocket.UpdateLeaderboardStats, handleUpdateLeaderboardStats);
@@ -96,6 +103,7 @@ export default function HostLayout() {
             removeMockSocketEventHandler(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
             removeMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
             removeMockSocketEventHandler(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
+            removeMockSocketEventHandler(ServerSocket.StartTimeout, handleStartTimeout);
         }
     }, []);
 
@@ -104,17 +112,43 @@ export default function HostLayout() {
         return subscribeToMuteState(setIsMuted);
     }, []);
 
+    const handleStartTimeout = (timeoutType: SessionTimeoutType, openTimeMs: number) => {
+        setResponseWindowOpenTimeMs((timeoutType === SessionTimeoutType.ResponseWindow) ? estimateClientTimeMs(openTimeMs) : undefined);
+    }
+
+    const handleStopTimeout = () => {
+        setResponseWindowOpenTimeMs(undefined);
+    }
+
+    useEffect(() => {
+        if (responseWindowOpenTimeMs === undefined) {
+            setResponseWindowOpen(false);
+            return;
+        }
+
+        const remainingMs = responseWindowOpenTimeMs - Date.now();
+        if (remainingMs <= 0) {
+            setResponseWindowOpen(true);
+            return;
+        }
+
+        setResponseWindowOpen(false);
+
+        const timeout = setTimeout(() => setResponseWindowOpen(true), remainingMs);
+        return () => clearTimeout(timeout);
+    }, [responseWindowOpenTimeMs]);
+
     const getMusicAudioType = () => {
         if (context.sessionState === SessionState.Lobby) {
             return AudioType.LobbyMusic;
         }
 
-        // if ((context.sessionState === SessionState.ClueResponse) && (context.categoryIndex >= 0) && (context.clueIndex >= 0)) {
-        //     const triviaClue = context.triviaRound?.categories[context.categoryIndex]?.clues[context.clueIndex];
-        //     if (triviaClue?.bonus === TriviaClueBonus.AllWager) {
-        //         return AudioType.ThinkingMusic;
-        //     }
-        // }
+        if (responseWindowOpen && (context.sessionState === SessionState.ClueResponse) && (context.categoryIndex >= 0) && (context.clueIndex >= 0)) {
+            const triviaClue = context.triviaRound?.categories[context.categoryIndex]?.clues[context.clueIndex];
+            if (triviaClue?.bonus === TriviaClueBonus.AllWager) {
+                return AudioType.ThinkingMusic;
+            }
+        }
 
         return AudioType.GameMusic;
     }
@@ -125,7 +159,7 @@ export default function HostLayout() {
         if (queuedToHideAnnouncement) {
             setAnnouncement(undefined);
         }
-    }, [context.sessionState]);
+    }, [context.sessionState, responseWindowOpen]);
 
     const handleUpdateLeaderboardPlayers = (leaderboardType: LeaderboardType, leaderboardPlayers: LeaderboardPlayers) => {
         switch (leaderboardType) {
@@ -289,7 +323,7 @@ export default function HostLayout() {
             <Flex height={"100vh"} width={"100vw"} alignContent={"center"} justifyContent={"center"}>
                 <Center zIndex={Layer.Bottom}>
                     <SwitchTransition>
-                        <CSSTransition key={componentState as HostComponentState} nodeRef={sessionStateRef} timeout={1000} classNames={"session-state"}
+                        <CSSTransition key={componentState as HostComponentState} nodeRef={sessionStateRef} timeout={{ appear: 1050, enter: 1050, exit: 1000 }} classNames={"session-state"}
                             appear mountOnEnter unmountOnExit>
 
                             <Box ref={sessionStateRef}>

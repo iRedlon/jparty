@@ -4,7 +4,7 @@ import { TriviaClueDecision } from "./trivia-game-constants";
 
 // this estimate is quite generous. the client will always tell the server to cancel the timeout early once its utterance is complete anyway
 // that is to say, as long as we don't underestimate the voice duration, the timing will always be as smooth as it can possibly be
-// the base covers TTS stream startup latency, which happens after the server's timer has already started
+// the base duration covers TTS stream startup latency, which happens after the server's timer has already started
 export const ESTIMATE_VOICE_DURATION_BASE_MS = 2500;
 export const ESTIMATE_VOICE_DURATION_MS_PER_CHARACTER = 120;
 
@@ -31,7 +31,8 @@ export enum AudioType {
     WagerResponseSubmitted,
     CorrectDecision,
     IncorrectDecision,
-    ClueSelected
+    ClueSelected,
+    FoundWagerBonus
 }
 
 export enum VoiceType {
@@ -56,6 +57,7 @@ export enum VoiceLineType {
 export enum VoiceLineVariable {
     RoundNumber = "{roundNumber}",
     ReadingCategoryName = "{readingCategoryName}",
+    QuotedCategoryText = "{quotedCategoryText}",
     CategoryName = "{categoryName}",
     ClueValue = "{clueValue}",
     ClueAnswer = "{clueAnswer}",
@@ -75,24 +77,42 @@ export const WELCOME_VOICE_LINES = [
 ];
 
 export const READ_FIRST_CATEGORY_NAME_VOICE_LINES = [
-    `The categories are: "${VoiceLineVariable.ReadingCategoryName}"`,
-    `Our first category will be: "${VoiceLineVariable.ReadingCategoryName}"`,
-    `In this round, we'll have: "${VoiceLineVariable.ReadingCategoryName}"`
+    `The categories are: "${VoiceLineVariable.ReadingCategoryName}",`,
+    `Our first category will be: "${VoiceLineVariable.ReadingCategoryName}",`,
+    `In this round, we'll have: "${VoiceLineVariable.ReadingCategoryName}",`
 ];
 
 // having three duplicates of the same line is my hacky way to implement voice line probability lol
 export const READ_MIDDLE_CATEGORY_NAME_VOICE_LINES = [
-    `"${VoiceLineVariable.ReadingCategoryName}"`,
-    `"${VoiceLineVariable.ReadingCategoryName}"`,
-    `"${VoiceLineVariable.ReadingCategoryName}"`,
-    `next it'll be: "${VoiceLineVariable.ReadingCategoryName}"`,
-    `then: "${VoiceLineVariable.ReadingCategoryName}"`
+    `"${VoiceLineVariable.ReadingCategoryName}",`,
+    `"${VoiceLineVariable.ReadingCategoryName}",`,
+    `"${VoiceLineVariable.ReadingCategoryName}",`,
+    `next it'll be: "${VoiceLineVariable.ReadingCategoryName}",`,
+    `then: "${VoiceLineVariable.ReadingCategoryName}",`
 ];
 
 export const READ_LAST_CATEGORY_NAME_VOICE_LINES = [
-    `and finally: "${VoiceLineVariable.ReadingCategoryName}"`,
-    `and lastly: "${VoiceLineVariable.ReadingCategoryName}"`,
-    `and the last will be: "${VoiceLineVariable.ReadingCategoryName}"`
+    `and finally: "${VoiceLineVariable.ReadingCategoryName}".`,
+    `and lastly: "${VoiceLineVariable.ReadingCategoryName}".`,
+    `and the last will be: "${VoiceLineVariable.ReadingCategoryName}".`
+];
+
+export const QUOTED_WORD_CATEGORY_VOICE_LINES = [
+    `All of the answers in that category will contain the word "${VoiceLineVariable.QuotedCategoryText}".`,
+    `Each answer in that category will contain the word "${VoiceLineVariable.QuotedCategoryText}".`,
+    `Every answer there will have the word "${VoiceLineVariable.QuotedCategoryText}" in it.`
+];
+
+export const QUOTED_LETTER_CATEGORY_VOICE_LINES = [
+    `All of the answers in that category will start with the letter "${VoiceLineVariable.QuotedCategoryText}".`,
+    `Each answer in that category will start with the letter "${VoiceLineVariable.QuotedCategoryText}".`,
+    `Every answer there will begin with the letter "${VoiceLineVariable.QuotedCategoryText}".`
+];
+
+export const QUOTED_OTHER_CATEGORY_VOICE_LINES = [
+    `Note that "${VoiceLineVariable.QuotedCategoryText}" is in quotations.`,
+    `Keep in mind that "${VoiceLineVariable.QuotedCategoryText}" is in quotations.`,
+    `"${VoiceLineVariable.QuotedCategoryText}" is in quotations there.`
 ];
 
 export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, string[]> = {
@@ -100,40 +120,32 @@ export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, strin
         // WELCOME_VOICE_LINES is responsible for this
     ],
     [SessionAnnouncement.ClueBonusWager]: [
-        `${VoiceLineVariable.ClueSelectorName} gets to wager on "${VoiceLineVariable.CategoryName}"!`, 
-        `${VoiceLineVariable.ClueSelectorName} found a wager bonus in "${VoiceLineVariable.CategoryName}"!`,
-        `Get ready to make a wager on "${VoiceLineVariable.CategoryName}". Good luck ${VoiceLineVariable.ClueSelectorName}.`,
-        `You get to wager on this one ${VoiceLineVariable.ClueSelectorName}. Good luck.`,
-        `You get to wager on this one ${VoiceLineVariable.ClueSelectorName}. Go ahead.`,
-        `${VoiceLineVariable.ClueSelectorName} found a wager bonus. Best of luck.`
+        // FIRST/SECOND/LAST_WAGER_BONUS_VOICE_LINES are responsible for this
     ],
     [SessionAnnouncement.ClueBonusAllWager]: [
-        `Get ready to wager on the final clue. The category will be: "${VoiceLineVariable.CategoryName}".`,
-        `It's time to wager on the final clue. The category is going to be: "${VoiceLineVariable.CategoryName}".`,
-        `Get ready to wager. The category of the final clue will be: "${VoiceLineVariable.CategoryName}".`
+        `It's time for final j-party! Get ready to wager. The category will be: "${VoiceLineVariable.CategoryName}".`,
+        `It's final j-party! Time to make a wager. The category is going to be: "${VoiceLineVariable.CategoryName}".`,
+        `It's time for final j-party! Everyone get ready to wager. The category will be: "${VoiceLineVariable.CategoryName}".`
     ],
     [SessionAnnouncement.ClueBonusAllPlay]: [
         `All play! Everyone gets to respond in the category: "${VoiceLineVariable.CategoryName}"`,
         `You found an all play for: "${VoiceLineVariable.CategoryName}"! Everyone can respond.`,
-        `That's an all play! Everyone get ready to respond in: "${VoiceLineVariable.CategoryName}"`
+        `That's an all play! Everyone get ready to respond in: "${VoiceLineVariable.CategoryName}".`
     ],
     [SessionAnnouncement.FinalClue]: [
-        "This is the final clue of the round!",
-        "This round is almost over. One more clue to go!",
+        "This is the final clue in the round.",
+        "This round is almost over! One more clue to go.",
         "Here comes the final clue in the round.",
         "One clue to go."
     ],
     [SessionAnnouncement.StartRound]: [
-        `${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}. Good luck in the next round!`,
-        `Good round everyone. ${VoiceLineVariable.LeaderName} has the lead. Let's move on.`, 
-        `Well done. Round ${VoiceLineVariable.RoundNumber} is coming up.`,
-        `Well played everyone. Round ${VoiceLineVariable.RoundNumber} is next. Good luck!`
+        `${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}. Clue values will be doubled in the next round.`,
+        `${VoiceLineVariable.LeaderName} has the lead as we head to double j-party. All clue values are doubled in this round.`, 
+        `It's time for double j-party! All the clues are worth twice as much here. ${VoiceLineVariable.LeaderName} has the lead with ${VoiceLineVariable.LeaderScore}.`,
+        `Well played everyone. We're headed to double j-party! There's plenty of money on the board to take the lead from ${VoiceLineVariable.LeaderName}.`
     ],
     [SessionAnnouncement.StartFinalRound]: [
-        `This is the final clue! ${VoiceLineVariable.LeaderName} has the lead.`,
-        `Here comes the final clue! ${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}.`,
-        `This is the last clue! ${VoiceLineVariable.LeaderName} is in the lead with ${VoiceLineVariable.LeaderScore}.`,
-        `This is the last clue of the game! ${VoiceLineVariable.LeaderName} is on top with ${VoiceLineVariable.LeaderScore}.`
+        // SessionAnnouncement.ClueBonusAllWager is responsible for this
     ],
     [SessionAnnouncement.GameOver]: [
         `Congratulations ${VoiceLineVariable.LeaderName}! You're a j-party champion. Thanks for playing!`,
@@ -142,6 +154,27 @@ export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, strin
         `Your j-party champion is ${VoiceLineVariable.LeaderName}. You rock! Thanks for playing!`
     ]
 };
+
+export const FIRST_WAGER_BONUS_VOICE_LINES = [
+    `${VoiceLineVariable.ClueSelectorName} found our first daily double in "${VoiceLineVariable.CategoryName}"! Best of luck.`,
+    `And there's the first daily double. ${VoiceLineVariable.ClueSelectorName} gets to wager on "${VoiceLineVariable.CategoryName}". Good luck.`,
+    `And that's our first daily double. Best of luck ${VoiceLineVariable.ClueSelectorName}.`,
+    `${VoiceLineVariable.ClueSelectorName} found the first daily double of the game in "${VoiceLineVariable.CategoryName}"! Good luck.`
+];
+
+export const SECOND_WAGER_BONUS_VOICE_LINES = [
+    `${VoiceLineVariable.ClueSelectorName} found our second daily double in "${VoiceLineVariable.CategoryName}"! Just one more left on the board. Best of luck.`,
+    `And there's the second daily double of the game. ${VoiceLineVariable.ClueSelectorName} gets to wager on "${VoiceLineVariable.CategoryName}". Good luck.`,
+    `And that's our second daily double! There's only one more left on the board. Best of luck ${VoiceLineVariable.ClueSelectorName}.`,
+    `${VoiceLineVariable.ClueSelectorName} found the second daily double of the game in "${VoiceLineVariable.CategoryName}"! Good luck.`
+];
+
+export const LAST_WAGER_BONUS_VOICE_LINES = [
+    `${VoiceLineVariable.ClueSelectorName} found the last daily double of the game in "${VoiceLineVariable.CategoryName}"! Best of luck.`,
+    `And there's our final daily double. ${VoiceLineVariable.ClueSelectorName} gets to wager on "${VoiceLineVariable.CategoryName}". Good luck.`,
+    `And that's our last daily double. Best of luck ${VoiceLineVariable.ClueSelectorName}.`,
+    `${VoiceLineVariable.ClueSelectorName} found the last daily double of the game in "${VoiceLineVariable.CategoryName}"! Good luck.`
+];
 
 export const LEADERBOARD_GAME_OVER_VOICE_LINES = [
     `Congratulations ${VoiceLineVariable.LeaderName}! You're a j-party champion, and you claimed ${VoiceLineVariable.ClaimedLeaderboardSpot}. Thanks for playing!`,
@@ -154,9 +187,10 @@ export const PROMPT_CLUE_SELECTION_VOICE_LINES = [
     `Make a selection ${VoiceLineVariable.ClueSelectorName}.`,
     `${VoiceLineVariable.ClueSelectorName} controls the board.`,
     `It's up to you ${VoiceLineVariable.ClueSelectorName}.`,
-    `Go ahead ${VoiceLineVariable.ClueSelectorName}`,
+    `Go ahead ${VoiceLineVariable.ClueSelectorName}.`,
     `Where are we headed ${VoiceLineVariable.ClueSelectorName}?`,
-    `Where to next ${VoiceLineVariable.ClueSelectorName}?`
+    `Where to next ${VoiceLineVariable.ClueSelectorName}?`,
+    `It's all yours ${VoiceLineVariable.ClueSelectorName}.`,
 ];
 
 export const READ_CLUE_SELECTION_VOICE_LINE = `${VoiceLineVariable.CategoryName} for ${VoiceLineVariable.ClueValue}`;

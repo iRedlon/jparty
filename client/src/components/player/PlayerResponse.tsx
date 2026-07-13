@@ -9,12 +9,12 @@ import { estimateClientTimeMs, socket } from "../../misc/socket";
 
 let responseWindowOpenClientTimeMs = 0;
 
-socket.on(ServerSocket.StartTimeout, (timeoutType: SessionTimeoutType, openTimeMs: number, _closeTimeMs: number) => {
+socket.on(ServerSocket.StartTimeout, (timeoutType: SessionTimeoutType, openTimeMs: number, _closeTimeMs: number, windowID: number) => {
     if (timeoutType === SessionTimeoutType.ResponseWindow) {
         responseWindowOpenClientTimeMs = estimateClientTimeMs(openTimeMs);
 
         const responseWindowArrivalSlackMs = Math.round(responseWindowOpenClientTimeMs - Date.now());
-        socket.emit(PlayerSocket.ResponseWindowArrived, timeoutType, responseWindowArrivalSlackMs);
+        socket.emit(PlayerSocket.ResponseWindowArrived, timeoutType, windowID, responseWindowArrivalSlackMs);
     }
 });
 

@@ -50,3 +50,12 @@ export function updateBackgroundTheme(theme: BackgroundTheme) {
     localStorage[LocalStorageKey.BackgroundTheme] = theme;
     window.dispatchEvent(new Event(BACKGROUND_THEME_CHANGE_EVENT));
 }
+
+export function getBackgroundParticlesEnabled(): boolean {
+    return localStorage[LocalStorageKey.BackgroundParticles] === "true";
+}
+
+export function updateBackgroundParticlesEnabled(enabled: boolean) {
+    localStorage[LocalStorageKey.BackgroundParticles] = enabled ? "true" : "false";
+    window.dispatchEvent(new Event(BACKGROUND_THEME_CHANGE_EVENT));
+}

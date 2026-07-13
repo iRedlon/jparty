@@ -23,6 +23,7 @@
 .session-state-enter #category-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
@@ -41,6 +42,7 @@
 .question-box-enter {
     animation-name: slide-from-right;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }

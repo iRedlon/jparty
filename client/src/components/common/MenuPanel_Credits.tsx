@@ -11,7 +11,7 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 
-import { DONATION_LINK, SOURCE_CODE_LINK } from "../../misc/ui-constants";
+import { SOURCE_CODE_LINK } from "../../misc/ui-constants";
 
 type CreditRowProps = {
   label: string;
@@ -118,33 +118,12 @@ export default function MenuPanel_Credits() {
                 <Text>
                   Bringbold Nineties (Zarma Type)
                   <br />
-                  Rheiborn Sans (Bartosz Wesolek)
+                  Alte Haas Grotesk (Yann Le Coroller)
                   <br />
                   OPTIKorinna-Agency (Castcraft Software)
                 </Text>
               </CreditRow>
             </Box>
-
-            <Stack spacing={2} align="center" textAlign="center" pt={1}>
-              <Link
-                href={DONATION_LINK}
-                isExternal
-                bg="#0070BA"
-                color="white"
-                fontWeight="bold"
-                px={5}
-                py={2.5}
-                borderRadius="full"
-                boxShadow="sm"
-                _hover={{ textDecoration: "none", boxShadow: "md", transform: "translateY(-1px)" }}
-              >
-                Donate on PayPal
-              </Link>
-
-              <Text fontSize="xs" color={muted} maxW="sm">
-                 jparty! will always be 100% free. Donations help pay for the cost of web hosting and API usage
-              </Text>
-            </Stack>
           </Stack>
         </Box>
       </Flex>

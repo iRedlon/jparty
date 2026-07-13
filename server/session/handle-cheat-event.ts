@@ -49,6 +49,15 @@ function handleSkipToRound(socket: Socket, sessionName: string, targetRoundIndex
 
     const announcement = session.isFinalRound() ? SessionAnnouncement.StartFinalRound : SessionAnnouncement.StartRound;
 
+    if (session.isFinalRound()) {
+        emitTriviaRoundUpdate(sessionName);
+
+        const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
+        if (didForceSelectFinalClue) {
+            return;
+        }
+    }
+
     showAnnouncement(sessionName, announcement, () => {
         let session = getSession(sessionName);
         if (!session) {

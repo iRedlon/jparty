@@ -42,6 +42,8 @@ Environment variables are set by a .env file at the roots of the server and clie
 ## _Scheduled Action Windows_
 - Time-sensitive player actions (buzzing, responding) are governed by "action windows" scheduled in real-world clock time, rather than timers that start whenever each client happens to hear about them
 - Clients estimate their clock offset from the server, and each window opens slightly in the future so every player's screen unlocks at the same real-world instant regardless of latency
+- Each window is provisionally scheduled at a worst-case open time. Every potential responder confirms receipt of the window schedule, and once all of them have, the server pulls the open time forward and re-broadcasts. This way even a badly desynced player gets their full window, but a frozen client can only delay everyone up to the cap
+- The client timer UI stays hidden until the window's open instant, so the countdown appears simultaneously on every screen already showing the full duration
 
 ## _[Logging](../server/misc/log.ts)_
 - All server logging flows through a single custom function: "debugLog". This is so that each log can be labelled by the system its a part of (i.e. connection, clue decision, game generation) and can be chosen to be logged or not depending on the current log level (which is ultimately set by an environment variable: LOG_LEVEL)

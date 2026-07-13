@@ -2,9 +2,23 @@
 import cleanTextUtils from "clean-text-utils";
 import { VoiceLineType } from "jparty-shared";
 import { containsProfanities, isProfane } from "no-profanity";
+import { englishDataset, englishRecommendedTransformers, RegExpMatcher } from "obscenity";
 
 const MAX_PLAYER_NAME_LENGTH = 20;
 const MAX_RESPONSE_LENGTH = 50;
+
+const profanityMatcher = new RegExpMatcher({
+    ...englishDataset.build(),
+    ...englishRecommendedTransformers
+});
+
+const LEET_SUBSTITUTIONS: Record<string, string> = {
+    "@": "a", "4": "a", "3": "e", "1": "i", "!": "i", "0": "o", "$": "s", "5": "s", "7": "t", "+": "t"
+};
+
+function normalizeLeetspeak(text: string) {
+    return text.toLowerCase().replace(/[@431!0$57+]/g, char => LEET_SUBSTITUTIONS[char]);
+}
 
 export interface ValidationResults {
     isValid: boolean,
@@ -56,11 +70,17 @@ export function validatePlayerName(playerName: string): ValidationResults {
         return { isValid: false, invalidReason: "too long" };
     }
 
-    if (isProfane(playerName)) {
+    const normalizedPlayerName = normalizeLeetspeak(playerName);
+
+    if (profanityMatcher.hasMatch(playerName) || profanityMatcher.hasMatch(normalizedPlayerName)) {
+        return { isValid: false, invalidReason: "profanity" };
+    }
+
+    if (isProfane(playerName) || isProfane(normalizedPlayerName)) {
         const profanityWords = containsProfanities(playerName);
         const profanityWordsString = profanityWords.map(profanity => `\"${profanity.word}\"`).join(", ");
 
-        return { isValid: false, invalidReason: `profanity: "${profanityWordsString}"` };
+        return { isValid: false, invalidReason: profanityWordsString ? `profanity: ${profanityWordsString}` : "profanity" };
     }
 
     return { isValid: true };

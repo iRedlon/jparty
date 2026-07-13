@@ -12,12 +12,12 @@ import "../../style/components/PlayerBuzzer.css";
 let buzzerOpenClientTimeMs = 0;
 export let buzzerUnmountTimeMs = 0;
 
-socket.on(ServerSocket.StartTimeout, (timeoutType: SessionTimeoutType, openTimeMs: number, _closeTimeMs: number) => {
+socket.on(ServerSocket.StartTimeout, (timeoutType: SessionTimeoutType, openTimeMs: number, _closeTimeMs: number, windowID: number) => {
     if (timeoutType === SessionTimeoutType.BuzzWindow) {
         buzzerOpenClientTimeMs = estimateClientTimeMs(openTimeMs);
-        
+
         const responseWindowArrivalSlackMs = Math.round(buzzerOpenClientTimeMs - Date.now());
-        socket.emit(PlayerSocket.ResponseWindowArrived, timeoutType, responseWindowArrivalSlackMs);
+        socket.emit(PlayerSocket.ResponseWindowArrived, timeoutType, windowID, responseWindowArrivalSlackMs);
     }
 });
 

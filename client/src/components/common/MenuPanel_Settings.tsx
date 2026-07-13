@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Checkbox,
   Divider,
   Flex,
   Heading,
@@ -28,7 +29,9 @@ import {
   BACKGROUND_THEME_DISPLAY_NAMES,
   BACKGROUND_THEME_SWATCHES,
   BackgroundTheme,
+  getBackgroundParticlesEnabled,
   getBackgroundTheme,
+  updateBackgroundParticlesEnabled,
   updateBackgroundTheme,
 } from "../../misc/background-theme";
 import { leaveQASession } from "../../misc/qa-dashboard";
@@ -74,10 +77,18 @@ export default function MenuPanel_Settings({
   );
 
   const [backgroundTheme, setBackgroundTheme] = useState(getBackgroundTheme());
+  const [backgroundParticlesEnabled, setBackgroundParticlesEnabled] = useState(
+    getBackgroundParticlesEnabled()
+  );
 
   const selectBackgroundTheme = (newTheme: BackgroundTheme) => {
     setBackgroundTheme(newTheme);
     updateBackgroundTheme(newTheme);
+  };
+
+  const selectBackgroundParticlesEnabled = (enabled: boolean) => {
+    setBackgroundParticlesEnabled(enabled);
+    updateBackgroundParticlesEnabled(enabled);
   };
 
   const updateVolumeState = (volumeType: VolumeType, volume: number) => {
@@ -258,7 +269,7 @@ export default function MenuPanel_Settings({
                           {modernVoicesDisabled && (
                             <Text mt={3} fontSize="sm" color={muted}>
                               <i>
-                                Note: modern voices are currently disabled due
+                                Modern voices are currently disabled due
                                 to API limits. Use Google Chrome for best
                                 classic voice experience
                               </i>
@@ -340,6 +351,17 @@ export default function MenuPanel_Settings({
                     </WrapItem>
                   ))}
                 </Wrap>
+
+                <Flex justify="center" mt={5}>
+                  <Checkbox
+                    isChecked={backgroundParticlesEnabled}
+                    onChange={(e) =>
+                      selectBackgroundParticlesEnabled(e.target.checked)
+                    }
+                  >
+                    Show particle squares
+                  </Checkbox>
+                </Flex>
               </Box>
             </Box>
           </Stack>

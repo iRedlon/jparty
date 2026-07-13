@@ -91,11 +91,18 @@ export class Session {
     roundIndex: number;
     categoryIndex: number;
     clueIndex: number;
+    wagerBonusCount: number;
 
     // response info
     currentResponderIDs: SocketID[];
     previousResponderIDs: SocketID[];
     spotlightResponderID: SocketID;
+
+    windowID: number;
+    pendingWindowAckType: SessionTimeoutType | undefined;
+    pendingWindowAckPlayerIDs: SocketID[];
+    windowAckWaitStartTimeMs: number;
+    maxWindowAckRttMs: number;
 
     constructor(name: string, creatorSocketID: SocketID, creatorClientID: SocketID) {
         this.creatorSocketID = creatorSocketID;
@@ -130,10 +137,17 @@ export class Session {
         this.roundIndex = 0;
         this.categoryIndex = 0;
         this.clueIndex = 0;
+        this.wagerBonusCount = 0;
 
         this.currentResponderIDs = [];
         this.previousResponderIDs = [];
         this.spotlightResponderID = "";
+
+        this.windowID = 0;
+        this.pendingWindowAckType = undefined;
+        this.pendingWindowAckPlayerIDs = [];
+        this.windowAckWaitStartTimeMs = 0;
+        this.maxWindowAckRttMs = 0;
 
         this.promptGameStarter();
     }
@@ -307,6 +321,7 @@ export class Session {
 
         this.currentResponderIDs = this.currentResponderIDs.map(playerID => (playerID === oldPlayerID) ? newPlayerID : playerID);
         this.previousResponderIDs = this.previousResponderIDs.map(playerID => (playerID === oldPlayerID) ? newPlayerID : playerID);
+        this.pendingWindowAckPlayerIDs = this.pendingWindowAckPlayerIDs.map(playerID => (playerID === oldPlayerID) ? newPlayerID : playerID);
     }
 
     deletePlayer(playerID: SocketID) {
@@ -460,15 +475,19 @@ export class Session {
     // announcements animate in and out of frame. never let one end before it's had real time on screen, even if its voice line finished quickly
     static MIN_ANNOUNCEMENT_DURATION_MS = 3000;
 
+    static MIN_ANNOUNCEMENT_DURATION_MS_OVERRIDES: { [key in SessionAnnouncement]?: number } = {
+        [SessionAnnouncement.ClueBonusAllWager]: 6000
+    };
+
     // an all play reveal puts everyone's decisions on screen at once. this warrants extra reading time
     static ALL_PLAY_DECISION_READING_PAD_MS = 2000;
 
     static TOSSUP_WINDOW_DURATION_MS = 750;
 
-    // response windows adjust for latency by opening and closing a bit later than reality
-    static RESPONSE_WINDOW_OPEN_LEAD_MS = 500;
-
-    static RESPONSE_WINDOW_CLOSE_GRACE_MS = 500;
+    static MAX_WINDOW_OPEN_DURATION_MS = 5000;
+    static RESPONSE_WINDOW_OPEN_DELAY_MS = 500;
+    static RESPONSE_WINDOW_OPEN_SLACK_MS = 250;
+    static RESPONSE_WINDOW_CLOSE_SLACK_MS = 500;
 
     getResponseWindowDurationMs() {
         if (!this.triviaGame) {
@@ -482,6 +501,17 @@ export class Session {
         }
 
         return durationMs;
+    }
+
+    getMinAnnouncementDurationMs() {
+        if (this.currentAnnouncement !== undefined) {
+            const overrideDurationMs = Session.MIN_ANNOUNCEMENT_DURATION_MS_OVERRIDES[this.currentAnnouncement];
+            if (overrideDurationMs !== undefined) {
+                return overrideDurationMs;
+            }
+        }
+
+        return Session.MIN_ANNOUNCEMENT_DURATION_MS;
     }
 
     getTimeoutDurationMs(timeoutType: SessionTimeoutType) {
@@ -500,7 +530,7 @@ export class Session {
                 break;
             case SessionTimeoutType.Announcement:
                 {
-                    durationMs = Math.max(getVoiceDurationMs(this.currentVoiceLine), Session.MIN_ANNOUNCEMENT_DURATION_MS);
+                    durationMs = Math.max(getVoiceDurationMs(this.currentVoiceLine), this.getMinAnnouncementDurationMs());
                 }
                 break;
             case SessionTimeoutType.ReadingClue:
@@ -513,7 +543,7 @@ export class Session {
                 break;
             case SessionTimeoutType.BuzzWindow:
                 {
-                    durationMs = Session.RESPONSE_WINDOW_OPEN_LEAD_MS + (this.triviaGame.settings.buzzWindowDurationSec * 1000) + Session.RESPONSE_WINDOW_CLOSE_GRACE_MS;
+                    durationMs = Session.MAX_WINDOW_OPEN_DURATION_MS + (this.triviaGame.settings.buzzWindowDurationSec * 1000) + Session.RESPONSE_WINDOW_CLOSE_SLACK_MS;
                 }
                 break;
             case SessionTimeoutType.TossupWindow:
@@ -530,7 +560,7 @@ export class Session {
                 break;
             case SessionTimeoutType.ResponseWindow:
                 {
-                    durationMs = Session.RESPONSE_WINDOW_OPEN_LEAD_MS + this.getResponseWindowDurationMs() + Session.RESPONSE_WINDOW_CLOSE_GRACE_MS;
+                    durationMs = Session.MAX_WINDOW_OPEN_DURATION_MS + this.getResponseWindowDurationMs() + Session.RESPONSE_WINDOW_CLOSE_SLACK_MS;
                 }
                 break;
             case SessionTimeoutType.ReadingClueDecision:
@@ -583,6 +613,49 @@ export class Session {
         }
 
         return { openTimeMs: Date.now(), closeTimeMs: timeoutInfo.endTimeMs };
+    }
+
+    // an action window doesn't open for anyone until every potential responder has confirmed they received its schedule (or until we give up waiting)
+    beginWindowAckWait(timeoutType: SessionTimeoutType, playerIDs: SocketID[]) {
+        this.windowID++;
+        this.pendingWindowAckType = timeoutType;
+        this.pendingWindowAckPlayerIDs = playerIDs;
+        this.windowAckWaitStartTimeMs = Date.now();
+        this.maxWindowAckRttMs = 0;
+    }
+
+    // returns true if we were still waiting on this player to confirm the current window
+    receiveWindowAck(playerID: SocketID, windowID: number) {
+        if ((windowID !== this.windowID) || (this.pendingWindowAckType === undefined)) {
+            return false;
+        }
+
+        if (!this.pendingWindowAckPlayerIDs.includes(playerID)) {
+            return false;
+        }
+
+        this.pendingWindowAckPlayerIDs = this.pendingWindowAckPlayerIDs.filter(pendingPlayerID => pendingPlayerID !== playerID);
+        this.maxWindowAckRttMs = Math.max(this.maxWindowAckRttMs, Date.now() - this.windowAckWaitStartTimeMs);
+        return true;
+    }
+
+    // always delay a response window opening by at least RESPONSE_WINDOW_OPEN_DELAY_MS unless we need to wait longer for a slow client
+    getWindowOpenPadMs() {
+        return Math.max(Session.RESPONSE_WINDOW_OPEN_DELAY_MS, (this.maxWindowAckRttMs / 2) + Session.RESPONSE_WINDOW_OPEN_SLACK_MS);
+    }
+
+    // disconnected (or deleted) players can't confirm anything. they shouldn't keep the window closed for everyone else
+    isWindowAckWaitFinished() {
+        return (this.pendingWindowAckType !== undefined) && !this.pendingWindowAckPlayerIDs.some(playerID => this.players[playerID]?.connected);
+    }
+
+    finishWindowAckWait() {
+        const timeoutType = this.pendingWindowAckType;
+
+        this.pendingWindowAckType = undefined;
+        this.pendingWindowAckPlayerIDs = [];
+
+        return timeoutType;
     }
 
     startTimeout(timeoutType: SessionTimeoutType, callback: Function) {
@@ -868,7 +941,9 @@ export class Session {
         this.state = SessionState.ClueTossup;
         this.buzzPlayerIDs = [];
         this.spotlightResponderID = "";
-        this.buzzWindowOpenTimeMs = Date.now() + Session.RESPONSE_WINDOW_OPEN_LEAD_MS;
+        this.buzzWindowOpenTimeMs = Date.now() + Session.MAX_WINDOW_OPEN_DURATION_MS;
+
+        let potentialResponderIDs: SocketID[] = [];
 
         for (const playerID in this.players) {
             // players may only respond to each clue once
@@ -878,7 +953,13 @@ export class Session {
             }
 
             this.players[playerID].state = PlayerState.PromptBuzz;
+
+            if (this.players[playerID].connected) {
+                potentialResponderIDs.push(playerID);
+            }
         }
+
+        this.beginWindowAckWait(SessionTimeoutType.BuzzWindow, potentialResponderIDs);
     }
 
     buzz(playerID: SocketID) {
@@ -957,7 +1038,7 @@ export class Session {
     // player response is a generic system. it can prompt any number of players for any of the different response types (i.e. clue, wager)
     // note that we pass in all responders who need to be prompted in one function call instead of individually for each responder
     promptResponse(responseType: PlayerResponseType, ...responderIDs: SocketID[]) {
-        this.responseWindowOpenTimeMs = Date.now() + Session.RESPONSE_WINDOW_OPEN_LEAD_MS;
+        this.responseWindowOpenTimeMs = Date.now() + Session.MAX_WINDOW_OPEN_DURATION_MS;
 
         switch (responseType) {
             case PlayerResponseType.Clue:
@@ -1003,6 +1084,8 @@ export class Session {
                 this.previousResponderIDs.push(responderID);
             }
         }
+
+        this.beginWindowAckWait(SessionTimeoutType.ResponseWindow, this.currentResponderIDs.filter(responderID => this.players[responderID]?.connected));
 
         if (!this.getCurrentClue()?.isAllPlayClue() && (responderIDs.length === 1)) {
             this.spotlightResponderID = responderIDs[0];

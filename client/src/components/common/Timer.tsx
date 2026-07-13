@@ -16,7 +16,9 @@ export default function Timer() {
     const timerRef = useRef(null);
 
     const [currentTimeoutType, setCurrentTimeoutType] = useState<SessionTimeoutType | undefined>();
+    const [currentTimeoutOpenTimeMs, setCurrentTimeoutOpenTimeMs] = useState(0);
     const [currentTimeoutEndTimeMs, setCurrentTimeoutEndTimeMs] = useState(0);
+    const [windowOpen, setWindowOpen] = useState(false);
     const [timeMs, setTimeMs] = useState(Date.now());
 
     useEffect(() => {
@@ -38,13 +40,34 @@ export default function Timer() {
 
     const handleStartTimeout = (timeoutType: SessionTimeoutType, openTimeMs: number, closeTimeMs: number) => {
         setCurrentTimeoutType(timeoutType);
+        setCurrentTimeoutOpenTimeMs(estimateClientTimeMs(openTimeMs));
         setCurrentTimeoutEndTimeMs(estimateClientTimeMs(closeTimeMs));
     }
 
     const handleStopTimeout = () => {
         setCurrentTimeoutType(undefined);
+        setCurrentTimeoutOpenTimeMs(0);
         setCurrentTimeoutEndTimeMs(0);
     }
+
+    // don't show the timer until the window is actually open
+    useEffect(() => {
+        if (currentTimeoutType === undefined) {
+            setWindowOpen(false);
+            return;
+        }
+
+        const remainingMs = currentTimeoutOpenTimeMs - Date.now();
+        if (remainingMs <= 0) {
+            setWindowOpen(true);
+            return;
+        }
+
+        setWindowOpen(false);
+
+        const timeout = setTimeout(() => setWindowOpen(true), remainingMs);
+        return () => clearTimeout(timeout);
+    }, [currentTimeoutType, currentTimeoutOpenTimeMs]);
 
     const getTimeRemainingSec = () => {
         let timeRemainingSec = Math.round((currentTimeoutEndTimeMs - timeMs) / 1000);
@@ -58,7 +81,7 @@ export default function Timer() {
     }
 
     return (
-        <CSSTransition nodeRef={timerRef} in={currentTimeoutType !== undefined} timeout={500} classNames={"timer"}
+        <CSSTransition nodeRef={timerRef} in={windowOpen} timeout={500} classNames={"timer"}
             appear mountOnEnter unmountOnExit>
 
             <Box ref={timerRef}>

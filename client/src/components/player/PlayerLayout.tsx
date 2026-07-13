@@ -66,6 +66,14 @@ export default function PlayerLayout() {
         ((context.sessionState === SessionState.ClueResponse) && (player?.state === PlayerState.PromptClueResponse)) ||
         ((context.sessionState === SessionState.WagerResponse) && (player?.state === PlayerState.PromptWager));
 
+    // an arriving prompt takes priority over anything else the player might be doing
+    useEffect(() => {
+        if (hasActivePrompt) {
+            setIsEditingSignature(false);
+            setForceIdle(false);
+        }
+    }, [hasActivePrompt]);
+
     const ForceIdleButton = () => {
         // no need to force yourself to be idle if you already are!
         if (!player || isIdle || !hasActivePrompt) {

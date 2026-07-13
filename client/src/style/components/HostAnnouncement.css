@@ -6,8 +6,12 @@
 
 #desktop-announcement-box {
     width: fit-content;
-    aspect-ratio: 1 / 1;
+    height: fit-content;
     padding: 3em;
+}
+
+#desktop-announcement-box .logo-text {
+    transform: translateY(0.1em);
 }
 
 /* announcement-box anims */
@@ -16,6 +20,7 @@
 .session-state-enter .announcement-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }

@@ -6,7 +6,7 @@ import { LocalStorageKey } from "./ui-constants";
 
 import GameMusicMP3 from "../assets/game-music.mp3";
 import LobbyMusicMP3 from "../assets/lobby-music.mp3";
-//import ThinkingMusicMP3 from "../assets/thinking-music.mp3";
+import ThinkingMusicMP3 from "../assets/thinking-music.mp3";
 
 import BuzzWindowTimeoutMP3 from "../assets/buzz-window-timeout.mp3";
 import ApplauseMP3 from "../assets/applause.mp3";
@@ -17,11 +17,12 @@ import WagerResponseSubmittedMP3 from "../assets/wager-response-submitted.mp3";
 import CorrectDecisionMP3 from "../assets/correct-decision.mp3";
 import IncorrectDecisionMP3 from "../assets/incorrect-decision.mp3";
 import ClueSelectedMP3 from "../assets/clue-selected.mp3";
+import FoundWagerBonusMP3 from "../assets/found-wager-bonus.mp3";
 
 const musicAudios: { [key in AudioType]?: HTMLAudioElement } = {
     [AudioType.LobbyMusic]: new Audio(LobbyMusicMP3),
     [AudioType.GameMusic]: new Audio(GameMusicMP3),
-    //[AudioType.ThinkingMusic]: new Audio(ThinkingMusicMP3)
+    [AudioType.ThinkingMusic]: new Audio(ThinkingMusicMP3)
 };
 
 const MUSIC_FADE_IN_DURATION_MS = 800;
@@ -84,6 +85,7 @@ const soundEffectAudios: { [key in AudioType]?: HTMLAudioElement } = {
     [AudioType.CorrectDecision]: new Audio(CorrectDecisionMP3),
     //[AudioType.IncorrectDecision]: new Audio(IncorrectDecisionMP3),
     [AudioType.ClueSelected]: new Audio(ClueSelectedMP3),
+    [AudioType.FoundWagerBonus]: new Audio(FoundWagerBonusMP3),
 };
 
 const NEUTRAL_VOLUME = 0.5;
@@ -221,7 +223,7 @@ export function playAudio(audioType: AudioType) {
         if (musicAudio.paused || !musicAudio.currentTime) {
             applyMusicVolume(audioType);
 
-            musicAudio.loop = true;
+            musicAudio.loop = (audioType !== AudioType.ThinkingMusic);
             musicAudio.play().catch(() => recomputeMusicPlaying());
         }
 

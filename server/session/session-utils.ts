@@ -143,7 +143,7 @@ export function joinSessionAsHost(socket: Socket, sessionName: string) {
         socket.emit(HostServerSocket.UpdateNumSubmittedResponders, numSubmittedResponders, numResponders);
     }
 
-    debugLog(LogCategory.ClientConnection, `host socket ID (${socket.id}) joined session: ${session.name}`, LogVerbosity.Verbose);
+    debugLog(LogCategory.ClientConnection, `host socket ID (${socket.id}) joined session: ${session.name}`, LogVerbosity.VeryVerbose);
 }
 
 export function joinSessionAsPlayer(socket: Socket, sessionName: string) {
@@ -164,7 +164,7 @@ export function joinSessionAsPlayer(socket: Socket, sessionName: string) {
     // check if this player needs to become the game starter
     session.promptGameStarter();
 
-    debugLog(LogCategory.ClientConnection, `player socket ID (${socket.id}) joined session: ${session.name}`, LogVerbosity.Verbose);
+    debugLog(LogCategory.ClientConnection, `player socket ID (${socket.id}) joined session: ${session.name}`, LogVerbosity.VeryVerbose);
 }
 
 export function handleDisconnect(socket: Socket) {
@@ -180,6 +180,10 @@ export function handleDisconnect(socket: Socket) {
 
         if (isPlayer) {
             session.disconnectPlayer(socket.id);
+
+            // if this player was the last one holding a pending action window closed, it can open for everyone else now
+            attemptAccelerateWindowOpen(session.name);
+
             emitStateUpdate(session.name);
         }
         else {
@@ -194,11 +198,11 @@ export function handleDisconnect(socket: Socket) {
 }
 
 export function handleAttemptReconnect(socket: Socket, sessionName: string, clientID: string, callback: ClientSocketCallback[ClientSocket.AttemptReconnect]) {
-    debugLog(LogCategory.ClientConnection, `socket ID (${socket.id}), client ID (${clientID}), attempting to reconnect to session: ${sessionName}`, LogVerbosity.Verbose);
+    debugLog(LogCategory.ClientConnection, `socket ID (${socket.id}), client ID (${clientID}), attempting to reconnect to session: ${sessionName}`, LogVerbosity.VeryVerbose);
 
     try {
         const result = attemptReconnectInternal(socket, sessionName, clientID);
-        debugLog(LogCategory.ClientConnection, `finished reconnection attempt with result: ${AttemptReconnectResult[result]}`, LogVerbosity.Verbose);
+        debugLog(LogCategory.ClientConnection, `finished reconnection attempt with result: ${AttemptReconnectResult[result]}`, LogVerbosity.VeryVerbose);
         callback(result);
     }
     catch (e) {
@@ -290,7 +294,7 @@ export function updateVoiceDuration(sessionName: string, voiceLine: string, dura
     }
 
     if (session.currentAnnouncement !== undefined) {
-        const minRemainingMs = Session.MIN_ANNOUNCEMENT_DURATION_MS - session.getTimeoutElapsedMs(SessionTimeoutType.Announcement);
+        const minRemainingMs = session.getMinAnnouncementDurationMs() - session.getTimeoutElapsedMs(SessionTimeoutType.Announcement);
         restartTimeout(sessionName, SessionTimeoutType.Announcement, Math.max(durationMs, minRemainingMs, 0));
     }
 
@@ -369,8 +373,48 @@ function emitTimeoutUpdate(sessionName: string, timeoutType: SessionTimeoutType)
     if (displayTimeout) {
         const displayWindow = session.getTimeoutDisplayWindowMs(timeoutType);
         if (displayWindow) {
-            io.in(session.name).emit(ServerSocket.StartTimeout, timeoutType, displayWindow.openTimeMs, displayWindow.closeTimeMs);
+            io.in(session.name).emit(ServerSocket.StartTimeout, timeoutType, displayWindow.openTimeMs, displayWindow.closeTimeMs, session.windowID);
         }
+    }
+}
+
+export function attemptAccelerateWindowOpen(sessionName: string) {
+    let session = getSession(sessionName);
+    if (!session || !session.isWindowAckWaitFinished()) {
+        return;
+    }
+
+    const timeoutType = session.finishWindowAckWait();
+    if ((timeoutType === undefined) || !session.timeoutInfo[timeoutType]) {
+        return;
+    }
+
+    const newOpenTimeMs = Date.now() + session.getWindowOpenPadMs();
+
+    if (timeoutType === SessionTimeoutType.BuzzWindow) {
+        if (newOpenTimeMs >= session.buzzWindowOpenTimeMs) {
+            return;
+        }
+
+        session.buzzWindowOpenTimeMs = newOpenTimeMs;
+    }
+    else if (timeoutType === SessionTimeoutType.ResponseWindow) {
+        if (newOpenTimeMs >= session.responseWindowOpenTimeMs) {
+            return;
+        }
+
+        session.responseWindowOpenTimeMs = newOpenTimeMs;
+    }
+    else {
+        return;
+    }
+
+    debugLog(LogCategory.Timeout, `every potential responder confirmed ${SessionTimeoutType[timeoutType]}. accelerating its open time`, LogVerbosity.Verbose);
+
+    // restarting the timeout re-emits the updated window schedule to every client
+    const displayWindow = session.getTimeoutDisplayWindowMs(timeoutType);
+    if (displayWindow) {
+        restartTimeout(sessionName, timeoutType, (displayWindow.closeTimeMs - Date.now()) + Session.RESPONSE_WINDOW_CLOSE_SLACK_MS);
     }
 }
 

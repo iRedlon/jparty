@@ -59,10 +59,8 @@ export async function streamVoiceAudio(req: Request, res: Response) {
 
         if (!response.ok || !response.body) {
             const errorText = response.body ? await response.text() : "no response body";
-            throw new Error(formatDebugLog(`failed to fetch TTS audio from OpenAI: ${errorText}`));
+            throw new Error(formatDebugLog(`failed to fetch TTS audio: ${errorText}`));
         }
-
-        debugLog(LogCategory.Voice, `streaming TTS audio from OpenAI for voice type: ${voiceType}`, LogVerbosity.Verbose);
 
         res.setHeader("Content-Type", "audio/wav");
 

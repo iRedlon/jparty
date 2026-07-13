@@ -15,7 +15,7 @@ export default function HostAnnouncement({ announcement }: HostAnnouncementProps
 
     return (
         <Box id={"desktop-announcement-box"} className={"announcement-box box"}>
-            <Text className={"logo-text"} fontSize={"6em"} maxWidth={"6em"}>{message}</Text>
+            <Text className={"logo-text"} fontSize={"8em"} maxWidth={"6em"}>{message}</Text>
         </Box>
     );
 }

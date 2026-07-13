@@ -1,10 +1,12 @@
 
 import {
     ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES, AudioType, CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES,
-    DISPLAY_CORRECT_ANSWER_VOICE_LINES, getOrdinalString, getRandomChoiceNoRepeat, HostServerSocket, LEADERBOARD_GAME_OVER_VOICE_LINES,
-    LEADERBOARD_TYPE_DISPLAY_NAMES, PROMPT_CLUE_SELECTION_VOICE_LINES, READ_CLUE_SELECTION_VOICE_LINE,
-    READ_FIRST_CATEGORY_NAME_VOICE_LINES, READ_LAST_CATEGORY_NAME_VOICE_LINES, READ_MIDDLE_CATEGORY_NAME_VOICE_LINES,
-    SESSION_ANNOUNCEMENT_VOICE_LINES, SessionAnnouncement, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable, WELCOME_VOICE_LINES,
+    DISPLAY_CORRECT_ANSWER_VOICE_LINES, FIRST_WAGER_BONUS_VOICE_LINES, getOrdinalString, getRandomChoiceNoRepeat, HostServerSocket,
+    LAST_WAGER_BONUS_VOICE_LINES, LEADERBOARD_GAME_OVER_VOICE_LINES, LEADERBOARD_TYPE_DISPLAY_NAMES, PROMPT_CLUE_SELECTION_VOICE_LINES,
+    QUOTED_LETTER_CATEGORY_VOICE_LINES, QUOTED_OTHER_CATEGORY_VOICE_LINES, QUOTED_WORD_CATEGORY_VOICE_LINES,
+    READ_CLUE_SELECTION_VOICE_LINE, READ_FIRST_CATEGORY_NAME_VOICE_LINES, READ_LAST_CATEGORY_NAME_VOICE_LINES, READ_MIDDLE_CATEGORY_NAME_VOICE_LINES,
+    SECOND_WAGER_BONUS_VOICE_LINES, SESSION_ANNOUNCEMENT_VOICE_LINES, SessionAnnouncement, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES,
+    VoiceLineType, VoiceLineVariable, WELCOME_VOICE_LINES,
 } from "jparty-shared";
 
 import { getSession } from "./session-utils.js";
@@ -20,6 +22,10 @@ export function playAudio(sessionName: string, audioType: AudioType) {
     }
 
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayAudio, audioType);
+}
+
+function getQuotedCategoryText(categoryName: string) {
+    return categoryName.match(/["“”]([^"“”]+)["“”]/)?.[1].trim();
 }
 
 export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
@@ -54,6 +60,19 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                 else {
                     voiceLine = getRandomChoiceNoRepeat(READ_MIDDLE_CATEGORY_NAME_VOICE_LINES);
                 }
+
+                const quotedText = getQuotedCategoryText(session.getReadingCategory()?.name || "");
+                if (quotedText) {
+                    if (/^[a-z]$/i.test(quotedText)) {
+                        voiceLine += `. ${getRandomChoiceNoRepeat(QUOTED_LETTER_CATEGORY_VOICE_LINES)}`;
+                    }
+                    else if (/^[a-z]+$/i.test(quotedText)) {
+                        voiceLine += `. ${getRandomChoiceNoRepeat(QUOTED_WORD_CATEGORY_VOICE_LINES)}`;
+                    }
+                    else {
+                        voiceLine += `. ${getRandomChoiceNoRepeat(QUOTED_OTHER_CATEGORY_VOICE_LINES)}`;
+                    }
+                }
             }
             break;
         case VoiceLineType.Announcement:
@@ -63,7 +82,18 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                     break;
                 }
 
-                if ((session.currentAnnouncement === SessionAnnouncement.GameOver) && session.getCurrentLeader()?.claimedLeaderboardSpot) {
+                if (session.currentAnnouncement === SessionAnnouncement.ClueBonusWager) {
+                    if (session.wagerBonusCount <= 1) {
+                        voiceLine = getRandomChoiceNoRepeat(FIRST_WAGER_BONUS_VOICE_LINES);
+                    }
+                    else if (session.wagerBonusCount === 2) {
+                        voiceLine = getRandomChoiceNoRepeat(SECOND_WAGER_BONUS_VOICE_LINES);
+                    }
+                    else {
+                        voiceLine = getRandomChoiceNoRepeat(LAST_WAGER_BONUS_VOICE_LINES);
+                    }
+                }
+                else if ((session.currentAnnouncement === SessionAnnouncement.GameOver) && session.getCurrentLeader()?.claimedLeaderboardSpot) {
                     voiceLine = getRandomChoiceNoRepeat(LEADERBOARD_GAME_OVER_VOICE_LINES);
                 }
                 else {
@@ -142,6 +172,11 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
     const readingCategoryName = session.getReadingCategory()?.name;
     if (readingCategoryName) {
         voiceLine = voiceLine.replace(VoiceLineVariable.ReadingCategoryName, readingCategoryName);
+
+        const quotedText = getQuotedCategoryText(readingCategoryName);
+        if (quotedText) {
+            voiceLine = voiceLine.replace(VoiceLineVariable.QuotedCategoryText, quotedText);
+        }
     }
 
     const categoryName = session.getCurrentCategory()?.name;

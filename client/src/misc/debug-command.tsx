@@ -121,14 +121,14 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
             break;
         case DebugCommand.ShowAnnouncement:
             {
-                emitMockSocketEvent(HostServerSocket.ShowAnnouncement, SessionAnnouncement.StartFinalRound);
-                setTimeout(() => {
-                    handleDebugCommand(DebugCommand.HideAnnouncement);
+                emitMockSocketEvent(HostServerSocket.ShowAnnouncement, SessionAnnouncement.ClueBonusAllWager);
+                // setTimeout(() => {
+                //     handleDebugCommand(DebugCommand.HideAnnouncement);
                     
-                    setTimeout(() => {
-                        emitMockSocketEvent(HostServerSocket.ShowAnnouncement, SessionAnnouncement.ClueBonusAllWager);
-                    }, 200);
-                }, 4000);
+                //     setTimeout(() => {
+                //         emitMockSocketEvent(HostServerSocket.ShowAnnouncement, SessionAnnouncement.ClueBonusAllWager);
+                //     }, 200);
+                // }, 4000);
             }
             break;
         case DebugCommand.HideAnnouncement:

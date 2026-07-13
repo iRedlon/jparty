@@ -100,7 +100,7 @@ export default function PlayerClueSelection() {
         <Box className={"mobile-box"} padding={"1em"}>
             <Heading size={"lg"} className={"logo-text"}>tap to select a clue</Heading>
 
-            <Stack direction={"column"} marginTop={"1em"} gap={"1em"} fontFamily={"board"}>
+            <Stack direction={"column"} marginTop={"1em"} gap={"1em"} className={"board-text"}>
                 <Stack direction={"row"} justifyContent={"center"} alignItems={"center"}>
                     <Box className={"arrow-box"} onClick={() => canGoLeft && updateCategoryIndex(nextLeftCategoryIndex)} pointerEvents={canGoLeft ? "auto" : "none"}>
                         {canGoLeft && <FaArrowLeft />}

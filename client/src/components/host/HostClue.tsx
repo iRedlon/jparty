@@ -62,7 +62,7 @@ export default function HostClue({ triviaCategory, triviaClue, showCorrectAnswer
             <Box margin={"0.25em"} />
 
             <Box height={"50vh"} width={"50vw"} marginLeft={"auto"} marginRight={"auto"} position={"relative"}>
-                <CSSTransition nodeRef={questionBoxRef} in={showQuestion} timeout={1000} classNames={"question-box"}
+                <CSSTransition nodeRef={questionBoxRef} in={showQuestion} timeout={{ enter: 1050, exit: 1000 }} classNames={"question-box"}
                     appear mountOnEnter unmountOnExit>
 
                     <Box ref={questionBoxRef} id={"question-box"} className={"box"}>

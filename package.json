@@ -27,6 +27,7 @@
         "mongodb": "^6.3.0",
         "no-profanity": "^1.5.1",
         "nodemailer": "^9.0.3",
+        "obscenity": "^0.4.6",
         "openai": "^6.45.0",
         "random-words": "^2.0.1",
         "socket.io": "^4.7.3",

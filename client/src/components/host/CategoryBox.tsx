@@ -7,7 +7,7 @@ import { formatDollarValue } from "../../misc/client-utils";
 
 interface CategoryBoxProps {
     triviaCategory: TriviaCategory,
-    triviaClue: TriviaClue
+    triviaClue: TriviaClue,
 }
 
 export default function CategoryBox({ triviaCategory, triviaClue }: CategoryBoxProps) {

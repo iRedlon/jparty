@@ -13,6 +13,12 @@
     padding: 1em;
 }
 
+.board-dollar-sign {
+    display: inline-block;
+    font-size: 0.8em;
+    transform: translateY(-9%);
+}
+
 .board-column {
     display: flex;
     flex-direction: column;
@@ -33,4 +39,9 @@
 .session-state-enter-active .board-column.visible,
 .session-state-enter-done .board-column.visible {
     transform: translateY(0);
+}
+
+.session-state-appear-active .board-column.visible,
+.session-state-enter-active .board-column.visible {
+    transition-delay: 50ms;
 }

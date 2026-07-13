@@ -1,9 +1,10 @@
 /* category box anims */
 
-.session-state-appear #category-box, 
+.session-state-appear #category-box,
 .session-state-enter #category-box {
     animation-name: slide-from-top;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
@@ -12,6 +13,22 @@
     animation-name: slide-from-top;
     animation-duration: 1s;
     animation-timing-function: ease-in-out;
+    animation-direction: reverse;
+    animation-fill-mode: both;
+}
+
+/* wager category preamble anims */
+
+#wager-category-preamble {
+    animation-name: fade-in;
+    animation-duration: 0.75s;
+    animation-delay: 1.05s;
+    animation-fill-mode: both;
+}
+
+.session-state-exit #wager-category-preamble {
+    animation-name: fade-in;
+    animation-duration: 0.5s;
     animation-direction: reverse;
     animation-fill-mode: both;
 }

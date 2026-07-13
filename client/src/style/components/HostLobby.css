@@ -48,6 +48,7 @@
 .session-state-enter #logo-box {
     animation-name: slide-from-top;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
@@ -66,6 +67,7 @@
 .session-state-enter #game-settings-preset-box {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
@@ -84,6 +86,7 @@
 .session-state-enter #leaderboard-box {
     animation-name: slide-from-right;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
@@ -102,6 +105,7 @@
 .session-state-enter #joined-players-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }

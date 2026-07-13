@@ -4,7 +4,6 @@ import { HostServerSocket, SessionState, TriviaRound } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
 
 import { LayoutContext } from "../common/Layout";
-import { formatDollarValue } from "../../misc/client-utils";
 import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
 import { socket } from "../../misc/socket";
 
@@ -13,14 +12,26 @@ import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../m
 
 function getBoardPanelFontSize(isDollarValue: boolean, content: string) {
     if (isDollarValue) {
-        return "4.5em";
+        return "5em";
     }
 
     if (content.length > 25) {
+        return "1.5em";
+    }
+
+    if (content.length > 20) {
         return "1.75em";
     }
 
-    return "2.25em";
+    if (content.length > 15) {
+        return "2em";
+    }
+
+    if (content.length > 10) {
+        return "2.25em";
+    }
+
+    return "2.75em";
 }
 
 interface HostBoardProps {
@@ -64,6 +75,14 @@ export default function HostBoard({ triviaRound }: HostBoardProps) {
     const boardPanelHeight = `${100 / numPanels}vh`;
     const boardPanelWidth = `${100 / numCategories}vw`;
 
+    const BoardDollarValue = (value: number) => {
+        return (
+            <>
+                {value < 0 && "-"}<span className={"board-dollar-sign"}>$</span>{Math.abs(value)}
+            </>
+        )
+    }
+
     const BoardPanel = (content: any, categoryIndex: number, panelIndex: number) => {
         return (
             <Box
@@ -71,7 +90,9 @@ export default function HostBoard({ triviaRound }: HostBoardProps) {
                 height={boardPanelHeight} width={boardPanelWidth}>
 
                 <Box onClick={() => handleDebugCommand(DebugCommand.SelectClue, categoryIndex, panelIndex - 1)} className={"board-panel box"}>
-                    <Heading fontFamily={"board"}lineHeight={1} fontSize={getBoardPanelFontSize(panelIndex > 0, content)} fontWeight={0}>{content}</Heading>
+                    <Heading className={"board-text"} lineHeight={1} fontSize={getBoardPanelFontSize(panelIndex > 0, content)} fontWeight={0}>
+                        {typeof content === "string" ? content.toUpperCase() : content}
+                    </Heading>
                 </Box>
             </Box>
         )
@@ -109,7 +130,7 @@ export default function HostBoard({ triviaRound }: HostBoardProps) {
 
                                 const triviaClue = triviaCategory.clues[panelIndex - 1];
 
-                                return BoardPanel(triviaClue.completed ? "" : formatDollarValue(triviaClue.value), categoryIndex, panelIndex);
+                                return BoardPanel(triviaClue.completed ? "" : BoardDollarValue(triviaClue.value), categoryIndex, panelIndex);
                             })}
                         </Box>
                     );

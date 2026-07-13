@@ -8,7 +8,7 @@ import { Socket } from "socket.io";
 import { playAudio, playVoiceLine } from "./audio.js";
 import { TelemetryEvent, sendTelemetryEvent } from "../misc/telemetry.js";
 import {
-    emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, handleDisconnect, joinSession,
+    attemptAccelerateWindowOpen, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, handleDisconnect, joinSession,
     restartTimeout, showAnnouncement, startPositionChangeAnimation, startTimeout, stopTimeout, updateLeaderboard
 } from "./session-utils.js";
 import { io } from "../controller.js";
@@ -279,8 +279,10 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
                 {
                     // set the spotlight responder ID in advance, just in case their socket ID happens to change during the announcement
                     session.spotlightResponderID = socket.id;
+                    session.wagerBonusCount++;
 
                     playAudio(sessionName, AudioType.Applause);
+                    playAudio(sessionName, AudioType.FoundWagerBonus);
 
                     showAnnouncement(sessionName, SessionAnnouncement.ClueBonusWager, () => {
                         let session = getSession(sessionName);
@@ -448,8 +450,10 @@ function handleSubmitResponse(socket: Socket, sessionName: string) {
         io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateNumSubmittedResponders, numSubmittedResponders, numResponders);
     }
 
+    const playingThinkingMusic = (session.state === SessionState.ClueResponse) && (session.getCurrentClue()?.bonus === TriviaClueBonus.AllWager);
+
     // finish the response window early if we aren't waiting for any more submissions
-    if (numSubmittedResponders >= numResponders) {
+    if ((numSubmittedResponders >= numResponders) && !playingThinkingMusic) {
         finishResponseWindow(sessionName);
     }
 }
@@ -715,6 +719,14 @@ async function finishRound(sessionName: string) {
 
         await updateLeaderboard(sessionName);
     }
+    else if (session.isFinalRound()) {
+        emitTriviaRoundUpdate(sessionName);
+
+        const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
+        if (didForceSelectFinalClue) {
+            return;
+        }
+    }
 
     showAnnouncement(sessionName, announcement, () => {
         let session = getSession(sessionName);
@@ -753,7 +765,7 @@ function handleVoteToReverseDecision(socket: Socket, sessionName: string, respon
     emitStateUpdate(sessionName);
 }
 
-function handleResponseWindowArrived(socket: Socket, sessionName: string, timeoutType: SessionTimeoutType, slackMs: number) {
+function handleResponseWindowArrived(socket: Socket, sessionName: string, timeoutType: SessionTimeoutType, windowID: number, slackMs: number) {
     let session = getSession(sessionName);
     if (!session) {
         return;
@@ -763,6 +775,12 @@ function handleResponseWindowArrived(socket: Socket, sessionName: string, timeou
     if (!player || !Number.isFinite(slackMs)) {
         return;
     }
+
+    if (!session.receiveWindowAck(socket.id, windowID)) {
+        return;
+    }
+
+    attemptAccelerateWindowOpen(sessionName);
 
     slackMs = Math.round(Math.min(Math.max(slackMs, -60000), 60000));
 

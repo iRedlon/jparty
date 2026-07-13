@@ -10,7 +10,11 @@
 
 @font-face {
     font-family: "board";
-    src: url("../fonts/rheiborn-sans-clean.ttf");
+    src: url("../fonts/alte-haas-grotesk-bold.ttf");
+}
+
+.board-text {
+    font-family: "board" !important;
 }
 
 @font-face {

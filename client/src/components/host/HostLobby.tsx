@@ -17,6 +17,17 @@ import { LocalStorageKey, PATCH_NOTES_LINK } from "../../misc/ui-constants";
 import "../../style/components/HostLobby.css";
 
 function JoinedPlayerBox(player: Player) {
+    let nameFontSize = "2em";
+    if (player.name.length > 14) {
+        nameFontSize = "1em";
+    }
+    else if (player.name.length > 10) {
+        nameFontSize = "1.2em";
+    }
+    else if (player.name.length > 6) {
+        nameFontSize = "1.5em";
+    }
+
     return (
         <Stack key={player.clientID} direction={"row"} justifyContent={"center"} paddingTop={"1em"} gap={"1em"}>
             <Box className={"child-box"} height={"4em"} minHeight={"4em"} width={"4em"} minWidth={"4em"}>
@@ -24,7 +35,9 @@ function JoinedPlayerBox(player: Player) {
             </Box>
 
             <Box className={"child-box"} height={"4em"} width={"8em"} overflow={"hidden"} display={"flex"} justifyContent={"center"} alignItems={"center"} padding={"0.5em"}>
-                <Text fontSize={"2em"} lineHeight={"1em"}><b>{player.name}</b></Text>
+                <Text fontSize={nameFontSize} lineHeight={"1.1em"} textAlign={"center"} overflowWrap={"anywhere"}>
+                    <b>{player.name}</b>
+                </Text>
             </Box>
         </Stack>
     );
@@ -123,11 +136,15 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
             }
             break;
     }
-
+    
     return (
         <Stack direction={"row"}>
             <Box ref={joinedPlayersBoxRef} id={"joined-players-box"} className={"box side-box"}>
-                <Heading size={"sm"} className={"logo-text"} fontSize={"2em"}>players</Heading>
+                {context.sessionName && (
+                    <Box className={"child-box"} width={"fit-content"} marginLeft={"auto"} marginRight={"auto"} padding={"0.5em"} display={"flex"}>
+                        <QRCodeSVG value={`${window.location.origin}/?join=${context.sessionName}`} marginSize={1} style={{ width: "12em", height: "12em" }} />
+                    </Box>
+                )}
                 <Box id={"joined-players-list-box"}>
                     {sortedSessionPlayerIDs.map((playerID: SocketID) => {
                         return JoinedPlayerBox(context.sessionPlayers[playerID]);
@@ -146,13 +163,7 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
 
                     <Box>
                         join on your phone with session name:
-                        <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} gap={"1em"}>
-                            <Heading className={"logo-text"} fontSize={"3em"} marginBottom={"-0.1em"}>{context.sessionName}</Heading>
-                            <Divider orientation={"vertical"} height={"4em"} />
-                            {context.sessionName && (
-                                <QRCodeSVG value={`${window.location.origin}/?join=${context.sessionName}`} marginSize={1} style={{ width: "5em", height: "5em" }} />
-                            )}
-                        </Stack>
+                        <Heading className={"logo-text"} fontSize={"3em"} marginBottom={"-0.1em"}>{context.sessionName}</Heading>
                     </Box>
 
                     <Divider marginTop={"0.5em"} marginBottom={"0.5em"} />
@@ -221,7 +232,7 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                                 </UnorderedList>
                             </Stack>
                         ) : (
-                            <Text><i>generating trivia...</i></Text>
+                            <Text><i>randomizing categories...</i></Text>
                         )}
                     </Box>
 
