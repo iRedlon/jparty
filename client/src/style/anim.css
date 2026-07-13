@@ -112,10 +112,14 @@
     100% { background-color: #c8518b; }
 }
 
+.kaleidoscope-background,
+.kaleidoscope-canvas {
+    animation: kaleidoscope-cycle 28s linear -2s infinite;
+}
+
 .kaleidoscope-background {
     position: fixed;
     inset: 0;
-    animation: kaleidoscope-cycle 28s linear -2s infinite;
 }
 
 .solid-background {

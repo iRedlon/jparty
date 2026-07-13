@@ -19,3 +19,8 @@ body {
     box-shadow: 4px 4px black;
     outline: black solid 2px;
 }
+
+.dollar-sign {
+    display: inline-block;
+    font-size: 0.75em;
+}

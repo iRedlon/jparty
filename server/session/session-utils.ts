@@ -190,7 +190,7 @@ export function handleDisconnect(socket: Socket) {
             session.disconnectHost(socket.id);
         }
 
-        debugLog(LogCategory.ClientConnection, `socket ID (${socket.id}) disconnected from session: ${session.name}`, LogVerbosity.Verbose);
+        debugLog(LogCategory.ClientConnection, `socket ID (${socket.id}) disconnected from session: ${session.name}`, LogVerbosity.VeryVerbose);
     }
     catch (e) {
         emitServerError(e, socket, sessionName);
@@ -418,14 +418,14 @@ export function attemptAccelerateWindowOpen(sessionName: string) {
     }
 }
 
-export function showAnnouncement(sessionName: string, announcement: SessionAnnouncement, callback: Function) {
+export function showAnnouncement(sessionName: string, announcement: SessionAnnouncement, callback: Function, voiceDelayMs: number = 0) {
     let session = getSession(sessionName);
     if (!session) {
         return;
     }
 
     session.setCurrentAnnouncement(announcement);
-    playVoiceLine(sessionName, VoiceLineType.Announcement);
+    playVoiceLine(sessionName, VoiceLineType.Announcement, voiceDelayMs);
 
     io.in(sessionName).emit(HostServerSocket.ShowAnnouncement, announcement, session.currentVoiceLine);
 

@@ -3,7 +3,7 @@ import { Box, Heading } from "@chakra-ui/react";
 import { SessionState, TriviaCategory, TriviaCategoryType, TriviaClue, TriviaClueBonus } from "jparty-shared";
 
 import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
-import { formatDollarValue } from "../../misc/client-utils";
+import { formatDollarValueString } from "../../misc/client-utils";
 
 interface CategoryBoxProps {
     triviaCategory: TriviaCategory,
@@ -15,7 +15,7 @@ export default function CategoryBox({ triviaCategory, triviaClue }: CategoryBoxP
 
     let clueValueString = "";
     if (!isWagerBonus) {
-        clueValueString = `for ${formatDollarValue(triviaClue.value)}`;
+        clueValueString = `for ${formatDollarValueString(triviaClue.value)}`;
     }
 
     return (

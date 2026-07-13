@@ -9,7 +9,7 @@ export function enableFullscreen() {
     }
 }
 
-export function formatDollarValue(value: number) {
+export function formatDollarValueString(value: number) {
     let sign = value < 0 ? "-" : "";
     return `${sign}$${Math.abs(value)}`;
 }
@@ -17,7 +17,7 @@ export function formatDollarValue(value: number) {
 const MAX_FULL_SIZE_SCORE_LENGTH = 7;
 
 export function getScoreFontSize(score: number, baseFontSizeEm: number) {
-    const scoreLength = formatDollarValue(score).length;
+    const scoreLength = formatDollarValueString(score).length;
     return `${baseFontSizeEm * Math.min(1, MAX_FULL_SIZE_SCORE_LENGTH / scoreLength)}em`;
 }
 

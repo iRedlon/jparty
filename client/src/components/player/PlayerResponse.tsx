@@ -4,7 +4,7 @@ import { Player, PlayerResponseType, PlayerSocket, ServerSocket, SessionState, S
 import { useContext, useEffect, useRef, useState } from "react";
 
 import { LayoutContext } from "../common/Layout";
-import { formatDollarValue } from "../../misc/client-utils";
+import { formatDollarValueString } from "../../misc/client-utils";
 import { estimateClientTimeMs, socket } from "../../misc/socket";
 
 let responseWindowOpenClientTimeMs = 0;
@@ -102,7 +102,7 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
 
                 return (
                     <Box className={"mobile-box"} padding={"2em"}>
-                        <Heading size={"lg"} className={"logo-text"}>you may wager up to {formatDollarValue(player.maxWager)}</Heading>
+                        <Heading size={"lg"} className={"logo-text"}>you may wager up to {formatDollarValueString(player.maxWager)}</Heading>
                         <Input
                             ref={inputRef}
                             onChange={(e) => emitUpdateResponse(e.target.value)}
@@ -110,8 +110,8 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
                             isInvalid={isWagerInvalid()} isDisabled={!windowOpen}
                             marginTop={"0.5em"} marginBottom={"1em"} type={"tel"} />
 
-                        <Button onClick={emitSubmitResponse} isDisabled={!windowOpen || !response} colorScheme={"blue"}>submit wager</Button>
-                        {isWagerInvalid() && <Text marginTop={"0.5em"}>Wager will be clamped to {formatDollarValue(getClampedWager())}</Text>}
+                        <Button onClick={emitSubmitResponse} isDisabled={!windowOpen || !response} colorScheme={"blue"}>submit</Button>
+                        {isWagerInvalid() && <Text marginTop={"0.5em"}>Wager will be clamped to {formatDollarValueString(getClampedWager())}</Text>}
                     </Box>
                 );
             }
@@ -121,7 +121,7 @@ export default function PlayerResponse({ player, responseType }: PlayerResponseP
                     <Box className={"mobile-box"} padding={"2em"}>
                         <Heading size={"lg"} className={"logo-text"}>enter your response</Heading>
                         <Input ref={inputRef} marginTop={"0.5em"} value={response} onChange={(e) => emitUpdateResponse(e.target.value)} isDisabled={!windowOpen} />
-                        <Button onClick={emitSubmitResponse} isDisabled={!windowOpen || !response} colorScheme={"blue"} marginTop={"1em"}>submit response</Button>
+                        <Button onClick={emitSubmitResponse} isDisabled={!windowOpen || !response} colorScheme={"blue"} marginTop={"1em"}>submit</Button>
                     </Box>
                 );
             }

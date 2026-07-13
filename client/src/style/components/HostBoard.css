@@ -13,12 +13,6 @@
     padding: 1em;
 }
 
-.board-dollar-sign {
-    display: inline-block;
-    font-size: 0.8em;
-    transform: translateY(-9%);
-}
-
 .board-column {
     display: flex;
     flex-direction: column;

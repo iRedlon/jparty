@@ -6,7 +6,7 @@ import { PiCrownSimpleFill } from "react-icons/pi";
 
 import ClueDecisionInfo from "./ClueDecisionInfo";
 import { LayoutContext } from "../common/Layout";
-import { formatDollarValue, getClientID, getScoreFontSize } from "../../misc/client-utils";
+import { formatDollarValueString, getClientID, getScoreFontSize } from "../../misc/client-utils";
 import { Layer } from "../../misc/ui-constants";
 
 import "../../style/components/PlayerScoreboard.css";
@@ -72,7 +72,7 @@ export default function PlayerScoreboard() {
 
                                     <Box textAlign={"left"} whiteSpace={"nowrap"}>
                                         <Text fontSize={getScoreFontSize(player.score, 1.5)}>
-                                            <i>{formatDollarValue(player.score)}</i>
+                                            <i>{formatDollarValueString(player.score)}</i>
                                         </Text>
                                     </Box>
                                 </Stack>

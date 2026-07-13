@@ -5,7 +5,7 @@ import { useContext, useRef } from "react";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 
 import { LayoutContext } from "../common/Layout";
-import { formatDollarValue } from "../../misc/client-utils";
+import { formatDollarValueString } from "../../misc/client-utils";
 
 import "../../style/components/ResponderInfo.css";
 
@@ -91,7 +91,7 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
             let response = "";
 
             if (responseType === PlayerResponseType.Wager) {
-                response = formatDollarValue(responder.responses[responseType]);
+                response = formatDollarValueString(responder.responses[responseType]);
             }
             else {
                 response = responder.responses[responseType];
@@ -118,7 +118,7 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
                                         <>
                                             <Text><b>{clueDecisionInfo.decision.toUpperCase()}</b></Text>
                                             {clueDecisionInfo.decision !== TriviaClueDecision.NeedsMoreDetail && <Heading className={"board-text"} fontWeight={0}>
-                                                {formatDollarValue(clueDecisionInfo.clueValue * decisionModifier)}
+                                                <Text fontSize={"0.75em"}>{formatDollarValueString(clueDecisionInfo.clueValue * decisionModifier)}</Text>
                                             </Heading>}
                                         </> :
                                         <>
@@ -129,7 +129,7 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
                         </CSSTransition>
                     </SwitchTransition>
 
-                    <Box className={"box"} padding={"1em"} width={"30vw"} height={"7em"}>
+                    <Box className={"box"} padding={"1em"} width={isWagerResponse ? "15vw" : "25vw"} height={"7em"}>
                         {
                             responder && (
                                 <Stack direction={"column"} paddingLeft={"0.5em"} marginLeft={"-0.5em"} paddingRight={"1em"} overflow={"hidden"}>

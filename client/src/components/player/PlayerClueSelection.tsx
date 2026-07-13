@@ -3,8 +3,9 @@ import { Box, Heading, Stack } from "@chakra-ui/react";
 import { PlayerSocket, TriviaClue } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
+
+import FormattedDollarValue from "../common/FormattedDollarValue";
 import { LayoutContext } from "../common/Layout";
-import { formatDollarValue } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
 import { LocalStorageKey } from "../../misc/ui-constants";
 
@@ -107,7 +108,7 @@ export default function PlayerClueSelection() {
                     </Box>
 
                     <Box id={"selected-category-box"} className={"child-box"}>
-                        {context.triviaRound?.categories[categoryIndex]?.name}
+                        {context.triviaRound?.categories[categoryIndex]?.name.toUpperCase()}
                     </Box>
 
                     <Box className={"arrow-box"} onClick={() => canGoRight && updateCategoryIndex(nextRightCategoryIndex)} pointerEvents={canGoRight ? "auto" : "none"}>
@@ -119,7 +120,7 @@ export default function PlayerClueSelection() {
                     if (!clue.completed) {
                         return (
                             <Box key={index} className={"child-box"} fontSize={"2em"} display={"flex"} justifyContent={"center"} alignItems={"center"} onClick={() => emitSelectClue(index)}>
-                                {formatDollarValue(clue.value)}
+                                <FormattedDollarValue value={clue.value} signOffsetY={"-3%"} />
                             </Box>
                         );
                     }

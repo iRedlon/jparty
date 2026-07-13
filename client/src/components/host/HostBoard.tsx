@@ -1,37 +1,38 @@
 
-import { Box, Button, Flex, Heading } from "@chakra-ui/react";
+import { Box, Flex, Heading } from "@chakra-ui/react";
 import { HostServerSocket, SessionState, TriviaRound } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
 
+import FormattedDollarValue from "../common/FormattedDollarValue";
 import { LayoutContext } from "../common/Layout";
 import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
+import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { socket } from "../../misc/socket";
 
 import "../../style/components/HostBoard.css";
-import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 
 function getBoardPanelFontSize(isDollarValue: boolean, content: string) {
     if (isDollarValue) {
-        return "5em";
+        return "4.5em";
     }
 
     if (content.length > 25) {
-        return "1.5em";
+        return "1.25em";
     }
 
     if (content.length > 20) {
-        return "1.75em";
+        return "1.5em";
     }
 
     if (content.length > 15) {
-        return "2em";
+        return "1.75em";
     }
 
     if (content.length > 10) {
-        return "2.25em";
+        return "2em";
     }
 
-    return "2.75em";
+    return "2.5em";
 }
 
 interface HostBoardProps {
@@ -74,14 +75,6 @@ export default function HostBoard({ triviaRound }: HostBoardProps) {
     const numPanels = numClues + 1;
     const boardPanelHeight = `${100 / numPanels}vh`;
     const boardPanelWidth = `${100 / numCategories}vw`;
-
-    const BoardDollarValue = (value: number) => {
-        return (
-            <>
-                {value < 0 && "-"}<span className={"board-dollar-sign"}>$</span>{Math.abs(value)}
-            </>
-        )
-    }
 
     const BoardPanel = (content: any, categoryIndex: number, panelIndex: number) => {
         return (
@@ -130,7 +123,7 @@ export default function HostBoard({ triviaRound }: HostBoardProps) {
 
                                 const triviaClue = triviaCategory.clues[panelIndex - 1];
 
-                                return BoardPanel(triviaClue.completed ? "" : BoardDollarValue(triviaClue.value), categoryIndex, panelIndex);
+                                return BoardPanel(triviaClue.completed ? "" : <FormattedDollarValue value={triviaClue.value} signOffsetY={"-14%"} />, categoryIndex, panelIndex);
                             })}
                         </Box>
                     );

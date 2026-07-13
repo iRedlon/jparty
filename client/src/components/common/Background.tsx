@@ -30,6 +30,18 @@ export default function Background() {
         return () => window.removeEventListener(BACKGROUND_THEME_CHANGE_EVENT, handleThemeChange);
     }, []);
 
+    useEffect(() => {
+        const root = document.documentElement;
+
+        if (theme === BackgroundTheme.Kaleidoscope) {
+            root.style.backgroundColor = "";
+            root.classList.add("kaleidoscope-canvas");
+        } else {
+            root.classList.remove("kaleidoscope-canvas");
+            root.style.backgroundColor = BACKGROUND_THEME_COLORS[theme].backgroundColor;
+        }
+    }, [theme]);
+
     const themeColors = BACKGROUND_THEME_COLORS[theme];
 
     return (

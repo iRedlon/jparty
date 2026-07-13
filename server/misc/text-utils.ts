@@ -44,8 +44,16 @@ export function formatClueResponse(response: string) {
     return formatText(response).slice(0, MAX_RESPONSE_LENGTH);
 }
 
+// captures every quoted segment in a category name (i.e. `hollowed "ground"` -> ["ground"])
+export function getQuotedCategoryTexts(categoryName: string) {
+    return [...categoryName.matchAll(/["“”]([^"“”]+)["“”]/g)].map(match => match[1].trim());
+}
+
 export function formatSpokenVoiceLine(text: string, type: VoiceLineType) {
     text = formatText(text);
+
+    // quotation marks shouldn't be spoken or accidentally interrupt the voice's flow
+    text = text.replace(/["“”]/g, "");
 
     // "_____" should be spoken as "blank"
     text = text.replace(/_+/g, "blank");

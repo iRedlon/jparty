@@ -3,7 +3,7 @@ import {
     ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES, AudioType, CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES,
     DISPLAY_CORRECT_ANSWER_VOICE_LINES, FIRST_WAGER_BONUS_VOICE_LINES, getOrdinalString, getRandomChoiceNoRepeat, HostServerSocket,
     LAST_WAGER_BONUS_VOICE_LINES, LEADERBOARD_GAME_OVER_VOICE_LINES, LEADERBOARD_TYPE_DISPLAY_NAMES, PROMPT_CLUE_SELECTION_VOICE_LINES,
-    QUOTED_LETTER_CATEGORY_VOICE_LINES, QUOTED_OTHER_CATEGORY_VOICE_LINES, QUOTED_WORD_CATEGORY_VOICE_LINES,
+    QUOTED_LETTER_CATEGORY_VOICE_LINES, QUOTED_MULTIPLE_CATEGORY_VOICE_LINES, QUOTED_OTHER_CATEGORY_VOICE_LINES, QUOTED_WORD_CATEGORY_VOICE_LINES,
     READ_CLUE_SELECTION_VOICE_LINE, READ_FIRST_CATEGORY_NAME_VOICE_LINES, READ_LAST_CATEGORY_NAME_VOICE_LINES, READ_MIDDLE_CATEGORY_NAME_VOICE_LINES,
     SECOND_WAGER_BONUS_VOICE_LINES, SESSION_ANNOUNCEMENT_VOICE_LINES, SessionAnnouncement, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES,
     VoiceLineType, VoiceLineVariable, WELCOME_VOICE_LINES,
@@ -13,7 +13,7 @@ import { getSession } from "./session-utils.js";
 import { shouldStreamVoiceAudio } from "../api-requests/tts.js";
 import { io } from "../controller.js";
 import { debugLog, LogCategory, LogVerbosity } from "../misc/log.js";
-import { formatSpokenVoiceLine } from "../misc/text-utils.js";
+import { formatSpokenVoiceLine, getQuotedCategoryTexts } from "../misc/text-utils.js";
 
 export function playAudio(sessionName: string, audioType: AudioType) {
     let session = getSession(sessionName);
@@ -24,11 +24,15 @@ export function playAudio(sessionName: string, audioType: AudioType) {
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayAudio, audioType);
 }
 
-function getQuotedCategoryText(categoryName: string) {
-    return categoryName.match(/["“”]([^"“”]+)["“”]/)?.[1].trim();
+function joinQuotedCategoryTexts(quotedTexts: string[]) {
+    if (quotedTexts.length <= 1) {
+        return quotedTexts[0] || "";
+    }
+
+    return `${quotedTexts.slice(0, -1).join(", ")} and ${quotedTexts[quotedTexts.length - 1]}`;
 }
 
-export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
+export async function playVoiceLine(sessionName: string, type: VoiceLineType, delayMs: number = 0) {
     let session = getSession(sessionName);
     if (!session) {
         return;
@@ -61,8 +65,13 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                     voiceLine = getRandomChoiceNoRepeat(READ_MIDDLE_CATEGORY_NAME_VOICE_LINES);
                 }
 
-                const quotedText = getQuotedCategoryText(session.getReadingCategory()?.name || "");
-                if (quotedText) {
+                const quotedTexts = getQuotedCategoryTexts(session.getReadingCategory()?.name || "");
+                if (quotedTexts.length > 1) {
+                    voiceLine += `. ${getRandomChoiceNoRepeat(QUOTED_MULTIPLE_CATEGORY_VOICE_LINES)}`;
+                }
+                else if (quotedTexts.length === 1) {
+                    const quotedText = quotedTexts[0];
+
                     if (/^[a-z]$/i.test(quotedText)) {
                         voiceLine += `. ${getRandomChoiceNoRepeat(QUOTED_LETTER_CATEGORY_VOICE_LINES)}`;
                     }
@@ -173,9 +182,9 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
     if (readingCategoryName) {
         voiceLine = voiceLine.replace(VoiceLineVariable.ReadingCategoryName, readingCategoryName);
 
-        const quotedText = getQuotedCategoryText(readingCategoryName);
-        if (quotedText) {
-            voiceLine = voiceLine.replace(VoiceLineVariable.QuotedCategoryText, quotedText);
+        const quotedTexts = getQuotedCategoryTexts(readingCategoryName);
+        if (quotedTexts.length) {
+            voiceLine = voiceLine.replace(VoiceLineVariable.QuotedCategoryText, joinQuotedCategoryTexts(quotedTexts));
         }
     }
 
@@ -217,6 +226,21 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
     debugLog(LogCategory.Voice, `final spoken voice line: \"${voiceLine}\"`, LogVerbosity.Verbose);
 
     const streamAudio = shouldStreamVoiceAudio(session.voiceType);
-    
-    io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayVoice, session.voiceType, voiceLine, streamAudio);
+
+    // a delay gives whatever sound is currently playing some room to breathe before the host starts talking over it
+    const emitPlayVoice = () => {
+        let session = getSession(sessionName);
+        if (!session || (session.currentVoiceLine !== voiceLine)) {
+            return;
+        }
+
+        io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayVoice, session.voiceType, voiceLine, streamAudio);
+    }
+
+    if (delayMs > 0) {
+        setTimeout(emitPlayVoice, delayMs);
+    }
+    else {
+        emitPlayVoice();
+    }
 }

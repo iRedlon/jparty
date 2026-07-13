@@ -5,7 +5,7 @@ import { useContext } from "react";
 import { PiCrownSimpleFill } from "react-icons/pi";
 
 import { LayoutContext } from "../common/Layout";
-import { formatDollarValue, getScoreFontSize } from "../../misc/client-utils";
+import { formatDollarValueString, getScoreFontSize } from "../../misc/client-utils";
 
 const LEADERBOARD_SPOT_LABELS: Record<LeaderboardType, string> = {
     [LeaderboardType.AllTime]: "on the all time leaderboard",
@@ -52,7 +52,7 @@ export default function HostScoreboard() {
 
                                 <Box textAlign={"left"} whiteSpace={"nowrap"}>
                                     <Text fontSize={getScoreFontSize(player.score, 4)} position={"relative"} bottom={"0.3em"}>
-                                        <i>{formatDollarValue(player.score)}</i>
+                                        <i>{formatDollarValueString(player.score)}</i>
                                     </Text>
                                 </Box>
                             </Stack>

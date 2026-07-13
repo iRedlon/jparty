@@ -115,6 +115,12 @@ export const QUOTED_OTHER_CATEGORY_VOICE_LINES = [
     `"${VoiceLineVariable.QuotedCategoryText}" is in quotations there.`
 ];
 
+export const QUOTED_MULTIPLE_CATEGORY_VOICE_LINES = [
+    `Notice the "${VoiceLineVariable.QuotedCategoryText}" in quotations.`,
+    `Note that the "${VoiceLineVariable.QuotedCategoryText}" are each in quotations.`,
+    `Keep in mind that the "${VoiceLineVariable.QuotedCategoryText}" are in quotations there.`
+];
+
 export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, string[]> = {
     [SessionAnnouncement.StartGame]: [
         // WELCOME_VOICE_LINES is responsible for this

@@ -8,7 +8,7 @@ import {
 
 import { getCategoryTypeCandidateCount, getRandomCategorySchema } from "./trivia-db.js";
 import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log.js";
-import { formatText } from "../misc/text-utils.js";
+import { formatText, getQuotedCategoryTexts } from "../misc/text-utils.js";
 
 const GAME_GENERATION_TIMEOUT_DURATION_MS = 10000;
 
@@ -165,6 +165,7 @@ async function generateTriviaRound(gameSettings: TriviaGameSettings, roundSettin
     // generate a category for each type that was rolled above
     let categoryIndex = 0;
     let usedCategoryIDs: number[] = [];
+    let hasQuotationCategory = false;
 
     while (triviaRound.categories.length < roundSettings.numCategories) {
         checkGameGenerationTimeout(deadlineMs);
@@ -186,6 +187,15 @@ async function generateTriviaRound(gameSettings: TriviaGameSettings, roundSettin
 
         if (usedCategoryIDs.includes(triviaCategory.id)) {
             continue;
+        }
+
+        if (getQuotedCategoryTexts(triviaCategory.name).length) {
+            const roundHasAllWager = (roundSettings.clueBonusCounts[TriviaClueBonus.AllWager] || 0) > 0;
+            if (hasQuotationCategory || roundHasAllWager) {
+                continue;
+            }
+
+            hasQuotationCategory = true;
         }
 
         triviaRound.categories.push(triviaCategory);

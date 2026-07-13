@@ -207,7 +207,7 @@ export default function MenuPanel_Settings({
                     {/* Voice */}
                     <Box>
                       <Heading size="sm" mb={1}>
-                        Host Voice
+                        Host voice
                       </Heading>
                       <Slider
                         value={voiceVolume}
@@ -359,7 +359,7 @@ export default function MenuPanel_Settings({
                       selectBackgroundParticlesEnabled(e.target.checked)
                     }
                   >
-                    Show particle squares
+                    Show moving squares
                   </Checkbox>
                 </Flex>
               </Box>

@@ -124,6 +124,21 @@ export default function MenuPanel_Credits() {
                 </Text>
               </CreditRow>
             </Box>
+
+            <Box
+              bg={useColorModeValue("gray.50", "whiteAlpha.50")}
+              borderRadius="xl"
+              p={3}
+              borderWidth="1px"
+              borderColor={useColorModeValue("gray.200", "whiteAlpha.200")}
+            >
+              <Text fontSize="sm" color={muted}>
+                    <i>
+                      jparty! is fan-made. It is not affiliated with, endorsed by, or sponsored by Jeopardy Productions, Inc. or Sony
+                      Pictures Entertainment. <i>Jeopardy!</i> is a registered trademark of Jeopardy Productions, Inc.
+                    </i>
+                  </Text>
+            </Box>
           </Stack>
         </Box>
       </Flex>

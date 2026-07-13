@@ -15,6 +15,10 @@ import { io } from "../controller.js";
 import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 import { formatText, validatePlayerName } from "../misc/text-utils.js";
 
+const FOUND_WAGER_BONUS_VOICE_DELAY_MS = 1000;
+
+const THINKING_MUSIC_VOICE_DELAY_MS = 1000;
+
 function handleConnect(socket: Socket, sessionName: string, clientID: string, playerName: string, callback: PlayerSocketCallback[PlayerSocket.Connect]) {
     sessionName = formatText(sessionName.toLowerCase());
     playerName = formatText(playerName.toLowerCase());
@@ -291,7 +295,7 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
                         }
 
                         promptResponse(sessionName, PlayerResponseType.Wager, session.spotlightResponderID);
-                    });
+                    }, FOUND_WAGER_BONUS_VOICE_DELAY_MS);
                 }
                 break;
             case TriviaClueBonus.AllWager:
@@ -487,7 +491,7 @@ async function finishResponseWindow(sessionName: string) {
 
                     const showCorrectAnswer = true;
                     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
-                    playVoiceLine(sessionName, VoiceLineType.ShowCorrectAnswer);
+                    playVoiceLine(sessionName, VoiceLineType.ShowCorrectAnswer, THINKING_MUSIC_VOICE_DELAY_MS);
 
                     startTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, () => batchRevealClueDecision(sessionName, decisionsPromise));
                 }

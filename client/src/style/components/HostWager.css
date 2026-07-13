@@ -31,4 +31,5 @@
     animation-duration: 0.5s;
     animation-direction: reverse;
     animation-fill-mode: both;
+    animation-delay: 0.5s;
 }

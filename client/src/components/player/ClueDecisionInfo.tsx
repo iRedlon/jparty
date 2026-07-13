@@ -4,7 +4,7 @@ import { MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD, Player, PlayerSocket, Socket
 import { useContext } from "react";
 
 import { LayoutContext } from "../common/Layout";
-import { formatDollarValue } from "../../misc/client-utils";
+import { formatDollarValueString } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
 
 function getNumRequiredVoters(numPlayers: number) {
@@ -19,7 +19,7 @@ function emitVoteToReverseDecision(responderID: SocketID, responder: Player, clu
     // check to see if this responder is currently qualified, and that this reversal would grant them enough money to disqualify them
     const needsConfirmation = wasRuledIncorrect && isResponderQualified && ((responder.earnedReversalScore + clueDecisionInfo.clueValue) > MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD);
 
-    if (needsConfirmation && !confirm(`Are you sure? ${responder.name.toUpperCase()} has earned ${formatDollarValue(responder.earnedReversalScore)} from decision reversals. They will be disqualified from the leaderboard if this decision is reversed.`)) {
+    if (needsConfirmation && !confirm(`Are you sure? ${responder.name.toUpperCase()} has earned ${formatDollarValueString(responder.earnedReversalScore)} from decision reversals. They will be disqualified from the leaderboard if this decision is reversed.`)) {
         return;
     }
 
@@ -47,7 +47,7 @@ export default function ClueDecisionInfo({ playerID }: ClueDecisionInfoProps) {
     // ruling info
     const rulingString = info.isReversal ? "reversed to" : "ruled";
     const decisionModifier = (info.decision === TriviaClueDecision.Incorrect) ? -1 : 1;
-    const clueValueString = (info.decision !== TriviaClueDecision.NeedsMoreDetail) && ` for ${formatDollarValue(info.clueValue * decisionModifier)}`;
+    const clueValueString = (info.decision !== TriviaClueDecision.NeedsMoreDetail) && ` for ${formatDollarValueString(info.clueValue * decisionModifier)}`;
 
     // voting info
     const numCurrentVoters = Object.keys(info.reversalVoterIDs).length;

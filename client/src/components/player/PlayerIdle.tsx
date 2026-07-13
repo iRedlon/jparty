@@ -49,7 +49,9 @@ export default function PlayerIdle({ setIsEditingSignature, promptStartGame }: P
         <Box className={"mobile-box"} padding={"1em"} marginLeft={"auto"} marginRight={"auto"}>
             <Heading fontSize={"3em"} className={"logo-text"}>jparty!</Heading>
 
-            {(context.sessionState === SessionState.Lobby) && <Button onClick={handleEditSignature} size={"sm"} margin={"0.5em"}>edit signature</Button>}
+            {(context.sessionState === SessionState.Lobby) && <>
+                <Button onClick={handleEditSignature} size={"sm"} margin={"0.5em"}>edit signature</Button><br/>
+            </>}
             
             {promptStartGame && <Button onClick={emitStartGame} isLoading={isLoading} margin={"0.5em"} colorScheme={"blue"}>start game</Button>}
             

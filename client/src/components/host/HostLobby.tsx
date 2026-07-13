@@ -10,7 +10,7 @@ import { useContext, useRef, useState } from "react";
 
 import { LayoutContext } from "../common/Layout";
 import { emitLeaveSession } from "../common/MenuPanel_Settings";
-import { formatDollarValue, getClientID } from "../../misc/client-utils";
+import { formatDollarValueString, getClientID } from "../../misc/client-utils";
 import { socket } from "../../misc/socket";
 import { LocalStorageKey, PATCH_NOTES_LINK } from "../../misc/ui-constants";
 
@@ -55,7 +55,7 @@ function LeaderboardPlayerBox(leaderboardType: LeaderboardType, leaderboardPlaye
 
                 <Box textAlign={"left"} whiteSpace={"nowrap"}>
                     <Text fontSize={"2em"} position={"relative"} bottom={"0.4em"}>
-                        <i>{formatDollarValue(leaderboardPlayer.score)}</i>
+                        <i>{formatDollarValueString(leaderboardPlayer.score)}</i>
                     </Text>
                 </Box>
             </Stack>
@@ -276,7 +276,7 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                 {currentLeaderboardStats && (
                     <Box marginTop={"0.5em"}>
                         <Text><i>{currentLeaderboardStats.gamesPlayed} games played</i></Text>
-                        <Text><i>{formatDollarValue(currentLeaderboardStats.moneyEarned)} total earnings</i></Text>
+                        <Text><i>{formatDollarValueString(currentLeaderboardStats.moneyEarned)} total earnings</i></Text>
                     </Box>
                 )}
 
