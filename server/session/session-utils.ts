@@ -409,7 +409,7 @@ export function attemptAccelerateWindowOpen(sessionName: string) {
         return;
     }
 
-    debugLog(LogCategory.Timeout, `every potential responder confirmed ${SessionTimeoutType[timeoutType]}. accelerating its open time`, LogVerbosity.Verbose);
+    debugLog(LogCategory.Timeout, `every potential responder confirmed ${SessionTimeoutType[timeoutType]}. accelerating its open time`, LogVerbosity.VeryVerbose);
 
     // restarting the timeout re-emits the updated window schedule to every client
     const displayWindow = session.getTimeoutDisplayWindowMs(timeoutType);

@@ -32,7 +32,8 @@ export enum AudioType {
     CorrectDecision,
     IncorrectDecision,
     ClueSelected,
-    FoundWagerBonus
+    FoundWagerBonus,
+    AllWagerCategoryRevealed
 }
 
 export enum VoiceType {
@@ -49,7 +50,9 @@ export enum VoiceLineType {
     ReadClueSelection,
     ReadClue,
     RevealClueDecision,
-    ShowCorrectAnswer
+    ShowCorrectAnswer,
+    RevealAllWagerCategory,
+    IntroduceAllWagerClue
 }
 
 // "voice line variables" are used to inject live game data into voice lines without needing to construct voice line strings during runtime
@@ -129,9 +132,9 @@ export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, strin
         // FIRST/SECOND/LAST_WAGER_BONUS_VOICE_LINES are responsible for this
     ],
     [SessionAnnouncement.ClueBonusAllWager]: [
-        `It's time for final j-party! Get ready to wager. The category will be: "${VoiceLineVariable.CategoryName}".`,
-        `It's final j-party! Time to make a wager. The category is going to be: "${VoiceLineVariable.CategoryName}".`,
-        `It's time for final j-party! Everyone get ready to wager. The category will be: "${VoiceLineVariable.CategoryName}".`
+        "It's time for final j-party! Get ready to wager. The category will be...",
+        "It's final j-party! Time to make a wager. The category is going to be...",
+        "It's time for final j-party! Everyone get ready to wager. You'll be dealing with..."
     ],
     [SessionAnnouncement.ClueBonusAllPlay]: [
         `All play! Everyone gets to respond in the category: "${VoiceLineVariable.CategoryName}"`,
@@ -160,6 +163,14 @@ export const SESSION_ANNOUNCEMENT_VOICE_LINES: Record<SessionAnnouncement, strin
         `Your j-party champion is ${VoiceLineVariable.LeaderName}. You rock! Thanks for playing!`
     ]
 };
+
+export const REVEAL_ALL_WAGER_CATEGORY_VOICE_LINE = `"${VoiceLineVariable.CategoryName}".`;
+
+export const INTRODUCE_ALL_WAGER_CLUE_VOICE_LINES = [
+    "And here's your final clue...",
+    "Here's your final clue...",
+    "Now, here's your final clue..."
+];
 
 export const FIRST_WAGER_BONUS_VOICE_LINES = [
     `${VoiceLineVariable.ClueSelectorName} found our first daily double in "${VoiceLineVariable.CategoryName}"! Best of luck.`,

@@ -18,6 +18,7 @@ import CorrectDecisionMP3 from "../assets/correct-decision.mp3";
 import IncorrectDecisionMP3 from "../assets/incorrect-decision.mp3";
 import ClueSelectedMP3 from "../assets/clue-selected.mp3";
 import FoundWagerBonusMP3 from "../assets/found-wager-bonus.mp3";
+import AllWagerCategoryRevealedMP3 from "../assets/all-wager-category-revealed.mp3";
 
 const musicAudios: { [key in AudioType]?: HTMLAudioElement } = {
     [AudioType.LobbyMusic]: new Audio(LobbyMusicMP3),
@@ -37,6 +38,8 @@ const musicFadeLevels: { [key in AudioType]?: number } = {
 
 let currentMusicAudioType: AudioType | undefined;
 let musicFadeInterval: NodeJS.Timeout | undefined;
+
+let pendingMusicAudioType: AudioType | undefined;
 
 let musicPlaying = false;
 const muteStateListeners = new Set<(muted: boolean) => void>();
@@ -60,6 +63,14 @@ for (const audio of Object.values(musicAudios)) {
     audio.addEventListener("pause", recomputeMusicPlaying);
     audio.addEventListener("ended", recomputeMusicPlaying);
 }
+
+musicAudios[AudioType.ThinkingMusic]?.addEventListener("ended", () => {
+    if (pendingMusicAudioType !== undefined) {
+        const nextAudioType = pendingMusicAudioType;
+        pendingMusicAudioType = undefined;
+        playAudio(nextAudioType);
+    }
+});
 
 export function isAudioMuted() {
     return !musicPlaying;
@@ -86,6 +97,7 @@ const soundEffectAudios: { [key in AudioType]?: HTMLAudioElement } = {
     //[AudioType.IncorrectDecision]: new Audio(IncorrectDecisionMP3),
     [AudioType.ClueSelected]: new Audio(ClueSelectedMP3),
     [AudioType.FoundWagerBonus]: new Audio(FoundWagerBonusMP3),
+    [AudioType.AllWagerCategoryRevealed]: new Audio(AllWagerCategoryRevealedMP3),
 };
 
 const NEUTRAL_VOLUME = 0.5;
@@ -100,8 +112,11 @@ const baseVolumes: { [key in VolumeType]?: number } = {
 // override per-track if a particular mp3 is unusually loud or quiet
 const baseVolumeOverrides: { [key in AudioType]?: number } = {
     [AudioType.GameMusic]: 0.05625,
+    [AudioType.ThinkingMusic]: 0.25,
+    [AudioType.LongApplause]: 0.5,
     [AudioType.CorrectDecision]: 0.2,
-    [AudioType.IncorrectDecision]: 0.2
+    [AudioType.IncorrectDecision]: 0.2,
+    [AudioType.AllWagerCategoryRevealed]: 0.4,
 };
 
 function getBaseVolume(audioType: AudioType) {
@@ -218,12 +233,25 @@ updateVolume(VolumeType.SoundEffects, getVolume(VolumeType.SoundEffects));
 export function playAudio(audioType: AudioType) {
     const musicAudio = musicAudios[audioType];
     if (musicAudio) {
+        // don't interrupt thinking music
+        const thinkingMusic = musicAudios[AudioType.ThinkingMusic];
+        if ((audioType !== AudioType.ThinkingMusic) && thinkingMusic && !thinkingMusic.paused) {
+            pendingMusicAudioType = audioType;
+            return;
+        }
+
         currentMusicAudioType = audioType;
+        pendingMusicAudioType = undefined;
 
         if (musicAudio.paused || !musicAudio.currentTime) {
             applyMusicVolume(audioType);
 
             musicAudio.loop = (audioType !== AudioType.ThinkingMusic);
+
+            if (audioType === AudioType.ThinkingMusic) {
+                musicAudio.currentTime = 0;
+            }
+
             musicAudio.play().catch(() => recomputeMusicPlaying());
         }
 

@@ -535,9 +535,9 @@ export class Session {
                 break;
             case SessionTimeoutType.ReadingClue:
                 {
-                    const currentQuestion = this.getCurrentClue()?.question;
-                    if (currentQuestion) {
-                        durationMs = getVoiceDurationMs(currentQuestion);
+                    // this is either the clue question itself, or the short intro line that precedes an all wager clue
+                    if (this.currentVoiceLine) {
+                        durationMs = getVoiceDurationMs(this.currentVoiceLine);
                     }
                 }
                 break;
@@ -615,7 +615,6 @@ export class Session {
         return { openTimeMs: Date.now(), closeTimeMs: timeoutInfo.endTimeMs };
     }
 
-    // an action window doesn't open for anyone until every potential responder has confirmed they received its schedule (or until we give up waiting)
     beginWindowAckWait(timeoutType: SessionTimeoutType, playerIDs: SocketID[]) {
         this.windowID++;
         this.pendingWindowAckType = timeoutType;
@@ -644,7 +643,6 @@ export class Session {
         return Math.max(Session.RESPONSE_WINDOW_OPEN_DELAY_MS, (this.maxWindowAckRttMs / 2) + Session.RESPONSE_WINDOW_OPEN_SLACK_MS);
     }
 
-    // disconnected (or deleted) players can't confirm anything. they shouldn't keep the window closed for everyone else
     isWindowAckWaitFinished() {
         return (this.pendingWindowAckType !== undefined) && !this.pendingWindowAckPlayerIDs.some(playerID => this.players[playerID]?.connected);
     }
@@ -659,7 +657,7 @@ export class Session {
     }
 
     startTimeout(timeoutType: SessionTimeoutType, callback: Function) {
-        debugLog(LogCategory.Timeout, `(session-utils.startTimeout): ${SessionTimeoutType[timeoutType]}`, LogVerbosity.VeryVerbose);
+        debugLog(LogCategory.Timeout, `start timeout: ${SessionTimeoutType[timeoutType]}`, LogVerbosity.VeryVerbose);
         this.stopTimeout(timeoutType);
         this.timeoutInfo[timeoutType] = new TimeoutInfo(timeoutType, callback, this.getTimeoutDurationMs(timeoutType));
     }
@@ -667,7 +665,7 @@ export class Session {
     stopTimeout(timeoutType: SessionTimeoutType) {
         let timeoutInfo = this.timeoutInfo[timeoutType];
         if (timeoutInfo) {
-            debugLog(LogCategory.Timeout, `(session-utils.stopTimeout): ${SessionTimeoutType[timeoutType]}`, LogVerbosity.VeryVerbose);
+            debugLog(LogCategory.Timeout, `stop timeout: ${SessionTimeoutType[timeoutType]}`, LogVerbosity.VeryVerbose);
             clearTimeout(timeoutInfo.timeout);
             delete this.timeoutInfo[timeoutType];
         }
@@ -689,7 +687,7 @@ export class Session {
 
             const newTimeoutID = this.timeoutInfo[timeoutType].id;
 
-            debugLog(LogCategory.Timeout, `(session-utils.restartTimeout): ${SessionTimeoutType[timeoutType]} was (${oldTimeoutID}) but is now (${newTimeoutID})`, LogVerbosity.VeryVerbose);
+            debugLog(LogCategory.Timeout, `restart timeout: ${SessionTimeoutType[timeoutType]} was (${oldTimeoutID}) but is now (${newTimeoutID})`, LogVerbosity.VeryVerbose);
         }
     }
 

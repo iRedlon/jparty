@@ -44,7 +44,7 @@ export default function HostLayout() {
     const [monthlyLeaderboardStats, setMonthlyLeaderboardStats] = useState<LeaderboardStatsSchema | undefined>();
     const [weeklyLeaderboardStats, setWeeklyLeaderboardStats] = useState<LeaderboardStatsSchema | undefined>();
     const [announcement, setAnnouncement] = useState<SessionAnnouncement | undefined>();
-    const [queuedToHideAnnouncement, setQueuedToHideAnnouncement] = useState(false);
+    const queuedToHideAnnouncement = useRef(false);
     const [numSubmittedResponders, setNumSubmittedResponders] = useState(0);
     const [numResponders, setNumResponders] = useState(0);
     const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
@@ -68,6 +68,7 @@ export default function HostLayout() {
         socket.on(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
         socket.on(ServerSocket.StartTimeout, handleStartTimeout);
         socket.on(ServerSocket.StopTimeout, handleStopTimeout);
+        socket.on(ServerSocket.UpdateSessionState, handleUpdateSessionState);
 
         addMockSocketEventHandler(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
         addMockSocketEventHandler(HostServerSocket.UpdateLeaderboardStats, handleUpdateLeaderboardStats);
@@ -79,6 +80,7 @@ export default function HostLayout() {
         addMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
         addMockSocketEventHandler(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
         addMockSocketEventHandler(ServerSocket.StartTimeout, handleStartTimeout);
+        addMockSocketEventHandler(ServerSocket.UpdateSessionState, handleUpdateSessionState);
 
         return () => {
             socket.off(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
@@ -93,6 +95,7 @@ export default function HostLayout() {
             socket.off(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
             socket.off(ServerSocket.StartTimeout, handleStartTimeout);
             socket.off(ServerSocket.StopTimeout, handleStopTimeout);
+            socket.off(ServerSocket.UpdateSessionState, handleUpdateSessionState);
 
             removeMockSocketEventHandler(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
             removeMockSocketEventHandler(HostServerSocket.UpdateLeaderboardStats, handleUpdateLeaderboardStats);
@@ -104,6 +107,7 @@ export default function HostLayout() {
             removeMockSocketEventHandler(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
             removeMockSocketEventHandler(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
             removeMockSocketEventHandler(ServerSocket.StartTimeout, handleStartTimeout);
+            removeMockSocketEventHandler(ServerSocket.UpdateSessionState, handleUpdateSessionState);
         }
     }, []);
 
@@ -155,11 +159,14 @@ export default function HostLayout() {
 
     useEffect(() => {
         playAudio(getMusicAudioType());
+    }, [context.sessionState, responseWindowOpen]);
 
-        if (queuedToHideAnnouncement) {
+    const handleUpdateSessionState = () => {
+        if (queuedToHideAnnouncement.current) {
+            queuedToHideAnnouncement.current = false;
             setAnnouncement(undefined);
         }
-    }, [context.sessionState, responseWindowOpen]);
+    }
 
     const handleUpdateLeaderboardPlayers = (leaderboardType: LeaderboardType, leaderboardPlayers: LeaderboardPlayers) => {
         switch (leaderboardType) {
@@ -225,15 +232,16 @@ export default function HostLayout() {
 
     const handleShowAnnouncement = (announcement: SessionAnnouncement) => {
         setAnnouncement(announcement);
-        setQueuedToHideAnnouncement(false);
+        queuedToHideAnnouncement.current = false;
     }
 
     const handleHideAnnouncement = (forceHide: boolean) => {
         if (forceHide) {
+            queuedToHideAnnouncement.current = false;
             setAnnouncement(undefined);
         }
         else {
-            setQueuedToHideAnnouncement(true);
+            queuedToHideAnnouncement.current = true;
         }
     }
 

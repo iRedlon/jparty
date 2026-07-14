@@ -15,9 +15,8 @@ import { io } from "../controller.js";
 import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 import { formatText, validatePlayerName } from "../misc/text-utils.js";
 
-const FOUND_WAGER_BONUS_VOICE_DELAY_MS = 1000;
-
-const THINKING_MUSIC_VOICE_DELAY_MS = 1000;
+// used any time we want to make sure a voice line waits for the end of a sound effect before starting
+const VOICE_DELAY_MS = 1250;
 
 function handleConnect(socket: Socket, sessionName: string, clientID: string, playerName: string, callback: PlayerSocketCallback[PlayerSocket.Connect]) {
     sessionName = formatText(sessionName.toLowerCase());
@@ -178,26 +177,47 @@ function readClue(sessionName: string) {
     io.in(sessionName).emit(ServerSocket.StopTimeout);
 
     session.readClue();
-    playVoiceLine(sessionName, VoiceLineType.ReadClue);
-
     emitStateUpdate(sessionName);
 
-    startTimeout(sessionName, SessionTimeoutType.ReadingClue, () => {
-        let session = getSession(sessionName);
-        if (!session) {
-            return;
-        }
+    const readClueAloud = (voiceDelayMs: number = 0) => {
+        playVoiceLine(sessionName, VoiceLineType.ReadClue, voiceDelayMs);
 
-        session.stopTimeout(SessionTimeoutType.ReadingClue);
+        startTimeout(sessionName, SessionTimeoutType.ReadingClue, () => {
+            let session = getSession(sessionName);
+            if (!session) {
+                return;
+            }
 
-        if (session.getCurrentClue()?.bonus === TriviaClueBonus.None) {
-            displayTossupClue(sessionName);
-        }
-        else {
-            // this must be a special clue, like an all play or wager. in any case, we expect our current responder IDs to have been updated already
-            promptResponse(sessionName, PlayerResponseType.Clue, ...session.currentResponderIDs);
-        }
-    });
+            session.stopTimeout(SessionTimeoutType.ReadingClue);
+
+            if (session.getCurrentClue()?.bonus === TriviaClueBonus.None) {
+                displayTossupClue(sessionName);
+            }
+            else {
+                // this must be a special clue, like an all play or wager. in any case, we expect our current responder IDs to have been updated already
+                promptResponse(sessionName, PlayerResponseType.Clue, ...session.currentResponderIDs);
+            }
+        });
+    }
+
+    if (session.getCurrentClue()?.bonus === TriviaClueBonus.AllWager) {
+        playVoiceLine(sessionName, VoiceLineType.IntroduceAllWagerClue);
+
+        startTimeout(sessionName, SessionTimeoutType.ReadingClue, () => {
+            let session = getSession(sessionName);
+            if (!session) {
+                return;
+            }
+
+            session.stopTimeout(SessionTimeoutType.ReadingClue);
+
+            playAudio(sessionName, AudioType.AllWagerCategoryRevealed);
+            readClueAloud(VOICE_DELAY_MS);
+        });
+    }
+    else {
+        readClueAloud();
+    }
 }
 
 function displayTossupClue(sessionName: string) {
@@ -268,7 +288,10 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
 
     session.selectClue(categoryIndex, clueIndex);
     io.in(sessionName).emit(ServerSocket.SelectClue, categoryIndex, clueIndex);
-    playAudio(sessionName, AudioType.ClueSelected);
+
+    if (session.getCurrentClue()?.bonus !== TriviaClueBonus.AllWager) {
+        playAudio(sessionName, AudioType.ClueSelected);
+    }
 
     const handleSelectClueInternal = () => {
         let session = getSession(sessionName);
@@ -295,7 +318,7 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
                         }
 
                         promptResponse(sessionName, PlayerResponseType.Wager, session.spotlightResponderID);
-                    }, FOUND_WAGER_BONUS_VOICE_DELAY_MS);
+                    }, VOICE_DELAY_MS);
                 }
                 break;
             case TriviaClueBonus.AllWager:
@@ -306,6 +329,8 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
                             return;
                         }
 
+                        playAudio(sessionName, AudioType.AllWagerCategoryRevealed);
+                        playVoiceLine(sessionName, VoiceLineType.RevealAllWagerCategory, VOICE_DELAY_MS);
                         promptResponse(sessionName, PlayerResponseType.Wager, ...session.getSolventPlayerIDs());
                     });
                 }
@@ -475,10 +500,14 @@ async function finishResponseWindow(sessionName: string) {
 
     session.resetPlayerSubmissions();
 
+    const isAllWagerClue = session.getCurrentClue()?.bonus === TriviaClueBonus.AllWager;
+
     switch (session.state) {
         case SessionState.ClueResponse:
             {
-                playAudio(sessionName, AudioType.ClueResponseSubmitted);
+                if (!isAllWagerClue) {
+                    playAudio(sessionName, AudioType.ClueResponseSubmitted);
+                }
                 session.finishClueResponseWindow();
                 emitStateUpdate(sessionName);
 
@@ -491,7 +520,7 @@ async function finishResponseWindow(sessionName: string) {
 
                     const showCorrectAnswer = true;
                     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
-                    playVoiceLine(sessionName, VoiceLineType.ShowCorrectAnswer, THINKING_MUSIC_VOICE_DELAY_MS);
+                    playVoiceLine(sessionName, VoiceLineType.ShowCorrectAnswer, VOICE_DELAY_MS);
 
                     startTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, () => batchRevealClueDecision(sessionName, decisionsPromise));
                 }
@@ -502,7 +531,9 @@ async function finishResponseWindow(sessionName: string) {
             break;
         case SessionState.WagerResponse:
             {
-                playAudio(sessionName, AudioType.WagerResponseSubmitted);
+                if (!isAllWagerClue) {
+                    playAudio(sessionName, AudioType.WagerResponseSubmitted);
+                }
                 readClue(sessionName);
                 emitStateUpdate(sessionName);
             }
