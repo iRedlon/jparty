@@ -1,6 +1,6 @@
 
 import { Box, Heading, Stack, Text } from "@chakra-ui/react";
-import { PlayerResponseType, SessionState, TriviaCategory, TriviaClue } from "jparty-shared";
+import { Player, PlayerResponseType, SessionState, TriviaCategory, TriviaClue } from "jparty-shared";
 import { useContext, useRef } from "react";
 import { CSSTransition } from "react-transition-group";
 
@@ -41,13 +41,27 @@ interface HostClueProps {
 export default function HostClue({ triviaCategory, triviaClue, showCorrectAnswer, numSubmittedResponders, numResponders }: HostClueProps) {
     const questionBoxRef = useRef(null);
     const correctAnswerRef = useRef(null);
+    const frozenSpotlightResponderRef = useRef<Player | undefined>(undefined);
 
     const context = useContext(LayoutContext);
 
     const showQuestion = context.sessionState !== SessionState.ReadingClueSelection;
     let showClueDecision = false;
 
-    const spotlightResponder = context.spotlightResponderID ? context.sessionPlayers[context.spotlightResponderID] : undefined;
+    let spotlightResponder = context.spotlightResponderID ? context.sessionPlayers[context.spotlightResponderID] : undefined;
+
+    if (context.sessionState === SessionState.ReadingClueDecision) {
+        if (spotlightResponder) {
+            frozenSpotlightResponderRef.current = spotlightResponder;
+        }
+        else if (!triviaClue.isAllPlayClue()) {
+            spotlightResponder = frozenSpotlightResponderRef.current;
+        }
+    }
+    else {
+        frozenSpotlightResponderRef.current = undefined;
+    }
+
     if (spotlightResponder && spotlightResponder.clueDecisionInfo && context.sessionState === SessionState.ReadingClueDecision) {
         showClueDecision = context.debugMode || (spotlightResponder.clueDecisionInfo.clue.id === triviaClue.id);
     }

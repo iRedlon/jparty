@@ -525,7 +525,7 @@ async function finishResponseWindow(sessionName: string) {
                     startTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, () => batchRevealClueDecision(sessionName, decisionsPromise));
                 }
                 else {
-                    recursiveRevealClueDecision(sessionName);
+                    recursiveRevealClueDecision(sessionName, false, Date.now() + VOICE_DELAY_MS);
                 }
             }
             break;
@@ -580,7 +580,7 @@ async function batchRevealClueDecision(sessionName: string, decisionsPromise: Pr
 }
 
 // make a series of recursive calls to get a clue decision for each responder
-async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswer: boolean = false) {
+async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswer: boolean = false, minRevealTimeMs: number = 0) {
     let session = getSession(sessionName);
     if (!session) {
         return;
@@ -617,6 +617,17 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
     catch (e) {
         emitServerError(e, undefined, sessionName);
         return;
+    }
+
+    // safeguard for instant decisions: wait out the remainder of the "response submitted" sound effect before revealing
+    const revealDelayMs = minRevealTimeMs - Date.now();
+    if (revealDelayMs > 0) {
+        await new Promise(resolve => setTimeout(resolve, revealDelayMs));
+
+        session = getSession(sessionName);
+        if (!session) {
+            return;
+        }
     }
 
     const responder = session.players[responderID];
@@ -755,8 +766,6 @@ async function finishRound(sessionName: string) {
         await updateLeaderboard(sessionName);
     }
     else if (session.isFinalRound()) {
-        emitTriviaRoundUpdate(sessionName);
-
         const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
         if (didForceSelectFinalClue) {
             return;

@@ -39,6 +39,7 @@
 #leaderboard-players-box {
     height: 26em;
     overflow-y: auto;
+    scrollbar-gutter: stable;
     padding-bottom: 6px;
 }
 

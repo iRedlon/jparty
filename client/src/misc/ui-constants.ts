@@ -8,6 +8,7 @@ export enum LocalStorageKey {
     CategoryIndex = "categoryIndex", // this was the last category index selected by this player
     BackgroundTheme = "backgroundTheme",
     BackgroundParticles = "backgroundParticles",
+    UIScale = "uiScale",
 }
 
 // z-index values for UI components

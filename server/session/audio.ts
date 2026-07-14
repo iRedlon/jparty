@@ -6,7 +6,7 @@ import {
     PROMPT_CLUE_SELECTION_VOICE_LINES, QUOTED_LETTER_CATEGORY_VOICE_LINES, QUOTED_MULTIPLE_CATEGORY_VOICE_LINES, QUOTED_OTHER_CATEGORY_VOICE_LINES,
     QUOTED_WORD_CATEGORY_VOICE_LINES, READ_CLUE_SELECTION_VOICE_LINE, READ_FIRST_CATEGORY_NAME_VOICE_LINES, READ_LAST_CATEGORY_NAME_VOICE_LINES,
     READ_MIDDLE_CATEGORY_NAME_VOICE_LINES, REVEAL_ALL_WAGER_CATEGORY_VOICE_LINE, SECOND_WAGER_BONUS_VOICE_LINES, SESSION_ANNOUNCEMENT_VOICE_LINES,
-    SessionAnnouncement, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable, WELCOME_VOICE_LINES,
+    SessionAnnouncement, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, TriviaClueBonus, VoiceLineType, VoiceLineVariable, WELCOME_VOICE_LINES,
 } from "jparty-shared";
 
 import { getSession } from "./session-utils.js";
@@ -125,12 +125,16 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType, de
                 }
 
                 const currentCategory = session.getCurrentCategory();
+                const currentClue = session.getCurrentClue();
+
+                const keptControlAfterWagerBonus = (currentClue?.bonus === TriviaClueBonus.Wager) &&
+                    (clueSelector.clueDecisionInfo?.clue.id === currentClue.id);
 
                 if (currentCategory && currentCategory.didPlayerClear(clueSelector.clientID)) {
                     playAudio(sessionName, AudioType.Applause);
                     voiceLine = getRandomChoiceNoRepeat(CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES);
                 }
-                else if (session.hasNewClueSelector()) {
+                else if (session.hasNewClueSelector() || keptControlAfterWagerBonus) {
                     voiceLine = getRandomChoiceNoRepeat(PROMPT_CLUE_SELECTION_VOICE_LINES);
                 }
             }

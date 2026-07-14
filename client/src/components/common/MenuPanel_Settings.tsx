@@ -37,6 +37,12 @@ import {
 import { leaveQASession } from "../../misc/qa-dashboard";
 import { socket } from "../../misc/socket";
 import { LocalStorageKey } from "../../misc/ui-constants";
+import {
+  getUIScale,
+  MAX_UI_SCALE,
+  MIN_UI_SCALE,
+  updateUIScale,
+} from "../../misc/ui-scale";
 
 // volume needs to be clamped between 0 and 1 when it's actually used,
 // but as a UI value: it needs to be on the scale of 0 to 100
@@ -80,6 +86,7 @@ export default function MenuPanel_Settings({
   const [backgroundParticlesEnabled, setBackgroundParticlesEnabled] = useState(
     getBackgroundParticlesEnabled()
   );
+  const [uiScale, setUIScale] = useState(getUIScale());
 
   const selectBackgroundTheme = (newTheme: BackgroundTheme) => {
     setBackgroundTheme(newTheme);
@@ -151,6 +158,39 @@ export default function MenuPanel_Settings({
                   </Button>
                 </Stack>
               )}
+            </Box>
+
+            {/* UI scale */}
+            <Box
+              bg={cardBg}
+              borderWidth="1px"
+              borderColor={borderColor}
+              borderRadius="2xl"
+              boxShadow="md"
+            >
+              <Box px={{ base: 4, md: 5 }} py={{ base: 3, md: 4 }}>
+                <Flex justify="space-between" align="center">
+                  <Heading size="md">UI scale</Heading>
+                  <Text color={muted}>{uiScale}%</Text>
+                </Flex>
+              </Box>
+
+              <Divider />
+
+              <Box px={{ base: 4, md: 5 }} py={{ base: 4, md: 5 }}>
+                <Slider
+                  value={uiScale}
+                  min={MIN_UI_SCALE}
+                  max={MAX_UI_SCALE}
+                  onChange={setUIScale}
+                  onChangeEnd={updateUIScale}
+                >
+                  <SliderTrack>
+                    <SliderFilledTrack />
+                  </SliderTrack>
+                  <SliderThumb outline="gray solid 1px" />
+                </Slider>
+              </Box>
             </Box>
 
             {/* Host settings */}
@@ -300,7 +340,7 @@ export default function MenuPanel_Settings({
                 </Box>
               </Box>
             )}
-
+            
             {/* Background theme */}
             <Box
               bg={cardBg}

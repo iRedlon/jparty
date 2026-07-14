@@ -41,6 +41,7 @@ function handleSkipToRound(socket: Socket, sessionName: string, targetRoundIndex
     io.in(sessionName).emit(HostServerSocket.HideAnnouncement, true);
 
     session.roundIndex = targetRoundIndex;
+    session.wagerBonusCount = (targetRoundIndex === 1) ? 1 : 3;
     session.resetClueSelection();
     session.resetPlayerSubmissions();
 

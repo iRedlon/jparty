@@ -22,6 +22,8 @@ export enum VolumeType {
 export enum AudioType {
     LobbyMusic,
     GameMusic,
+    GameMusic2,
+    GameMusic3,
     ThinkingMusic,
     BuzzWindowTimeout,
     Applause,
@@ -33,7 +35,7 @@ export enum AudioType {
     IncorrectDecision,
     ClueSelected,
     FoundWagerBonus,
-    AllWagerCategoryRevealed
+    AllWagerCategoryRevealed,
 }
 
 export enum VoiceType {
@@ -223,7 +225,7 @@ export const TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES: Record<TriviaClueDecision,
         "Correct!", 
         "Right!",
         "Well done.", 
-        `You got it ${VoiceLineVariable.SpotlightResponderName}.`,
+        `Good.`,
         "That's the answer.",
         "That was it.",
         "That's right.",
@@ -238,7 +240,7 @@ export const TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES: Record<TriviaClueDecision,
         "I'm afraid not."
     ],
     [TriviaClueDecision.NeedsMoreDetail]: [
-        `Needs more detail. Try again ${VoiceLineVariable.SpotlightResponderName}.`, 
+        `That needs more detail. Try again ${VoiceLineVariable.SpotlightResponderName}.`, 
         "Could you be more specific?",
         "Could you add some detail?",
         `Could you please clarify, ${VoiceLineVariable.SpotlightResponderName}?`,

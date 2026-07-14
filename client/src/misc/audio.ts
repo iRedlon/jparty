@@ -4,7 +4,9 @@ import { AudioType, HostSocket, VoiceType, VolumeType } from "jparty-shared";
 import { socket } from "./socket";
 import { LocalStorageKey } from "./ui-constants";
 
-import GameMusicMP3 from "../assets/game-music.mp3";
+import GameMusic1MP3 from "../assets/game-music-1.mp3";
+import GameMusic2MP3 from "../assets/game-music-2.mp3";
+import GameMusic3MP3 from "../assets/game-music-3.mp3";
 import LobbyMusicMP3 from "../assets/lobby-music.mp3";
 import ThinkingMusicMP3 from "../assets/thinking-music.mp3";
 
@@ -22,9 +24,14 @@ import AllWagerCategoryRevealedMP3 from "../assets/all-wager-category-revealed.m
 
 const musicAudios: { [key in AudioType]?: HTMLAudioElement } = {
     [AudioType.LobbyMusic]: new Audio(LobbyMusicMP3),
-    [AudioType.GameMusic]: new Audio(GameMusicMP3),
+    [AudioType.GameMusic]: new Audio(GameMusic1MP3),
+    [AudioType.GameMusic2]: new Audio(GameMusic2MP3),
+    [AudioType.GameMusic3]: new Audio(GameMusic3MP3),
     [AudioType.ThinkingMusic]: new Audio(ThinkingMusicMP3)
 };
+
+const GAME_MUSIC_ROTATION = [AudioType.GameMusic, AudioType.GameMusic2, AudioType.GameMusic3];
+let currentGameMusicAudioType = GAME_MUSIC_ROTATION[0];
 
 const MUSIC_FADE_IN_DURATION_MS = 800;
 const MUSIC_FADE_OUT_DURATION_MS = 800;
@@ -33,6 +40,8 @@ const MUSIC_FADE_TICK_MS = 50;
 const musicFadeLevels: { [key in AudioType]?: number } = {
     [AudioType.LobbyMusic]: 0,
     [AudioType.GameMusic]: 0,
+    [AudioType.GameMusic2]: 0,
+    [AudioType.GameMusic3]: 0,
     [AudioType.ThinkingMusic]: 0
 };
 
@@ -70,6 +79,18 @@ musicAudios[AudioType.ThinkingMusic]?.addEventListener("ended", () => {
         pendingMusicAudioType = undefined;
         playAudio(nextAudioType);
     }
+});
+
+GAME_MUSIC_ROTATION.forEach((audioType, rotationIndex) => {
+    musicAudios[audioType]?.addEventListener("ended", () => {
+        const nextAudioType = GAME_MUSIC_ROTATION[(rotationIndex + 1) % GAME_MUSIC_ROTATION.length];
+
+        currentGameMusicAudioType = nextAudioType;
+
+        if (currentMusicAudioType === audioType) {
+            playAudio(nextAudioType);
+        }
+    });
 });
 
 export function isAudioMuted() {
@@ -112,6 +133,8 @@ const baseVolumes: { [key in VolumeType]?: number } = {
 // override per-track if a particular mp3 is unusually loud or quiet
 const baseVolumeOverrides: { [key in AudioType]?: number } = {
     [AudioType.GameMusic]: 0.05625,
+    [AudioType.GameMusic2]: 0.05625,
+    [AudioType.GameMusic3]: 0.05625,
     [AudioType.ThinkingMusic]: 0.25,
     [AudioType.LongApplause]: 0.5,
     [AudioType.CorrectDecision]: 0.2,
@@ -231,6 +254,10 @@ updateVolume(VolumeType.Music, getVolume(VolumeType.Music));
 updateVolume(VolumeType.SoundEffects, getVolume(VolumeType.SoundEffects));
 
 export function playAudio(audioType: AudioType) {
+    if (audioType === AudioType.GameMusic) {
+        audioType = currentGameMusicAudioType;
+    }
+
     const musicAudio = musicAudios[audioType];
     if (musicAudio) {
         // don't interrupt thinking music
@@ -246,7 +273,8 @@ export function playAudio(audioType: AudioType) {
         if (musicAudio.paused || !musicAudio.currentTime) {
             applyMusicVolume(audioType);
 
-            musicAudio.loop = (audioType !== AudioType.ThinkingMusic);
+            // game music tracks don't loop themselves; their "ended" listeners chain to the next track in the rotation
+            musicAudio.loop = (audioType === AudioType.LobbyMusic);
 
             if (audioType === AudioType.ThinkingMusic) {
                 musicAudio.currentTime = 0;
@@ -277,6 +305,10 @@ export function playAudio(audioType: AudioType) {
 
 // audio "stop" is done by pausing the audio. it'll always be restarted the next time it plays anyway
 export function stopAudio(audioType: AudioType) {
+    if (audioType === AudioType.GameMusic) {
+        audioType = currentGameMusicAudioType;
+    }
+
     const musicAudio = musicAudios[audioType];
     if (musicAudio) {
         if (currentMusicAudioType === audioType) {

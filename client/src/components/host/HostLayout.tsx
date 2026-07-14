@@ -286,12 +286,12 @@ export default function HostLayout() {
             return [<HostBoard triviaRound={context.triviaRound} />, HostComponentState.Board];
         }
 
-        if (context.categoryIndex < 0 || context.clueIndex < 0) {
-            throw new Error(`HostLayout: missing current clue`);
-        }
-
         const triviaCategory = context.triviaRound.categories[context.categoryIndex];
-        const triviaClue = triviaCategory.clues[context.clueIndex];
+        const triviaClue = triviaCategory?.clues[context.clueIndex];
+
+        if (!triviaClue) {
+            return [<></>, HostComponentState.None];
+        }
 
         if ((context.sessionState === SessionState.ReadingClueSelection) || (context.sessionState === SessionState.ReadingClue) || (context.sessionState === SessionState.ClueTossup)) {
             return [<HostClue triviaCategory={triviaCategory} triviaClue={triviaClue} />, HostComponentState.Clue];
