@@ -53,14 +53,46 @@ let pendingMusicAudioType: AudioType | undefined;
 let musicPlaying = false;
 const muteStateListeners = new Set<(muted: boolean) => void>();
 
-function recomputeMusicPlaying() {
-    const anyPlaying = Object.values(musicAudios).some((audio) => !!audio && !audio.paused);
-    if (anyPlaying === musicPlaying) {
+const MUSIC_SILENCE_GRACE_MS = 500;
+let musicSilenceTimeout: NodeJS.Timeout | undefined;
+
+function isAnyMusicPlaying() {
+    return Object.values(musicAudios).some((audio) => !!audio && !audio.paused);
+}
+
+function setMusicPlaying(playing: boolean) {
+    if (playing === musicPlaying) {
         return;
     }
 
-    musicPlaying = anyPlaying;
+    musicPlaying = playing;
     muteStateListeners.forEach((listener) => listener(!musicPlaying));
+}
+
+function recomputeMusicPlaying() {
+    if (isAnyMusicPlaying()) {
+        if (musicSilenceTimeout) {
+            clearTimeout(musicSilenceTimeout);
+            musicSilenceTimeout = undefined;
+        }
+
+        setMusicPlaying(true);
+        return;
+    }
+
+    // nothing's playing right now. wait out a short grace period before considering ourselves muted, so that
+    // momentary silence between tracks doesn't briefly reveal the mute icon
+    if (!musicPlaying || musicSilenceTimeout) {
+        return;
+    }
+
+    musicSilenceTimeout = setTimeout(() => {
+        musicSilenceTimeout = undefined;
+
+        if (!isAnyMusicPlaying()) {
+            setMusicPlaying(false);
+        }
+    }, MUSIC_SILENCE_GRACE_MS);
 }
 
 for (const audio of Object.values(musicAudios)) {

@@ -16,7 +16,7 @@ import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log
 import { formatText, validatePlayerName } from "../misc/text-utils.js";
 
 // used any time we want to make sure a voice line waits for the end of a sound effect before starting
-const VOICE_DELAY_MS = 750;
+const VOICE_DELAY_MS = 1000;
 const WAGER_BONUS_VOICE_DELAY_MS = 1250;
 const ALL_WAGER_VOICE_DELAY_MS = 1000;
 
