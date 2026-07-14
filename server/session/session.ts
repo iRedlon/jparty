@@ -1180,7 +1180,7 @@ export class Session {
         return;
     }
 
-    async getClueDecision(responderID: SocketID) {
+    async getClueDecision(responderID: SocketID, minRevealTimeMs: number = 0) {
         const responderIndex = this.currentResponderIDs.indexOf(responderID);
 
         let responder = this.players[responderID];
@@ -1203,6 +1203,11 @@ export class Session {
         }
         catch (e) {
             throw e;
+        }
+
+        const decisionDelayMs = minRevealTimeMs - Date.now();
+        if (decisionDelayMs > 0) {
+            await new Promise(resolve => setTimeout(resolve, decisionDelayMs));
         }
 
         // re-resolve the responder in case their socket ID changed while we were waiting on the decision

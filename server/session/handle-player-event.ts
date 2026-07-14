@@ -16,7 +16,9 @@ import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log
 import { formatText, validatePlayerName } from "../misc/text-utils.js";
 
 // used any time we want to make sure a voice line waits for the end of a sound effect before starting
-const VOICE_DELAY_MS = 1250;
+const VOICE_DELAY_MS = 750;
+const WAGER_BONUS_VOICE_DELAY_MS = 1250;
+const ALL_WAGER_VOICE_DELAY_MS = 1000;
 
 function handleConnect(socket: Socket, sessionName: string, clientID: string, playerName: string, callback: PlayerSocketCallback[PlayerSocket.Connect]) {
     sessionName = formatText(sessionName.toLowerCase());
@@ -212,7 +214,7 @@ function readClue(sessionName: string) {
             session.stopTimeout(SessionTimeoutType.ReadingClue);
 
             playAudio(sessionName, AudioType.AllWagerCategoryRevealed);
-            readClueAloud(VOICE_DELAY_MS);
+            readClueAloud(ALL_WAGER_VOICE_DELAY_MS);
         });
     }
     else {
@@ -318,7 +320,7 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
                         }
 
                         promptResponse(sessionName, PlayerResponseType.Wager, session.spotlightResponderID);
-                    }, VOICE_DELAY_MS);
+                    }, WAGER_BONUS_VOICE_DELAY_MS);
                 }
                 break;
             case TriviaClueBonus.AllWager:
@@ -330,7 +332,7 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
                         }
 
                         playAudio(sessionName, AudioType.AllWagerCategoryRevealed);
-                        playVoiceLine(sessionName, VoiceLineType.RevealAllWagerCategory, VOICE_DELAY_MS);
+                        playVoiceLine(sessionName, VoiceLineType.RevealAllWagerCategory, ALL_WAGER_VOICE_DELAY_MS);
                         promptResponse(sessionName, PlayerResponseType.Wager, ...session.getSolventPlayerIDs());
                     });
                 }
@@ -612,22 +614,11 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
     let decision = TriviaClueDecision.Incorrect;
 
     try {
-        decision = await session.getClueDecision(responderID);
+        decision = await session.getClueDecision(responderID, minRevealTimeMs);
     }
     catch (e) {
         emitServerError(e, undefined, sessionName);
         return;
-    }
-
-    // safeguard for instant decisions: wait out the remainder of the "response submitted" sound effect before revealing
-    const revealDelayMs = minRevealTimeMs - Date.now();
-    if (revealDelayMs > 0) {
-        await new Promise(resolve => setTimeout(resolve, revealDelayMs));
-
-        session = getSession(sessionName);
-        if (!session) {
-            return;
-        }
     }
 
     const responder = session.players[responderID];
@@ -657,16 +648,16 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
 
     session.displayingCorrectAnswer = showCorrectAnswer;
 
-    startPositionChangeAnimation(sessionName);
-
-    io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
-
     if (decision === TriviaClueDecision.Correct) {
         playAudio(sessionName, AudioType.CorrectDecision);
     }
     else if (decision === TriviaClueDecision.Incorrect) {
         //playAudio(sessionName, AudioType.IncorrectDecision);
     }
+
+    startPositionChangeAnimation(sessionName);
+
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
 
     if (!session.getCurrentClue()?.isAllPlayClue() && noEligibleRespondersRemaining && decision === TriviaClueDecision.Incorrect) {
         playVoiceLine(sessionName, VoiceLineType.ShowCorrectAnswer);
@@ -829,12 +820,6 @@ function handleResponseWindowArrived(socket: Socket, sessionName: string, timeou
     slackMs = Math.round(Math.min(Math.max(slackMs, -60000), 60000));
 
     debugLog(LogCategory.Timeout, `(${player.name}) received ${SessionTimeoutType[timeoutType]} with ${slackMs}ms of slack time remaining`, LogVerbosity.VeryVerbose);
-
-    sendTelemetryEvent(TelemetryEvent.ResponseWindowArrived, sessionName, {
-        player_name: player.name,
-        timeout_type: SessionTimeoutType[timeoutType],
-        response_window_arrival_slack_ms: slackMs
-    });
 }
 
 const handlers: Record<PlayerSocket, Function> = {

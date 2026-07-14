@@ -7,8 +7,7 @@ export enum TelemetryEvent {
     PlayerJoined = "player_joined",
     PlayerLeft = "player_left",
     ClueDecision = "clue_decision",
-    LeaderboardChange = "leaderboard_change",
-    ResponseWindowArrived = "response_window_arrived"
+    LeaderboardChange = "leaderboard_change"
 }
 
 const GA_ENDPOINT = "https://www.google-analytics.com/mp/collect";
