@@ -16,7 +16,7 @@ function getBoardPanelFontSize(isDollarValue: boolean, content: string) {
         return "4.5em";
     }
 
-    if (content.length >= 30) {
+    if (content.length >= 35) {
         return "1em";
     }
 
