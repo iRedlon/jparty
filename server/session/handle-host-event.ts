@@ -1,14 +1,16 @@
 
 import {
-    HostServerSocket, HostSocket, HostSocketCallback, ServerSocket, ServerSocketMessage, SessionState, SessionTimeoutType,
-    TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
+    HostServerSocket, HostSocket, HostSocketCallback, NORMAL_GAME_SETTINGS, PARTY_GAME_SETTINGS, ServerSocket, ServerSocketMessage,
+    SessionState, TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
 } from "jparty-shared";
 import { generate as generateRandomWord } from "random-words";
 import { Socket } from "socket.io";
 
-import { createSession, deleteSession, emitLeaderboardUpdate, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost, restartTimeout } from "./session-utils.js";
+import { createSession, deleteSession, emitGamePreviewUpdate, emitLeaderboardUpdate, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost, updateVoiceDuration } from "./session-utils.js";
+import { generateTriviaGame } from "../api-requests/generate-trivia-game.js";
 import { io } from "../controller.js";
-import { debugLog, DebugLogType } from "../misc/log.js";
+import { debugLog, LogCategory, LogVerbosity } from "../misc/log.js";
+import { formatText } from "../misc/text-utils.js";
 
 function handleConnect(socket: Socket, clientID: string) {
     let sessionName = "";
@@ -19,6 +21,55 @@ function handleConnect(socket: Socket, clientID: string) {
 
     createSession(sessionName, socket.id, clientID);
     joinSessionAsHost(socket, sessionName);
+
+    generateGamePreview(socket, sessionName);
+}
+
+// pre-generate the entire trivia game while we're still in the lobby so the hosts can preview (and re-roll) the round 1 categories
+async function generateGamePreview(socket: Socket, sessionName: string) {
+    let session = getSession(sessionName);
+    if (!session || (session.state !== SessionState.Lobby)) {
+        return;
+    }
+
+    const gameSettingsPreset = session.triviaGameSettingsPreset;
+
+    let gameSettings = NORMAL_GAME_SETTINGS;
+
+    if (gameSettingsPreset === TriviaGameSettingsPreset.Party) {
+        gameSettings = PARTY_GAME_SETTINGS;
+    }
+
+    let triviaGame;
+
+    try {
+        triviaGame = await generateTriviaGame(TriviaGameSettings.clone(gameSettings));
+    }
+    catch (e) {
+        emitServerError(e, socket);
+        emitGamePreviewUpdate(sessionName);
+        return;
+    }
+
+    if ((session.state !== SessionState.Lobby) || (session.triviaGameSettingsPreset !== gameSettingsPreset)) {
+        return;
+    }
+
+    session.triviaGame = triviaGame;
+    emitGamePreviewUpdate(sessionName);
+}
+
+async function handleGenerateGamePreview(socket: Socket, sessionName: string) {
+    let session = getSession(sessionName);
+    if (!session || (session.state !== SessionState.Lobby)) {
+        return;
+    }
+
+    if (socket.id !== session.creatorSocketID) {
+        return;
+    }
+
+    await generateGamePreview(socket, sessionName);
 }
 
 function handleUpdateGameSettingsPreset(socket: Socket, sessionName: string, gameSettingsPreset: TriviaGameSettingsPreset) {
@@ -31,9 +82,17 @@ function handleUpdateGameSettingsPreset(socket: Socket, sessionName: string, gam
         return;
     }
 
+    if ((gameSettingsPreset !== TriviaGameSettingsPreset.Normal) && (gameSettingsPreset !== TriviaGameSettingsPreset.Party)) {
+        return;
+    }
+
     session.triviaGameSettingsPreset = gameSettingsPreset;
 
-    io.to(Object.keys(session.hosts)).except(socket.id).emit(HostServerSocket.UpdateGameSettingsPreset, gameSettingsPreset);
+    io.to(Object.keys(session.hosts)).except(socket.id).emit(HostServerSocket.UpdateGameSettingsPreset, gameSettingsPreset, true /* fromServer */);
+
+    // if we have a trivia game already it must have been made with the old preset. discard it and roll a fresh preview
+    session.triviaGame = undefined;
+    generateGamePreview(socket, sessionName);
 }
 
 function handleUpdateVoiceType(socket: Socket, sessionName: string, voiceType: VoiceType) {
@@ -42,7 +101,7 @@ function handleUpdateVoiceType(socket: Socket, sessionName: string, voiceType: V
         return;
     }
 
-    debugLog(DebugLogType.Voice, `updating session (${sessionName}) to use voice type: ${voiceType}`);
+    debugLog(LogCategory.Voice, `updating session (${sessionName}) to use voice type: ${voiceType}`, LogVerbosity.Verbose);
 
     session.voiceType = voiceType;
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateVoiceType, voiceType, !process.env.USE_OPENAI_TTS /* modernVoicesDisabled */);
@@ -50,50 +109,21 @@ function handleUpdateVoiceType(socket: Socket, sessionName: string, voiceType: V
 
 function handleUpdateVoiceDuration(socket: Socket, sessionName: string, voiceLine: string, durationSec: number) {
     let session = getSession(sessionName);
-    if (!session) {
+    if (!session || socket.id !== session.creatorSocketID) {
         return;
     }
 
-    if (socket.id !== session.creatorSocketID) {
-        return;
-    }
+    debugLog(LogCategory.Voice, `got a new duration of ${durationSec} seconds for current voice line: "${session.currentVoiceLine}"`, LogVerbosity.VeryVerbose);
 
-    if (voiceLine !== session.currentVoiceLine) {
-        return;
-    }
-
-    // an estimated voice duration timeout will have already started, but now that we know exactly how long it will take...
-    // we can restart the timeout with a much more accurate duration
-    debugLog(DebugLogType.Voice, `got a new duration of ${durationSec} seconds for current voice line: "${session.currentVoiceLine}"`);
-
-    const durationMs = durationSec * 1000;
-
-    if (session.currentAnnouncement) {
-        restartTimeout(sessionName, SessionTimeoutType.Announcement, durationMs);
-    }
-
-    switch (session.state) {
-        case SessionState.ReadingCategoryNames:
-            {
-                restartTimeout(sessionName, SessionTimeoutType.ReadingCategoryName, durationMs);
-            }
-        case SessionState.ReadingClueSelection:
-            {
-                restartTimeout(sessionName, SessionTimeoutType.ReadingClueSelection, durationMs);
-            }
-            break;
-        case SessionState.ReadingClue:
-            {
-                restartTimeout(sessionName, SessionTimeoutType.ReadingClue, durationMs);
-            }
-            break;
-    }
+    updateVoiceDuration(sessionName, voiceLine, durationSec * 1000);
 }
 
 function handleAttemptSpectate(socket: Socket, sessionName: string, clientID: string) {
+    sessionName = formatText(`${sessionName}`.toLowerCase());
+
     let session = getSession(sessionName);
     if (!session) {
-        socket.emit(ServerSocket.Message, new ServerSocketMessage(`Couldn't find session a session named: ${sessionName}`, true));
+        socket.emit(ServerSocket.Message, new ServerSocketMessage(`Couldn't find a session named: ${sessionName}`, true));
         return;
     }
 
@@ -102,13 +132,17 @@ function handleAttemptSpectate(socket: Socket, sessionName: string, clientID: st
         return;
     }
 
+    // we're moving to a new session. make sure our current session knows we're leaving
+    const previousSessionName = (socket as any).sessionName;
+    if (previousSessionName && (previousSessionName !== sessionName)) {
+        handleLeaveSession(socket, previousSessionName);
+        socket.leave(previousSessionName);
+    }
+
     session.connectHost(socket.id, clientID);
     joinSessionAsHost(socket, sessionName);
 
     socket.emit(ServerSocket.Message, new ServerSocketMessage(`Joined session: ${sessionName} as spectator`));
-
-    // we're moving to a new session. make sure our current session knows we're leaving
-    handleLeaveSession(socket, (socket as any).sessionName);
 }
 
 function handleLeaveSession(socket: Socket, sessionName: string) {
@@ -117,7 +151,7 @@ function handleLeaveSession(socket: Socket, sessionName: string) {
         return;
     }
 
-    debugLog(DebugLogType.ClientConnection, `socket ID (${socket.id}) is leaving session: ${session.name}`);
+    debugLog(LogCategory.ClientConnection, `socket ID (${socket.id}) is leaving session: ${session.name}`, LogVerbosity.Verbose);
 
     session.disconnectHost(socket.id);
 
@@ -137,14 +171,33 @@ async function handleGenerateCustomGame(socket: Socket, sessionName: string, gam
         return;
     }
 
+    // gameSettings arrives as a plain object from a client we can't trust. rebuild it as a real
+    // TriviaGameSettings and validate it server-side before generating anything with it
+    let cleanGameSettings: TriviaGameSettings;
+
     try {
-        await session.generateTriviaGame(gameSettings);
+        cleanGameSettings = TriviaGameSettings.clone(gameSettings);
+
+        if (cleanGameSettings.isInvalid()) {
+            throw new Error("invalid custom game settings");
+        }
+    }
+    catch (e) {
+        socket.emit(ServerSocket.Message, new ServerSocketMessage("Those custom game settings are invalid", true));
+        callback(false);
+        return;
+    }
+
+    try {
+        await session.generateTriviaGame(cleanGameSettings);
     }
     catch (e) {
         emitServerError(e, socket);
         callback(false);
         return;
     }
+
+    session.triviaGameSettingsPreset = TriviaGameSettingsPreset.Custom;
 
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateGameSettingsPreset, TriviaGameSettingsPreset.Custom);
     socket.emit(ServerSocket.Message, new ServerSocketMessage("Custom settings were saved successfully"));
@@ -162,6 +215,7 @@ function handlePlayAgain(socket: Socket, sessionName: string) {
     emitStateUpdate(sessionName);
     emitTriviaRoundUpdate(sessionName);
     emitLeaderboardUpdate(socket);
+    generateGamePreview(socket, sessionName);
 }
 
 const handlers: Record<HostSocket, Function> = {
@@ -172,6 +226,7 @@ const handlers: Record<HostSocket, Function> = {
     [HostSocket.AttemptSpectate]: handleAttemptSpectate,
     [HostSocket.LeaveSession]: handleLeaveSession,
     [HostSocket.GenerateCustomGame]: handleGenerateCustomGame,
+    [HostSocket.GenerateGamePreview]: handleGenerateGamePreview,
     [HostSocket.PlayAgain]: handlePlayAgain
 }
 

@@ -1,16 +1,17 @@
 
 import {
-    AttemptReconnectResult, ClientSocket, ClientSocketCallback, getEnumSize, HostServerSocket, LeaderboardType,
+    AttemptReconnectResult, ClientSocket, ClientSocketCallback, getEnumSize, getSortedSessionPlayerIDs, HostServerSocket, LeaderboardType,
     ServerSocket, ServerSocketMessage, SessionAnnouncement, SessionState, SessionTimeoutType, TriviaGameSettingsPreset, VoiceLineType,
     VoiceType
 } from "jparty-shared";
+
 import { Socket } from "socket.io";
 
 import { playVoiceLine } from "./audio.js";
 import { Session } from "./session.js";
-import { addNewLeaderboardPlayer, getLeaderboardPlayers } from "../api-requests/leaderboard-db.js";
+import { addNewLeaderboardPlayer, getLeaderboardPlayers, getLeaderboardStats, recordLeaderboardGameStats } from "../api-requests/leaderboard-db.js";
 import { io } from "../controller.js";
-import { debugLog, DebugLogType, formatDebugLog } from "../misc/log.js";
+import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 
 // don't let "the man" convince you that 1000 and 60 are magic numbers
 const SESSION_EXPIRATION_PERIOD_MS = 10 * 60 * 1000;
@@ -24,9 +25,20 @@ export let sessions: Sessions = {};
 // every once in a while, check our sessions and delete any stale ones
 setInterval(() => {
     for (const sessionName in sessions) {
-        if ((Date.now() - sessions[sessionName].lastUpdatedTimeMs) > SESSION_EXPIRATION_PERIOD_MS) {
-            deleteSession(sessionName);
+        const session = sessions[sessionName];
+
+        if ((Date.now() - session.lastUpdatedTimeMs) <= SESSION_EXPIRATION_PERIOD_MS) {
+            continue;
         }
+
+        const hasConnectedHost = Object.values(session.hosts).some(host => host.connected);
+        if (hasConnectedHost || session.getConnectedPlayerIDs().length) {
+            session.lastUpdatedTimeMs = Date.now();
+            continue;
+        }
+
+        io.in(sessionName).emit(ServerSocket.CancelGame);
+        deleteSession(sessionName);
     }
 }, SESSION_EXPIRATION_CHECK_INTERVAL_MS);
 
@@ -75,7 +87,7 @@ export function joinSession(socket: Socket, sessionName: string) {
 
     socket.emit(ServerSocket.UpdateSessionName, session.name);
 
-    if (session.getCurrentRound()) {
+    if (session.getCurrentRound() && (session.state !== SessionState.Lobby)) {
         socket.emit(ServerSocket.UpdateTriviaRound, session.getCurrentRound());
         socket.emit(ServerSocket.SelectClue, session.categoryIndex, session.clueIndex);
     }
@@ -115,8 +127,12 @@ export function joinSessionAsHost(socket: Socket, sessionName: string) {
     }
 
     emitLeaderboardUpdate(socket);
-    socket.emit(HostServerSocket.UpdateGameSettingsPreset, session.triviaGameSettingsPreset);
+    socket.emit(HostServerSocket.UpdateGameSettingsPreset, session.triviaGameSettingsPreset, true /* fromServer */);
     socket.emit(HostServerSocket.UpdateReadingCategoryIndex, session.readingCategoryIndex);
+
+    if (session.state === SessionState.Lobby) {
+        emitGamePreviewUpdate(sessionName, socket);
+    }
 
     if (session.spotlightResponderID) {
         socket.emit(HostServerSocket.RevealClueDecision, session.displayingCorrectAnswer);
@@ -127,7 +143,7 @@ export function joinSessionAsHost(socket: Socket, sessionName: string) {
         socket.emit(HostServerSocket.UpdateNumSubmittedResponders, numSubmittedResponders, numResponders);
     }
 
-    debugLog(DebugLogType.ClientConnection, `host socket ID (${socket.id}) joined session: ${session.name}`);
+    debugLog(LogCategory.ClientConnection, `host socket ID (${socket.id}) joined session: ${session.name}`, LogVerbosity.VeryVerbose);
 }
 
 export function joinSessionAsPlayer(socket: Socket, sessionName: string) {
@@ -148,7 +164,7 @@ export function joinSessionAsPlayer(socket: Socket, sessionName: string) {
     // check if this player needs to become the game starter
     session.promptGameStarter();
 
-    debugLog(DebugLogType.ClientConnection, `player socket ID (${socket.id}) joined session: ${session.name}`);
+    debugLog(LogCategory.ClientConnection, `player socket ID (${socket.id}) joined session: ${session.name}`, LogVerbosity.VeryVerbose);
 }
 
 export function handleDisconnect(socket: Socket) {
@@ -164,13 +180,17 @@ export function handleDisconnect(socket: Socket) {
 
         if (isPlayer) {
             session.disconnectPlayer(socket.id);
+
+            // if this player was the last one holding a pending action window closed, it can open for everyone else now
+            attemptAccelerateWindowOpen(session.name);
+
             emitStateUpdate(session.name);
         }
         else {
             session.disconnectHost(socket.id);
         }
 
-        debugLog(DebugLogType.ClientConnection, `socket ID (${socket.id}) disconnected from session: ${session.name}`);
+        debugLog(LogCategory.ClientConnection, `socket ID (${socket.id}) disconnected from session: ${session.name}`, LogVerbosity.VeryVerbose);
     }
     catch (e) {
         emitServerError(e, socket, sessionName);
@@ -178,11 +198,11 @@ export function handleDisconnect(socket: Socket) {
 }
 
 export function handleAttemptReconnect(socket: Socket, sessionName: string, clientID: string, callback: ClientSocketCallback[ClientSocket.AttemptReconnect]) {
-    debugLog(DebugLogType.ClientConnection, `socket ID (${socket.id}), client ID (${clientID}), attempting to reconnect to session: ${sessionName}`);
+    debugLog(LogCategory.ClientConnection, `socket ID (${socket.id}), client ID (${clientID}), attempting to reconnect to session: ${sessionName}`, LogVerbosity.VeryVerbose);
 
     try {
         const result = attemptReconnectInternal(socket, sessionName, clientID);
-        debugLog(DebugLogType.ClientConnection, `finished reconnection attempt with result: ${AttemptReconnectResult[result]}`);
+        debugLog(LogCategory.ClientConnection, `finished reconnection attempt with result: ${AttemptReconnectResult[result]}`, LogVerbosity.VeryVerbose);
         callback(result);
     }
     catch (e) {
@@ -241,20 +261,61 @@ export async function updateLeaderboard(sessionName: string) {
         return;
     }
 
-    if (session.triviaGameSettingsPreset !== TriviaGameSettingsPreset.Normal) {
+    if (!process.env.DEBUG_MODE && (session.triviaGameSettingsPreset !== TriviaGameSettingsPreset.Normal)) {
         return;
     }
 
     session.clearPlayerClueDecisions();
     emitStateUpdate(sessionName);
 
-    for (const playerID in session.players) {
+    const moneyEarned = Object.values(session.players).reduce((total, player) => total + Math.max(player.score, 0), 0);
+    await recordLeaderboardGameStats(moneyEarned);
+
+    for (const playerID of getSortedSessionPlayerIDs(session.players)) {
         const player = session.players[playerID];
         if (!player || !player.qualifiesForLeaderboard()) {
             continue;
         }
 
-        await addNewLeaderboardPlayer(player);
+        await addNewLeaderboardPlayer(player, sessionName);
+    }
+
+    emitStateUpdate(sessionName);
+}
+
+export function updateVoiceDuration(sessionName: string, voiceLine: string, durationMs: number) {
+    let session = getSession(sessionName);
+    if (!session || voiceLine !== session.currentVoiceLine) {
+        return;
+    }
+
+    if (!durationMs) {
+        session.currentVoiceLineFinished = true;
+    }
+
+    if (session.currentAnnouncement !== undefined) {
+        const minRemainingMs = session.getMinAnnouncementDurationMs() - session.getTimeoutElapsedMs(SessionTimeoutType.Announcement);
+        restartTimeout(sessionName, SessionTimeoutType.Announcement, Math.max(durationMs, minRemainingMs, 0));
+    }
+
+    if (session.timeoutInfo[SessionTimeoutType.ReadingClueDecision]) {
+        const revealedAllPlayDecisions = session.getCurrentClue()?.isAllPlayClue() && session.displayingCorrectAnswer;
+        const readingPadMs = revealedAllPlayDecisions ? Session.ALL_PLAY_DECISION_READING_PAD_MS : 0;
+        const minRemainingMs = session.getRevealClueDecisionDurationMs() - session.getTimeoutElapsedMs(SessionTimeoutType.ReadingClueDecision);
+
+        restartTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, Math.max(durationMs + readingPadMs, minRemainingMs, 0));
+    }
+
+    switch (session.state) {
+        case SessionState.ReadingCategoryNames:
+            restartTimeout(sessionName, SessionTimeoutType.ReadingCategoryName, durationMs);
+            break;
+        case SessionState.ReadingClueSelection:
+            restartTimeout(sessionName, SessionTimeoutType.ReadingClueSelection, durationMs);
+            break;
+        case SessionState.ReadingClue:
+            restartTimeout(sessionName, SessionTimeoutType.ReadingClue, durationMs);
+            break;
     }
 }
 
@@ -273,7 +334,7 @@ export function startTimeout(sessionName: string, timeoutType: SessionTimeoutTyp
         }
     });
 
-    emitTimeoutAckRequest(sessionName, timeoutType);
+    emitTimeoutUpdate(sessionName, timeoutType);
 }
 
 export function stopTimeout(sessionName: string, timeoutType: SessionTimeoutType) {
@@ -293,7 +354,7 @@ export function restartTimeout(sessionName: string, timeoutType: SessionTimeoutT
 
     session.restartTimeout(timeoutType, newDurationMs);
 
-    emitTimeoutAckRequest(sessionName, timeoutType);
+    emitTimeoutUpdate(sessionName, timeoutType);
 }
 
 function emitTimeoutUpdate(sessionName: string, timeoutType: SessionTimeoutType) {
@@ -310,18 +371,61 @@ function emitTimeoutUpdate(sessionName: string, timeoutType: SessionTimeoutType)
     const displayTimeout = (timeoutType === SessionTimeoutType.BuzzWindow) || (timeoutType === SessionTimeoutType.ResponseWindow);
 
     if (displayTimeout) {
-        io.in(session.name).emit(ServerSocket.StartTimeout, timeoutType, timeoutInfo.getRemainingDurationMs());
+        const displayWindow = session.getTimeoutDisplayWindowMs(timeoutType);
+        if (displayWindow) {
+            io.in(session.name).emit(ServerSocket.StartTimeout, timeoutType, displayWindow.openTimeMs, displayWindow.closeTimeMs, session.windowID);
+        }
     }
 }
 
-export function showAnnouncement(sessionName: string, announcement: SessionAnnouncement, callback: Function) {
+export function attemptAccelerateWindowOpen(sessionName: string) {
+    let session = getSession(sessionName);
+    if (!session || !session.isWindowAckWaitFinished()) {
+        return;
+    }
+
+    const timeoutType = session.finishWindowAckWait();
+    if ((timeoutType === undefined) || !session.timeoutInfo[timeoutType]) {
+        return;
+    }
+
+    const newOpenTimeMs = Date.now() + session.getWindowOpenPadMs();
+
+    if (timeoutType === SessionTimeoutType.BuzzWindow) {
+        if (newOpenTimeMs >= session.buzzWindowOpenTimeMs) {
+            return;
+        }
+
+        session.buzzWindowOpenTimeMs = newOpenTimeMs;
+    }
+    else if (timeoutType === SessionTimeoutType.ResponseWindow) {
+        if (newOpenTimeMs >= session.responseWindowOpenTimeMs) {
+            return;
+        }
+
+        session.responseWindowOpenTimeMs = newOpenTimeMs;
+    }
+    else {
+        return;
+    }
+
+    debugLog(LogCategory.Timeout, `every potential responder confirmed ${SessionTimeoutType[timeoutType]}. accelerating its open time`, LogVerbosity.VeryVerbose);
+
+    // restarting the timeout re-emits the updated window schedule to every client
+    const displayWindow = session.getTimeoutDisplayWindowMs(timeoutType);
+    if (displayWindow) {
+        restartTimeout(sessionName, timeoutType, (displayWindow.closeTimeMs - Date.now()) + Session.RESPONSE_WINDOW_CLOSE_SLACK_MS);
+    }
+}
+
+export function showAnnouncement(sessionName: string, announcement: SessionAnnouncement, callback: Function, voiceDelayMs: number = 0) {
     let session = getSession(sessionName);
     if (!session) {
         return;
     }
 
     session.setCurrentAnnouncement(announcement);
-    playVoiceLine(sessionName, VoiceLineType.Announcement);
+    playVoiceLine(sessionName, VoiceLineType.Announcement, voiceDelayMs);
 
     io.in(sessionName).emit(HostServerSocket.ShowAnnouncement, announcement, session.currentVoiceLine);
 
@@ -362,43 +466,30 @@ export function emitTriviaRoundUpdate(sessionName: string) {
     io.in(sessionName).emit(ServerSocket.UpdateTriviaRound, session.getCurrentRound());
 }
 
-function emitTimeoutAckRequest(sessionName: string, timeoutType: SessionTimeoutType) {
+export function emitGamePreviewUpdate(sessionName: string, socket?: Socket) {
     let session = getSession(sessionName);
     if (!session) {
         return;
     }
 
-    const timeoutInfo = session.timeoutInfo[timeoutType];
-    if (!timeoutInfo) {
-        return;
+    const categoryNames = session.triviaGame ? session.triviaGame.rounds[0].categories.map(category => category.name) : [];
+
+    if (socket) {
+        socket.emit(HostServerSocket.UpdateGamePreview, categoryNames);
     }
-
-    const oldTimeoutInfoID = timeoutInfo.id;
-
-    debugLog(DebugLogType.Timeout, `(session-utils.emitTimeoutAckRequest): requesting... ${SessionTimeoutType[timeoutType]}`);
-
-    const TIMEOUT_ACK_REQUEST_TIME_MS = 5000;
-    io.in(sessionName).timeout(TIMEOUT_ACK_REQUEST_TIME_MS).emit(ServerSocket.TimeoutAckRequest, timeoutType, oldTimeoutInfoID, (err: any, responses: any) => {
-        let timeoutInfo = session.timeoutInfo[timeoutType];
-        if (!timeoutInfo) {
-            return;
-        }
-
-        if (oldTimeoutInfoID != timeoutInfo.id) {
-            return;
-        }
-
-        debugLog(DebugLogType.Timeout, `(session-utils.emitTimeoutAckRequest): heard acknowledgement from (${JSON.stringify(responses)})... ${SessionTimeoutType[timeoutType]}`);
-
-        timeoutInfo.startTimeout();
-        emitTimeoutUpdate(sessionName, timeoutType);
-    });
+    else {
+        io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateGamePreview, categoryNames);
+    }
 }
 
 export async function emitLeaderboardUpdate(socket: Socket) {
     socket.emit(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.AllTime, await getLeaderboardPlayers(LeaderboardType.AllTime));
     socket.emit(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.Monthly, await getLeaderboardPlayers(LeaderboardType.Monthly));
     socket.emit(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.Weekly, await getLeaderboardPlayers(LeaderboardType.Weekly));
+
+    socket.emit(HostServerSocket.UpdateLeaderboardStats, LeaderboardType.AllTime, await getLeaderboardStats(LeaderboardType.AllTime));
+    socket.emit(HostServerSocket.UpdateLeaderboardStats, LeaderboardType.Monthly, await getLeaderboardStats(LeaderboardType.Monthly));
+    socket.emit(HostServerSocket.UpdateLeaderboardStats, LeaderboardType.Weekly, await getLeaderboardStats(LeaderboardType.Weekly));
 }
 
 export function emitServerError(error: any, socket?: Socket, sessionName?: string) {

@@ -13,6 +13,7 @@
     margin-right: auto;
     padding: 1em;
     height: 5em;
+    width: fit-content;
     min-width: 25vw;
     display: flex;
     justify-content: center;
@@ -63,6 +64,7 @@
 .session-state-enter #responder-info-box {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }

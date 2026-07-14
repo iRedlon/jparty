@@ -1,32 +1,44 @@
 
+import compression from "compression";
 import dotenv from "dotenv";
 import express from "express";
 import { createServer } from "http";
-import { ClientSocket, ClientSocketCallback, Feedback, HostSocket, PlayerSocket, ReservedEvent, ServerSocket } from "jparty-shared";
+import { CheatSocket, ClientSocket, ClientSocketCallback, Feedback, HostSocket, PlayerSocket, ReservedEvent, ServerSocket } from "jparty-shared";
 import path from "path";
 import { Server, Socket } from "socket.io";
 import { fileURLToPath } from "url";
 
 import { handleSubmitFeedback } from "./api-requests/feedback.js";
-import { cleanupTriviaData } from "./api-requests/trivia-db.js";
-import { debugLog, DebugLogType } from "./misc/log.js";
+import { streamVoiceAudio } from "./api-requests/tts.js";
+//import { cleanupTriviaData } from "./api-requests/trivia-db.js";
+import { debugLog, LogCategory, LogVerbosity } from "./misc/log.js";
+import handleCheatEvent from "./session/handle-cheat-event.js";
 import handleHostEvent from "./session/handle-host-event.js";
 import handlePlayerEvent from "./session/handle-player-event.js";
 import { handleAttemptReconnect, handleDisconnect, sessions } from "./session/session-utils.js";
-import { resetLeaderboard } from "./api-requests/leaderboard-db.js";
+//import { resetLeaderboard } from "./api-requests/leaderboard-db.js";
 
 dotenv.config();
 
 const app = express();
 const server = createServer(app);
-export const io = new Server(server);
+
+export const io = new Server(server, { pingInterval: 10000, pingTimeout: 10000 });
 const port = process.env.PORT || 3000;
+
+// gzip responses (most importantly the client JS bundle, which every new visitor downloads)
+app.use(compression());
 
 // serve react files from the client build folder
 let dirname = path.dirname(fileURLToPath(import.meta.url));
 app.use(express.static(path.join(dirname, "../../client/build")));
 
-cleanupTriviaData();
+// serve the QA dashboard
+if (process.env.DEBUG_MODE) {
+    app.get("/qa", (_req, res) => res.sendFile(path.join(dirname, "../../client/qa-dashboard.html")));
+}
+
+app.get("/api/voice", streamVoiceAudio);
 
 io.on(ReservedEvent.Connection, (socket: Socket) => {
     if (process.env.DEBUG_MODE) {
@@ -44,12 +56,31 @@ io.on(ReservedEvent.Connection, (socket: Socket) => {
     });
 
     socket.on(ClientSocket.SubmitFeedback, (feedback: Feedback) => {
-        handleSubmitFeedback(socket, feedback);
+        try {
+            handleSubmitFeedback(socket, feedback);
+        }
+        catch (e) {
+            console.error(e);
+        }
+    });
+
+    socket.on(ClientSocket.SyncClock, (callback: ClientSocketCallback[ClientSocket.SyncClock]) => {
+        if (typeof callback === "function") {
+            callback(Date.now());
+        }
     });
 
     socket.onAny((event: string, ...args: any[]) => {
         if (Object.values(ClientSocket).includes(event as ClientSocket)) {
             // handled above
+            return;
+        }
+
+        if (Object.values(CheatSocket).includes(event as CheatSocket)) {
+            if (process.env.DEBUG_MODE) {
+                handleCheatEvent(socket, event as CheatSocket);
+            }
+
             return;
         }
 
@@ -63,22 +94,34 @@ io.on(ReservedEvent.Connection, (socket: Socket) => {
             return;
         }
 
-        debugLog(DebugLogType.Server, `couldn't find an event handler for event: ${event}`);
+        debugLog(LogCategory.Server, `couldn't find an event handler for event: ${event}`, LogVerbosity.Normal);
     });
 });
 
-server.listen(port, () => debugLog(DebugLogType.Server, `server is running at port: ${port}`));
+server.listen(port, () => debugLog(LogCategory.Server, `server is running at port: ${port}`, LogVerbosity.Normal));
 
 ["SIGINT", "SIGTERM", "SIGQUIT", "uncaughtException"].forEach(signal => process.on(signal, (error) => {
     if (error) {
         console.error(error);
     }
 
-    debugLog(DebugLogType.Server, `server is shutting down`);
+    debugLog(LogCategory.Server, `server is shutting down`, LogVerbosity.Normal);
 
     // if the server is shutting down for any reason, log all of the sessions in progress so we can assess the damage (if any)
     if (process.env.NODE_ENV === "production") {
-        console.log(JSON.stringify(sessions));
+        try {
+            const sessionSnapshots = Object.values(sessions).map(session => ({
+                name: session.name,
+                state: session.state,
+                gameCount: session.gameCount,
+                players: Object.values(session.players).map(player => ({ name: player.name, score: player.score }))
+            }));
+
+            console.log(JSON.stringify(sessionSnapshots));
+        }
+        catch (e) {
+            console.error(e);
+        }
     }
 
     // finally, cancel any games in progress so all current players are notified

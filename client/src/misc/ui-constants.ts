@@ -1,16 +1,15 @@
 
 import { FeedbackType, SessionAnnouncement, TriviaClueBonus, TriviaRoundType } from "jparty-shared";
 
-// all of these are stored in the window's localStorage object for this browser session
 export enum LocalStorageKey {
     ClientID = "clientID",
     IsPlayer = "isPlayer",
     SessionName = "sessionName",
     CategoryIndex = "categoryIndex", // this was the last category index selected by this player
+    BackgroundTheme = "backgroundTheme",
+    BackgroundParticles = "backgroundParticles",
+    UIScale = "uiScale",
 }
-
-export const BACKGROUND_COLOR = "#0d47a1";
-export const BACKGROUND_ACCENT_COLOR = "#00008b";
 
 // z-index values for UI components
 export enum Layer {
@@ -48,14 +47,14 @@ export const TRIVIA_CLUE_BONUS_DESCRIPTIONS: Record<TriviaClueBonus, string> = {
 }
 
 export const SESSION_ANNOUNCEMENT_MESSAGES: Record<SessionAnnouncement, string> = {
-    [SessionAnnouncement.StartGame]: "The game is starting!",
-    [SessionAnnouncement.ClueBonusWager]: "Clue bonus: wager!",
-    [SessionAnnouncement.ClueBonusAllWager]: "Clue bonus: all wager!",
-    [SessionAnnouncement.ClueBonusAllPlay]: "Clue bonus: all play!",
-    [SessionAnnouncement.FinalClue]: "This is the final clue for this round!",
-    [SessionAnnouncement.StartRound]: "A new round is starting!",
-    [SessionAnnouncement.StartFinalRound]: "The final round is starting!",
-    [SessionAnnouncement.GameOver]: "Game over!"
+    [SessionAnnouncement.StartGame]: "",
+    [SessionAnnouncement.ClueBonusWager]: "daily double!",
+    [SessionAnnouncement.ClueBonusAllWager]: "final jparty!",
+    [SessionAnnouncement.ClueBonusAllPlay]: "all play!",
+    [SessionAnnouncement.FinalClue]: "final clue for the round!",
+    [SessionAnnouncement.StartRound]: "double jparty!",
+    [SessionAnnouncement.StartFinalRound]: "",
+    [SessionAnnouncement.GameOver]: "game over!"
 }
 
 export const FEEDBACK_TYPE_DISPLAY_NAMES: Record<FeedbackType, string> = {

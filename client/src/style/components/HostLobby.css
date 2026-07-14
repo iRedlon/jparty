@@ -8,12 +8,39 @@
     overflow: auto;
 }
 
+#lobby-center-column {
+    max-height: 100vh;
+    overflow-y: auto;
+    padding-right: 7px;
+    padding-bottom: 7px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+#lobby-center-column::-webkit-scrollbar {
+    display: none;
+}
+
 #joined-players-box {
     margin-right: 2em;
 }
 
+#joined-players-list-box {
+    max-height: 30em;
+    overflow-y: auto;
+    padding-bottom: 6px;
+}
+
 #leaderboard-box {
     margin-left: 2em;
+}
+
+/* should be tall enough to show the top 5 leaderboard spots */
+#leaderboard-players-box {
+    height: 26em;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    padding-bottom: 6px;
 }
 
 /* logo box anims */
@@ -22,6 +49,7 @@
 .session-state-enter #logo-box {
     animation-name: slide-from-top;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
@@ -40,6 +68,7 @@
 .session-state-enter #game-settings-preset-box {
     animation-name: slide-from-bottom;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
@@ -58,6 +87,7 @@
 .session-state-enter #leaderboard-box {
     animation-name: slide-from-right;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
@@ -76,6 +106,7 @@
 .session-state-enter #joined-players-box {
     animation-name: slide-from-left;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }

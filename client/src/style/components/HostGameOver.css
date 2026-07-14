@@ -1,9 +1,10 @@
 /* game over box anims */
 
-.session-state-appear #game-over-box, 
+.session-state-appear #game-over-box,
 .session-state-enter #game-over-box {
     animation-name: slide-from-top;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
@@ -18,10 +19,11 @@
 
 /* even scoreboard player box anims */
 
-.session-state-appear .scoreboard-player-box.even, 
+.session-state-appear .scoreboard-player-box.even,
 .session-state-enter .scoreboard-player-box.even {
     animation-name: slide-from-left;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }
@@ -36,10 +38,11 @@
 
 /* odd scoreboard player box anims */
 
-.session-state-appear .scoreboard-player-box.odd, 
+.session-state-appear .scoreboard-player-box.odd,
 .session-state-enter .scoreboard-player-box.odd {
     animation-name: slide-from-right;
     animation-duration: 1s;
+    animation-delay: 50ms;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
 }

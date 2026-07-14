@@ -8,8 +8,9 @@ import { isMobile } from "react-device-detect";
 
 import HostLayout from "../host/HostLayout";
 import PlayerLayout from "../player/PlayerLayout";
-import { getClientID } from "../../misc/client-utils";
+import { getClientID, joinSessionName } from "../../misc/client-utils";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
+import { isQAPlayer, updateQASessionName } from "../../misc/qa-dashboard";
 import { socket } from "../../misc/socket";
 import { LocalStorageKey } from "../../misc/ui-constants";
 
@@ -33,7 +34,7 @@ export const LayoutContext = createContext<LayoutContextData>({} as any);
 export default function Layout() {
     const [debugMode, setDebugMode] = useState(process.env.NODE_ENV === "development");
     const [isSpectator, setIsSpectator] = useState(false);
-    const [isPlayer, setIsPlayer] = useState(isMobile || localStorage[LocalStorageKey.IsPlayer]);
+    const [isPlayer, setIsPlayer] = useState(isQAPlayer || isMobile || !!joinSessionName || localStorage[LocalStorageKey.IsPlayer]);
     const [sessionName, setSessionName] = useState("");
     const [sessionState, setSessionState] = useState(SessionState.Lobby);
     const [sessionPlayers, setSessionPlayers] = useState<SessionPlayers>({});
@@ -132,7 +133,7 @@ export default function Layout() {
 
     const handleCancelGame = (serverCrashed?: boolean) => {
         if (serverCrashed && (sessionState > SessionState.Lobby)) {
-            alert("We apologize: the jparty server just crashed. Your game cannot continue. This incident has been reported.");
+            alert("The jparty! server just crashed. Your game progress is lost. We apologize!");
         }
 
         location.reload();
@@ -141,6 +142,7 @@ export default function Layout() {
     const handleUpdateSessionName = (sessionName: string) => {
         setSessionName(sessionName);
         localStorage.setItem(LocalStorageKey.SessionName, sessionName);
+        updateQASessionName(sessionName);
     }
 
     const handleUpdateSessionState = (sessionState: SessionState) => {

@@ -75,11 +75,13 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
                 emitMockSocketEvent(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.AllTime, PLACEHOLDER_LEADERBOARD_PLAYERS);
                 emitMockSocketEvent(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.Monthly, PLACEHOLDER_LEADERBOARD_PLAYERS);
                 emitMockSocketEvent(HostServerSocket.UpdateLeaderboardPlayers, LeaderboardType.Weekly, PLACEHOLDER_LEADERBOARD_PLAYERS);
+                emitMockSocketEvent(HostServerSocket.UpdateGamePreview, ["category one", "category two", "category three", "category four", "category five", "category six"]);
             }
             break;
         case DebugCommand.UpdateSessionState:
             {
                 emitMockSocketEvent(ServerSocket.UpdateSessionState, ...args);
+                emitMockSocketEvent(HostServerSocket.RevealClueDecision, args[0] === SessionState.ReadingClueDecision);
             }
             break;
         case DebugCommand.UpdatePlayerState:
@@ -114,19 +116,19 @@ export function handleDebugCommand(command: DebugCommand, ...args: any[]) {
             break;
         case DebugCommand.StartTimeout:
             {
-                emitMockSocketEvent(ServerSocket.StartTimeout, SessionTimeoutType.Announcement, 60000);
+                emitMockSocketEvent(ServerSocket.StartTimeout, SessionTimeoutType.Announcement, Date.now(), Date.now() + 60000);
             }
             break;
         case DebugCommand.ShowAnnouncement:
             {
-                emitMockSocketEvent(HostServerSocket.ShowAnnouncement, SessionAnnouncement.StartFinalRound);
-                setTimeout(() => {
-                    handleDebugCommand(DebugCommand.HideAnnouncement);
+                emitMockSocketEvent(HostServerSocket.ShowAnnouncement, SessionAnnouncement.ClueBonusAllWager);
+                // setTimeout(() => {
+                //     handleDebugCommand(DebugCommand.HideAnnouncement);
                     
-                    setTimeout(() => {
-                        emitMockSocketEvent(HostServerSocket.ShowAnnouncement, SessionAnnouncement.ClueBonusAllWager);
-                    }, 200);
-                }, 4000);
+                //     setTimeout(() => {
+                //         emitMockSocketEvent(HostServerSocket.ShowAnnouncement, SessionAnnouncement.ClueBonusAllWager);
+                //     }, 200);
+                // }, 4000);
             }
             break;
         case DebugCommand.HideAnnouncement:

@@ -1,11 +1,11 @@
 
 import { Box, Heading, Stack, Text } from "@chakra-ui/react";
-import { Player, PlayerResponseType, SessionState, TriviaClue, TriviaClueDecision } from "jparty-shared";
+import { getSortedSessionPlayerIDs, Player, PlayerResponseType, SessionState, TriviaClue, TriviaClueDecision } from "jparty-shared";
 import { useContext, useRef } from "react";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 
 import { LayoutContext } from "../common/Layout";
-import { formatDollarValue } from "../../misc/client-utils";
+import { formatDollarValueString } from "../../misc/client-utils";
 
 import "../../style/components/ResponderInfo.css";
 
@@ -16,6 +16,20 @@ interface ResponderInfoProps {
     showClueDecision?: boolean,
     numSubmittedResponders?: number,
     numResponders?: number
+}
+
+function getCorrectResponderNamesFontSize(namesString: string) {
+    if (namesString.length <= 25) {
+        return "2em";
+    }
+    else if (namesString.length <= 45) {
+        return "1.75em";
+    }
+    else if (namesString.length <= 60) {
+        return "1.5em";
+    }
+
+    return "1.25em";
 }
 
 export default function ResponderInfo({ triviaClue, responder, responseType, showClueDecision, numSubmittedResponders, numResponders }: ResponderInfoProps) {
@@ -30,6 +44,7 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
     const isResponse = isWagerResponse || isClueResponse;
 
     const showSubmittedResponders = triviaClue.isAllPlayClue() && isResponse;
+    const showAllPlayResults = triviaClue.isAllPlayClue() && (context.sessionState === SessionState.ReadingClueDecision) && !responder;
 
     let responderInfoState: any = "none";
     let responderInfoBox = <></>;
@@ -43,11 +58,40 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
                 </Box>
             );
         }
+        else if (showAllPlayResults) {
+            const correctResponderNames = getSortedSessionPlayerIDs(context.sessionPlayers)
+                .map(playerID => context.sessionPlayers[playerID])
+                .filter(player => player && player.clueDecisionInfo &&
+                    (player.clueDecisionInfo.clue.id === triviaClue.id) &&
+                    (player.clueDecisionInfo.decision === TriviaClueDecision.Correct))
+                .map(player => player.name.toUpperCase());
+
+            const numCorrectResponders = correctResponderNames.length;
+            const responderNamesString = correctResponderNames.slice(0, 3).join(", ") + ((numCorrectResponders > 3) ? ", and others..." : "");
+
+            responderInfoState = "all-play-results";
+            responderInfoBox = (
+                <Box className={"box"} padding={"1em"} width={"30vw"} height={"7em"} marginLeft={"auto"} marginRight={"auto"}>
+                    {numCorrectResponders ? (
+                        <Stack direction={"column"} spacing={"0.25em"} height={"100%"} overflow={"hidden"}>
+                            <Text fontSize={"1.5em"} flexShrink={0}><b>{(numCorrectResponders === 1) ? "1 CORRECT RESPONSE" : `${numCorrectResponders} CORRECT RESPONSES`}</b></Text>
+                            <Text fontSize={getCorrectResponderNamesFontSize(responderNamesString)} minHeight={0} overflow={"hidden"}>
+                                <i>{responderNamesString}</i>
+                            </Text>
+                        </Stack>
+                    ) : (
+                        <Stack direction={"column"} justifyContent={"center"} height={"100%"}>
+                            <Text fontSize={"1.5em"}><b>NO CORRECT RESPONSES</b></Text>
+                        </Stack>
+                    )}
+                </Box>
+            );
+        }
         else if (responder) {
             let response = "";
 
             if (responseType === PlayerResponseType.Wager) {
-                response = formatDollarValue(responder.responses[responseType]);
+                response = formatDollarValueString(responder.responses[responseType]);
             }
             else {
                 response = responder.responses[responseType];
@@ -60,7 +104,7 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
                 decisionModifier = -1;
             }
 
-            // label our current state with this responder's client ID. this way the switch transition knows to animate between one responder to another
+            // label our current state with responder client ID so we're forced to animate between each responder
             responderInfoState = responder.clientID;
             responderInfoBox = (
                 <Stack direction={"row"} justifyContent={"center"}>
@@ -73,8 +117,8 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
                                     {(showClueDecision && clueDecisionInfo) ?
                                         <>
                                             <Text><b>{clueDecisionInfo.decision.toUpperCase()}</b></Text>
-                                            {clueDecisionInfo.decision !== TriviaClueDecision.NeedsMoreDetail && <Heading fontFamily={"board"} fontWeight={0}>
-                                                {formatDollarValue(clueDecisionInfo.clueValue * decisionModifier)}
+                                            {clueDecisionInfo.decision !== TriviaClueDecision.NeedsMoreDetail && <Heading className={"board-text"} fontWeight={0}>
+                                                <Text fontSize={"0.75em"}>{formatDollarValueString(clueDecisionInfo.clueValue * decisionModifier)}</Text>
                                             </Heading>}
                                         </> :
                                         <>
@@ -85,10 +129,10 @@ export default function ResponderInfo({ triviaClue, responder, responseType, sho
                         </CSSTransition>
                     </SwitchTransition>
 
-                    <Box className={"box"} padding={"1em"} width={"25vw"} height={"7em"}>
+                    <Box className={"box"} padding={"1em"} width={isWagerResponse ? "15vw" : "25vw"} height={"7em"}>
                         {
                             responder && (
-                                <Stack direction={"column"} paddingRight={"1em"} overflow={"hidden"}>
+                                <Stack direction={"column"} paddingLeft={"0.5em"} marginLeft={"-0.5em"} paddingRight={"1em"} overflow={"hidden"}>
                                     <Box textAlign={"left"}>
                                         <b>{responder.name.toUpperCase()}</b>
                                     </Box>

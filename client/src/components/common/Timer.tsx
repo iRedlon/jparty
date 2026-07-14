@@ -7,7 +7,7 @@ import { CSSTransition } from "react-transition-group";
 
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { getClientID } from "../../misc/client-utils";
-import { socket } from "../../misc/socket";
+import { estimateClientTimeMs, socket } from "../../misc/socket";
 import { Layer } from "../../misc/ui-constants";
 
 import "../../style/components/Timer.css";
@@ -16,7 +16,9 @@ export default function Timer() {
     const timerRef = useRef(null);
 
     const [currentTimeoutType, setCurrentTimeoutType] = useState<SessionTimeoutType | undefined>();
+    const [currentTimeoutOpenTimeMs, setCurrentTimeoutOpenTimeMs] = useState(0);
     const [currentTimeoutEndTimeMs, setCurrentTimeoutEndTimeMs] = useState(0);
+    const [windowOpen, setWindowOpen] = useState(false);
     const [timeMs, setTimeMs] = useState(Date.now());
 
     useEffect(() => {
@@ -24,7 +26,6 @@ export default function Timer() {
 
         socket.on(ServerSocket.StartTimeout, handleStartTimeout);
         socket.on(ServerSocket.StopTimeout, handleStopTimeout);
-        socket.on(ServerSocket.TimeoutAckRequest, handleTimeoutAckRequest);
 
         addMockSocketEventHandler(ServerSocket.StartTimeout, handleStartTimeout);
 
@@ -32,26 +33,41 @@ export default function Timer() {
             clearInterval(interval);
             socket.off(ServerSocket.StartTimeout, handleStartTimeout);
             socket.off(ServerSocket.StopTimeout, handleStopTimeout);
-            socket.off(ServerSocket.TimeoutAckRequest, handleTimeoutAckRequest);
 
             removeMockSocketEventHandler(ServerSocket.StartTimeout, handleStartTimeout);
         };
     }, []);
 
-    const handleStartTimeout = (timeoutType: SessionTimeoutType, durationMs: number) => {
+    const handleStartTimeout = (timeoutType: SessionTimeoutType, openTimeMs: number, closeTimeMs: number) => {
         setCurrentTimeoutType(timeoutType);
-        setCurrentTimeoutEndTimeMs(Date.now() + durationMs);
+        setCurrentTimeoutOpenTimeMs(estimateClientTimeMs(openTimeMs));
+        setCurrentTimeoutEndTimeMs(estimateClientTimeMs(closeTimeMs));
     }
 
     const handleStopTimeout = () => {
         setCurrentTimeoutType(undefined);
+        setCurrentTimeoutOpenTimeMs(0);
         setCurrentTimeoutEndTimeMs(0);
     }
 
-    const handleTimeoutAckRequest = (timeoutType: SessionTimeoutType, id: string, callback: Function) => {
-        // console.log(`Sending ack for timeout: ${SessionTimeoutType[timeoutType]}-${id}`);
-        callback(socket.id);
-    }
+    // don't show the timer until the window is actually open
+    useEffect(() => {
+        if (currentTimeoutType === undefined) {
+            setWindowOpen(false);
+            return;
+        }
+
+        const remainingMs = currentTimeoutOpenTimeMs - Date.now();
+        if (remainingMs <= 0) {
+            setWindowOpen(true);
+            return;
+        }
+
+        setWindowOpen(false);
+
+        const timeout = setTimeout(() => setWindowOpen(true), remainingMs);
+        return () => clearTimeout(timeout);
+    }, [currentTimeoutType, currentTimeoutOpenTimeMs]);
 
     const getTimeRemainingSec = () => {
         let timeRemainingSec = Math.round((currentTimeoutEndTimeMs - timeMs) / 1000);
@@ -65,13 +81,13 @@ export default function Timer() {
     }
 
     return (
-        <CSSTransition nodeRef={timerRef} in={currentTimeoutType !== undefined} timeout={500} classNames={"timer"}
+        <CSSTransition nodeRef={timerRef} in={windowOpen} timeout={500} classNames={"timer"}
             appear mountOnEnter unmountOnExit>
 
             <Box ref={timerRef}>
                 <Box id={isMobile ? "mobile-timer-wrapper" : "desktop-timer-wrapper"} className={`timer-wrapper ${isMobile ? "mobile-box" : "box"}`} zIndex={Layer.Top}>
                     <Box id={"timer"}>
-                        <Text fontFamily={"logo"} fontSize={isMobile ? "2em" : "4em"}>{getTimeRemainingSec()}</Text>
+                        <Text className={"logo-text"} fontSize={isMobile ? "2em" : "4em"}>{getTimeRemainingSec()}</Text>
                     </Box>
                 </Box>
             </Box>

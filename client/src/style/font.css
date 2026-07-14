@@ -1,11 +1,20 @@
 @font-face {
     font-family: "logo";
-    src: url("../fonts/square.ttf");
+    src: url("../fonts/bringbold-nineties.ttf");
+}
+
+.logo-text {
+    font-family: "logo" !important;
+    letter-spacing: 0.05em;
 }
 
 @font-face {
     font-family: "board";
-    src: url("../fonts/rheiborn-sans-clean.ttf");
+    src: url("../fonts/alte-haas-grotesk-bold.ttf");
+}
+
+.board-text {
+    font-family: "board" !important;
 }
 
 @font-face {

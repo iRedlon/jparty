@@ -60,9 +60,23 @@ export default function PlayerLayout() {
     const player = getPlayer();
     const isIdle = player ? ((player.state === PlayerState.Idle) || (player.state === PlayerState.PromptStartGame)) : false;
 
+    const hasActivePrompt =
+        ((context.sessionState === SessionState.PromptClueSelection) && (player?.state === PlayerState.PromptClueSelection)) ||
+        ((context.sessionState === SessionState.ClueTossup) && (player?.state === PlayerState.PromptBuzz)) ||
+        ((context.sessionState === SessionState.ClueResponse) && (player?.state === PlayerState.PromptClueResponse)) ||
+        ((context.sessionState === SessionState.WagerResponse) && (player?.state === PlayerState.PromptWager));
+
+    // an arriving prompt takes priority over anything else the player might be doing
+    useEffect(() => {
+        if (hasActivePrompt) {
+            setIsEditingSignature(false);
+            setForceIdle(false);
+        }
+    }, [hasActivePrompt]);
+
     const ForceIdleButton = () => {
         // no need to force yourself to be idle if you already are!
-        if (!player || isIdle) {
+        if (!player || isIdle || !hasActivePrompt) {
             return;
         }
 
@@ -171,7 +185,7 @@ export default function PlayerLayout() {
             <PlayerMenu />
             <Box position={"fixed"} bottom={"4em"} right={"1em"} zIndex={Layer.Middle}>{ForceIdleButton()}</Box>
 
-            <Flex height={"100vh"} width={"100vw"} justifyContent={"center"} alignItems={"flex-start"} overflow={"auto"}>
+            <Flex height={"100vh"} width={"100vw"} justifyContent={"center"} alignItems={"flex-start"} overflow={"auto"} sx={{ scrollbarGutter: "stable both-edges" }}>
                 <Center id={"foo"} margin={"2em"} zIndex={Layer.Bottom}>
                     <SwitchTransition>
                         <CSSTransition key={componentState as PlayerComponentState} nodeRef={sessionStateRef} timeout={0} classNames={"session-state"}

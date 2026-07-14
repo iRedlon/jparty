@@ -1,16 +1,19 @@
 
 import {
     ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES, AudioType, CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES,
-    DISPLAY_CORRECT_ANSWER_VOICE_LINES, getRandomChoice, HostServerSocket, PROMPT_CLUE_SELECTION_VOICE_LINES, READ_CLUE_SELECTION_VOICE_LINE, 
-    READ_FIRST_CATEGORY_NAME_VOICE_LINES, READ_LAST_CATEGORY_NAME_VOICE_LINES, READ_MIDDLE_CATEGORY_NAME_VOICE_LINES,
-    SESSION_ANNOUNCEMENT_VOICE_LINES, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, VoiceLineType, VoiceLineVariable, WELCOME_VOICE_LINES,
+    DISPLAY_CORRECT_ANSWER_VOICE_LINES, FIRST_WAGER_BONUS_VOICE_LINES, getOrdinalString, getRandomChoiceNoRepeat, HostServerSocket,
+    INTRODUCE_ALL_WAGER_CLUE_VOICE_LINES, LAST_WAGER_BONUS_VOICE_LINES, LEADERBOARD_GAME_OVER_VOICE_LINES, LEADERBOARD_TYPE_DISPLAY_NAMES,
+    PROMPT_CLUE_SELECTION_VOICE_LINES, QUOTED_LETTER_CATEGORY_VOICE_LINES, QUOTED_MULTIPLE_CATEGORY_VOICE_LINES, QUOTED_OTHER_CATEGORY_VOICE_LINES,
+    QUOTED_WORD_CATEGORY_VOICE_LINES, READ_CLUE_SELECTION_VOICE_LINE, READ_FIRST_CATEGORY_NAME_VOICE_LINES, READ_LAST_CATEGORY_NAME_VOICE_LINES,
+    READ_MIDDLE_CATEGORY_NAME_VOICE_LINES, REVEAL_ALL_WAGER_CATEGORY_VOICE_LINE, SECOND_WAGER_BONUS_VOICE_LINES, SESSION_ANNOUNCEMENT_VOICE_LINES,
+    SessionAnnouncement, TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES, TriviaClueBonus, VoiceLineType, VoiceLineVariable, WELCOME_VOICE_LINES,
 } from "jparty-shared";
 
 import { getSession } from "./session-utils.js";
-import { getVoiceAudioBase64 } from "../api-requests/tts.js";
+import { shouldStreamVoiceAudio } from "../api-requests/tts.js";
 import { io } from "../controller.js";
-import { debugLog, DebugLogType } from "../misc/log.js";
-import { formatSpokenVoiceLine } from "../misc/text-utils.js";
+import { debugLog, LogCategory, LogVerbosity } from "../misc/log.js";
+import { formatSpokenVoiceLine, getQuotedCategoryTexts } from "../misc/text-utils.js";
 
 export function playAudio(sessionName: string, audioType: AudioType) {
     let session = getSession(sessionName);
@@ -21,13 +24,21 @@ export function playAudio(sessionName: string, audioType: AudioType) {
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayAudio, audioType);
 }
 
-export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
+function joinQuotedCategoryTexts(quotedTexts: string[]) {
+    if (quotedTexts.length <= 1) {
+        return quotedTexts[0] || "";
+    }
+
+    return `${quotedTexts.slice(0, -1).join(", ")} and ${quotedTexts[quotedTexts.length - 1]}`;
+}
+
+export async function playVoiceLine(sessionName: string, type: VoiceLineType, delayMs: number = 0) {
     let session = getSession(sessionName);
     if (!session) {
         return;
     }
 
-    debugLog(DebugLogType.Voice, `playing voice line of type: ${VoiceLineType[type]}`);
+    debugLog(LogCategory.Voice, `playing voice line of type: ${VoiceLineType[type]}`, LogVerbosity.Verbose);
 
     let voiceLine: string = "";
 
@@ -40,53 +51,91 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
                 }
 
                 if (session.readingCategoryIndex === 0) {
-                    voiceLine = getRandomChoice(READ_FIRST_CATEGORY_NAME_VOICE_LINES);
+                    voiceLine = getRandomChoiceNoRepeat(READ_FIRST_CATEGORY_NAME_VOICE_LINES);
 
                     if (session.roundIndex === 0) {
                         // if we're reading the first category for the first round, tack on an extra line welcoming players to the game
-                        voiceLine = getRandomChoice(WELCOME_VOICE_LINES) + voiceLine;
+                        voiceLine = getRandomChoiceNoRepeat(WELCOME_VOICE_LINES) + voiceLine;
                     }
                 }
                 else if (session.readingCategoryIndex === (currentRound.settings.numCategories - 1)) {
-                    voiceLine = getRandomChoice(READ_LAST_CATEGORY_NAME_VOICE_LINES);
+                    voiceLine = getRandomChoiceNoRepeat(READ_LAST_CATEGORY_NAME_VOICE_LINES);
                 }
                 else {
-                    voiceLine = getRandomChoice(READ_MIDDLE_CATEGORY_NAME_VOICE_LINES);
+                    voiceLine = getRandomChoiceNoRepeat(READ_MIDDLE_CATEGORY_NAME_VOICE_LINES);
+                }
+
+                const quotedTexts = getQuotedCategoryTexts(session.getReadingCategory()?.name || "");
+                if (quotedTexts.length > 1) {
+                    voiceLine += `. ${getRandomChoiceNoRepeat(QUOTED_MULTIPLE_CATEGORY_VOICE_LINES)}`;
+                }
+                else if (quotedTexts.length === 1) {
+                    const quotedText = quotedTexts[0];
+
+                    if (/^[a-z]$/i.test(quotedText)) {
+                        voiceLine += `. ${getRandomChoiceNoRepeat(QUOTED_LETTER_CATEGORY_VOICE_LINES)}`;
+                    }
+                    else if (/^[a-z]+$/i.test(quotedText)) {
+                        voiceLine += `. ${getRandomChoiceNoRepeat(QUOTED_WORD_CATEGORY_VOICE_LINES)}`;
+                    }
+                    else {
+                        voiceLine += `. ${getRandomChoiceNoRepeat(QUOTED_OTHER_CATEGORY_VOICE_LINES)}`;
+                    }
                 }
             }
             break;
         case VoiceLineType.Announcement:
             {
                 if (session.currentAnnouncement === undefined) {
-                    debugLog(DebugLogType.Voice, "early out. session didn't have a current announcement");
+                    debugLog(LogCategory.Voice, "early out. session didn't have a current announcement", LogVerbosity.Verbose);
                     break;
                 }
 
-                voiceLine = getRandomChoice(SESSION_ANNOUNCEMENT_VOICE_LINES[session.currentAnnouncement]);
+                if (session.currentAnnouncement === SessionAnnouncement.ClueBonusWager) {
+                    if (session.wagerBonusCount <= 1) {
+                        voiceLine = getRandomChoiceNoRepeat(FIRST_WAGER_BONUS_VOICE_LINES);
+                    }
+                    else if (session.wagerBonusCount === 2) {
+                        voiceLine = getRandomChoiceNoRepeat(SECOND_WAGER_BONUS_VOICE_LINES);
+                    }
+                    else {
+                        voiceLine = getRandomChoiceNoRepeat(LAST_WAGER_BONUS_VOICE_LINES);
+                    }
+                }
+                else if ((session.currentAnnouncement === SessionAnnouncement.GameOver) && session.getCurrentLeader()?.claimedLeaderboardSpot) {
+                    voiceLine = getRandomChoiceNoRepeat(LEADERBOARD_GAME_OVER_VOICE_LINES);
+                }
+                else {
+                    voiceLine = getRandomChoiceNoRepeat(SESSION_ANNOUNCEMENT_VOICE_LINES[session.currentAnnouncement]);
+                }
             }
             break;
         case VoiceLineType.PromptClueSelection:
             {
                 const clueSelector = session.players[session.clueSelectorID];
                 if (!clueSelector) {
-                    debugLog(DebugLogType.Voice, "early out. session didn't have a clue selector");
+                    debugLog(LogCategory.Voice, "early out. session didn't have a clue selector", LogVerbosity.Verbose);
                     break;
                 }
 
                 const finalCluePosition = session.getCurrentRound()?.getFinalCluePosition();
                 if (finalCluePosition) {
-                    debugLog(DebugLogType.Voice, "early out. trying to prompt clue selection on the final clue");
+                    debugLog(LogCategory.Voice, "early out. trying to prompt clue selection on the final clue", LogVerbosity.Verbose);
                     return;
                 }
 
                 const currentCategory = session.getCurrentCategory();
+                const currentClue = session.getCurrentClue();
+
+                const keptControlAfterWagerBonus = (currentClue?.bonus === TriviaClueBonus.Wager) &&
+                    (clueSelector.clueDecisionInfo?.clue.id === currentClue.id);
 
                 if (currentCategory && currentCategory.didPlayerClear(clueSelector.clientID)) {
                     playAudio(sessionName, AudioType.Applause);
-                    voiceLine = getRandomChoice(CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES);
+                    voiceLine = getRandomChoiceNoRepeat(CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES);
                 }
-                else if (session.hasNewClueSelector()) {
-                    voiceLine = getRandomChoice(PROMPT_CLUE_SELECTION_VOICE_LINES);
+                else if (session.hasNewClueSelector() || keptControlAfterWagerBonus) {
+                    voiceLine = getRandomChoiceNoRepeat(PROMPT_CLUE_SELECTION_VOICE_LINES);
                 }
             }
             break;
@@ -107,27 +156,37 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
             {
                 const spotlightResponder = session.players[session.spotlightResponderID];
                 if (!spotlightResponder || !spotlightResponder.clueDecisionInfo) {
-                    debugLog(DebugLogType.Voice, "early out. session didn't have a valid spotlight responder");
+                    debugLog(LogCategory.Voice, "early out. session didn't have a valid spotlight responder", LogVerbosity.Verbose);
                     break;
                 }
 
                 if (session.getCurrentClue()?.isAllPlayClue()) {
-                    voiceLine = getRandomChoice(ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
+                    voiceLine = getRandomChoiceNoRepeat(ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
                 }
                 else {
-                    voiceLine = getRandomChoice(TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
+                    voiceLine = getRandomChoiceNoRepeat(TOSSUP_REVEAL_CLUE_DECISION_VOICE_LINES[spotlightResponder.clueDecisionInfo.decision]);
                 }
             }
             break;
         case VoiceLineType.ShowCorrectAnswer:
             {
-                voiceLine = getRandomChoice(DISPLAY_CORRECT_ANSWER_VOICE_LINES);
+                voiceLine = getRandomChoiceNoRepeat(DISPLAY_CORRECT_ANSWER_VOICE_LINES);
+            }
+            break;
+        case VoiceLineType.RevealAllWagerCategory:
+            {
+                voiceLine = REVEAL_ALL_WAGER_CATEGORY_VOICE_LINE;
+            }
+            break;
+        case VoiceLineType.IntroduceAllWagerClue:
+            {
+                voiceLine = getRandomChoiceNoRepeat(INTRODUCE_ALL_WAGER_CLUE_VOICE_LINES);
             }
             break;
     }
 
     if (!voiceLine) {
-        debugLog(DebugLogType.Voice, "early out. no valid voice line");
+        debugLog(LogCategory.Voice, "early out. no valid voice line", LogVerbosity.Verbose);
         return;
     }
 
@@ -136,6 +195,11 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
     const readingCategoryName = session.getReadingCategory()?.name;
     if (readingCategoryName) {
         voiceLine = voiceLine.replace(VoiceLineVariable.ReadingCategoryName, readingCategoryName);
+
+        const quotedTexts = getQuotedCategoryTexts(readingCategoryName);
+        if (quotedTexts.length) {
+            voiceLine = voiceLine.replace(VoiceLineVariable.QuotedCategoryText, joinQuotedCategoryTexts(quotedTexts));
+        }
     }
 
     const categoryName = session.getCurrentCategory()?.name;
@@ -163,23 +227,34 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType) {
     if (leader) {
         voiceLine = voiceLine.replace(VoiceLineVariable.LeaderName, leader.name);
         voiceLine = voiceLine.replace(VoiceLineVariable.LeaderScore, `${leader.score} dollars`);
+
+        const claimedSpot = leader.claimedLeaderboardSpot;
+        if (claimedSpot) {
+            voiceLine = voiceLine.replace(VoiceLineVariable.ClaimedLeaderboardSpot, `the ${getOrdinalString(claimedSpot.spot)} spot on the ${LEADERBOARD_TYPE_DISPLAY_NAMES[claimedSpot.type]} leaderboard`);
+        }
     }
 
     voiceLine = formatSpokenVoiceLine(voiceLine, type);
     session.setCurrentVoiceLine(voiceLine);
 
-    debugLog(DebugLogType.Voice, `final spoken voice line: \"${voiceLine}\"`);
+    debugLog(LogCategory.Voice, `final spoken voice line: \"${voiceLine}\"`, LogVerbosity.Verbose);
 
-    let voiceAudioBase64 = undefined;
+    const streamAudio = shouldStreamVoiceAudio(session.voiceType);
 
-    try {
-        voiceAudioBase64 = await getVoiceAudioBase64(session.voiceType, voiceLine);
+    // a delay gives whatever sound is currently playing some room to breathe before the host starts talking over it
+    const emitPlayVoice = () => {
+        let session = getSession(sessionName);
+        if (!session || (session.currentVoiceLine !== voiceLine)) {
+            return;
+        }
+
+        io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayVoice, session.voiceType, voiceLine, streamAudio);
     }
-    catch (e) {
-        // normally we'd go through handleServerError, but if our external TTS request fails we can just fall back on the speech synthesis voice instead
-        // no need to recover the session; nothing's broken. but the TTS request failed so we should still log it
-        console.error(e);
-    }
 
-    io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayVoice, session.voiceType, voiceLine, voiceAudioBase64);
+    if (delayMs > 0) {
+        setTimeout(emitPlayVoice, delayMs);
+    }
+    else {
+        emitPlayVoice();
+    }
 }

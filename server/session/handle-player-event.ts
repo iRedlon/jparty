@@ -6,13 +6,19 @@ import {
 import { Socket } from "socket.io";
 
 import { playAudio, playVoiceLine } from "./audio.js";
+import { TelemetryEvent, sendTelemetryEvent } from "../misc/telemetry.js";
 import {
-    emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, handleDisconnect, joinSession,
+    attemptAccelerateWindowOpen, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, handleDisconnect, joinSession,
     restartTimeout, showAnnouncement, startPositionChangeAnimation, startTimeout, stopTimeout, updateLeaderboard
 } from "./session-utils.js";
 import { io } from "../controller.js";
-import { DebugLogType, debugLog, formatDebugLog } from "../misc/log.js";
+import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 import { formatText, validatePlayerName } from "../misc/text-utils.js";
+
+// used any time we want to make sure a voice line waits for the end of a sound effect before starting
+const VOICE_DELAY_MS = 1000;
+const WAGER_BONUS_VOICE_DELAY_MS = 1250;
+const ALL_WAGER_VOICE_DELAY_MS = 1000;
 
 function handleConnect(socket: Socket, sessionName: string, clientID: string, playerName: string, callback: PlayerSocketCallback[PlayerSocket.Connect]) {
     sessionName = formatText(sessionName.toLowerCase());
@@ -40,6 +46,8 @@ function handleConnect(socket: Socket, sessionName: string, clientID: string, pl
     session.connectPlayer(socket.id, clientID, playerName);
     joinSession(socket, sessionName);
 
+    sendTelemetryEvent(TelemetryEvent.PlayerJoined, sessionName, { player_name: playerName });
+
     // reset both session and player name
     callback(true, true);
 }
@@ -48,6 +56,11 @@ function handleLeaveSession(socket: Socket, sessionName: string) {
     let session = getSession(sessionName);
     if (!session) {
         return;
+    }
+
+    const player = session.players[socket.id];
+    if (player) {
+        sendTelemetryEvent(TelemetryEvent.PlayerLeft, sessionName, { player_name: player.name });
     }
 
     handleDisconnect(socket);
@@ -71,7 +84,7 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
         return;
     }
 
-    if (!session.triviaGame || (session.triviaGameSettingsPreset !== TriviaGameSettingsPreset.Custom)) {
+    if (!session.triviaGame) {
         let gameSettings = NORMAL_GAME_SETTINGS;
 
         if (session.triviaGameSettingsPreset === TriviaGameSettingsPreset.Party) {
@@ -86,9 +99,18 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
             callback(false);
             return;
         }
-
-        emitTriviaRoundUpdate(sessionName);
     }
+
+    emitTriviaRoundUpdate(sessionName);
+
+    session.gameStartTimeMs = Date.now();
+    session.gameCount++;
+
+    sendTelemetryEvent(TelemetryEvent.GameStarted, sessionName, {
+        num_players: session.getConnectedPlayerIDs().length,
+        session_duration_sec: session.getSessionDurationSec(),
+        session_game_count: session.gameCount
+    });
 
     session.readCategoryNames();
     emitStateUpdate(sessionName);
@@ -99,7 +121,7 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
     }
 }
 
-function recursiveReadCategoryName(sessionName: string) {
+export function recursiveReadCategoryName(sessionName: string) {
     let session = getSession(sessionName);
     if (!session) {
         return;
@@ -157,26 +179,47 @@ function readClue(sessionName: string) {
     io.in(sessionName).emit(ServerSocket.StopTimeout);
 
     session.readClue();
-    playVoiceLine(sessionName, VoiceLineType.ReadClue);
-
     emitStateUpdate(sessionName);
 
-    startTimeout(sessionName, SessionTimeoutType.ReadingClue, () => {
-        let session = getSession(sessionName);
-        if (!session) {
-            return;
-        }
+    const readClueAloud = (voiceDelayMs: number = 0) => {
+        playVoiceLine(sessionName, VoiceLineType.ReadClue, voiceDelayMs);
 
-        session.stopTimeout(SessionTimeoutType.ReadingClue);
+        startTimeout(sessionName, SessionTimeoutType.ReadingClue, () => {
+            let session = getSession(sessionName);
+            if (!session) {
+                return;
+            }
 
-        if (session.getCurrentClue()?.bonus === TriviaClueBonus.None) {
-            displayTossupClue(sessionName);
-        }
-        else {
-            // this must be a special clue, like an all play or wager. in any case, we expect our current responder IDs to have been updated already
-            promptResponse(sessionName, PlayerResponseType.Clue, ...session.currentResponderIDs);
-        }
-    });
+            session.stopTimeout(SessionTimeoutType.ReadingClue);
+
+            if (session.getCurrentClue()?.bonus === TriviaClueBonus.None) {
+                displayTossupClue(sessionName);
+            }
+            else {
+                // this must be a special clue, like an all play or wager. in any case, we expect our current responder IDs to have been updated already
+                promptResponse(sessionName, PlayerResponseType.Clue, ...session.currentResponderIDs);
+            }
+        });
+    }
+
+    if (session.getCurrentClue()?.bonus === TriviaClueBonus.AllWager) {
+        playVoiceLine(sessionName, VoiceLineType.IntroduceAllWagerClue);
+
+        startTimeout(sessionName, SessionTimeoutType.ReadingClue, () => {
+            let session = getSession(sessionName);
+            if (!session) {
+                return;
+            }
+
+            session.stopTimeout(SessionTimeoutType.ReadingClue);
+
+            playAudio(sessionName, AudioType.AllWagerCategoryRevealed);
+            readClueAloud(ALL_WAGER_VOICE_DELAY_MS);
+        });
+    }
+    else {
+        readClueAloud();
+    }
 }
 
 function displayTossupClue(sessionName: string) {
@@ -248,6 +291,10 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
     session.selectClue(categoryIndex, clueIndex);
     io.in(sessionName).emit(ServerSocket.SelectClue, categoryIndex, clueIndex);
 
+    if (session.getCurrentClue()?.bonus !== TriviaClueBonus.AllWager) {
+        playAudio(sessionName, AudioType.ClueSelected);
+    }
+
     const handleSelectClueInternal = () => {
         let session = getSession(sessionName);
         if (!session) {
@@ -261,8 +308,10 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
                 {
                     // set the spotlight responder ID in advance, just in case their socket ID happens to change during the announcement
                     session.spotlightResponderID = socket.id;
+                    session.wagerBonusCount++;
 
                     playAudio(sessionName, AudioType.Applause);
+                    playAudio(sessionName, AudioType.FoundWagerBonus);
 
                     showAnnouncement(sessionName, SessionAnnouncement.ClueBonusWager, () => {
                         let session = getSession(sessionName);
@@ -271,7 +320,7 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
                         }
 
                         promptResponse(sessionName, PlayerResponseType.Wager, session.spotlightResponderID);
-                    });
+                    }, WAGER_BONUS_VOICE_DELAY_MS);
                 }
                 break;
             case TriviaClueBonus.AllWager:
@@ -282,6 +331,8 @@ function handleSelectClue(socket: Socket, sessionName: string, categoryIndex: nu
                             return;
                         }
 
+                        playAudio(sessionName, AudioType.AllWagerCategoryRevealed);
+                        playVoiceLine(sessionName, VoiceLineType.RevealAllWagerCategory, ALL_WAGER_VOICE_DELAY_MS);
                         promptResponse(sessionName, PlayerResponseType.Wager, ...session.getSolventPlayerIDs());
                     });
                 }
@@ -355,8 +406,15 @@ function handleBuzz(socket: Socket, sessionName: string) {
         return;
     }
 
+    // the buzzer isn't live on anyone's screen yet — ignore early buzzes from hacked or misbehaving clients
+    if (Date.now() < session.buzzWindowOpenTimeMs) {
+        return;
+    }
+
     // this must be the first buzz attempt!
     if (!session.buzzPlayerIDs.length) {
+        playAudio(sessionName, AudioType.Buzz);
+
         startTimeout(sessionName, SessionTimeoutType.TossupWindow, () => {
             stopTimeout(sessionName, SessionTimeoutType.TossupWindow);
 
@@ -387,6 +445,11 @@ function handleUpdateResponse(socket: Socket, sessionName: string, response: str
         return;
     }
 
+    // the response window isn't live on anyone's screen yet
+    if (Date.now() < session.responseWindowOpenTimeMs) {
+        return;
+    }
+
     response = response.toLowerCase();
 
     session.updateResponse(socket.id, response);
@@ -403,6 +466,11 @@ function handleSubmitResponse(socket: Socket, sessionName: string) {
         return;
     }
 
+    // the response window isn't live on anyone's screen yet
+    if (Date.now() < session.responseWindowOpenTimeMs) {
+        return;
+    }
+
     session.submitResponse(socket.id);
     emitStateUpdate(sessionName);
 
@@ -413,8 +481,10 @@ function handleSubmitResponse(socket: Socket, sessionName: string) {
         io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateNumSubmittedResponders, numSubmittedResponders, numResponders);
     }
 
+    const playingThinkingMusic = (session.state === SessionState.ClueResponse) && (session.getCurrentClue()?.bonus === TriviaClueBonus.AllWager);
+
     // finish the response window early if we aren't waiting for any more submissions
-    if (numSubmittedResponders >= numResponders) {
+    if ((numSubmittedResponders >= numResponders) && !playingThinkingMusic) {
         finishResponseWindow(sessionName);
     }
 }
@@ -432,28 +502,40 @@ async function finishResponseWindow(sessionName: string) {
 
     session.resetPlayerSubmissions();
 
+    const isAllWagerClue = session.getCurrentClue()?.bonus === TriviaClueBonus.AllWager;
+
     switch (session.state) {
         case SessionState.ClueResponse:
             {
+                if (!isAllWagerClue) {
+                    playAudio(sessionName, AudioType.ClueResponseSubmitted);
+                }
                 session.finishClueResponseWindow();
                 emitStateUpdate(sessionName);
 
                 // there's only one response window for an all play/wager, so we can safely announce the correct answer to begin with
                 // before finding any of the decisions
                 if (session.getCurrentClue()?.isAllPlayClue()) {
+                    // request every responder's decision at once, in parallel with the correct answer announcement
+                    const decisionsPromise = Promise.all(session.currentResponderIDs.map(responderID => session!.getClueDecision(responderID)))
+                        .catch((e) => { emitServerError(e, undefined, sessionName); return undefined; });
+
                     const showCorrectAnswer = true;
                     io.to(Object.keys(session.hosts)).emit(HostServerSocket.RevealClueDecision, showCorrectAnswer);
-                    playVoiceLine(sessionName, VoiceLineType.ShowCorrectAnswer);
+                    playVoiceLine(sessionName, VoiceLineType.ShowCorrectAnswer, VOICE_DELAY_MS);
 
-                    startTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, () => recursiveRevealClueDecision(sessionName, true));
+                    startTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, () => batchRevealClueDecision(sessionName, decisionsPromise));
                 }
                 else {
-                    recursiveRevealClueDecision(sessionName);
+                    recursiveRevealClueDecision(sessionName, false, Date.now() + VOICE_DELAY_MS);
                 }
             }
             break;
         case SessionState.WagerResponse:
             {
+                if (!isAllWagerClue) {
+                    playAudio(sessionName, AudioType.WagerResponseSubmitted);
+                }
                 readClue(sessionName);
                 emitStateUpdate(sessionName);
             }
@@ -461,8 +543,46 @@ async function finishResponseWindow(sessionName: string) {
     }
 }
 
+async function batchRevealClueDecision(sessionName: string, decisionsPromise: Promise<TriviaClueDecision[] | undefined>) {
+    stopTimeout(sessionName, SessionTimeoutType.ReadingClueDecision);
+
+    io.in(sessionName).emit(ServerSocket.StopTimeout);
+
+    const decisions = await decisionsPromise;
+    if (!decisions) {
+        return;
+    }
+
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    for (const responderID of session.currentResponderIDs) {
+        const responder = session.players[responderID];
+        const decisionInfo = responder?.clueDecisionInfo;
+
+        if (responder && decisionInfo) {
+            sendTelemetryEvent(TelemetryEvent.ClueDecision, sessionName, {
+                player_name: responder.name,
+                player_answer: decisionInfo.response,
+                clue: decisionInfo.clue.question,
+                answer: decisionInfo.clue.answer,
+                clue_value: decisionInfo.clueValue * ((decisionInfo.decision === TriviaClueDecision.Correct) ? 1 : -1)
+            });
+        }
+    }
+
+    session.displayingCorrectAnswer = true;
+
+    // this emits a state update, revealing every decision and score change at once
+    startPositionChangeAnimation(sessionName);
+
+    startTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, () => finishRevealClueDecision(sessionName, true));
+}
+
 // make a series of recursive calls to get a clue decision for each responder
-async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswer: boolean = false) {
+async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswer: boolean = false, minRevealTimeMs: number = 0) {
     let session = getSession(sessionName);
     if (!session) {
         return;
@@ -475,10 +595,10 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
 
     const responderID = session.findUndecidedResponderID();
 
-    debugLog(DebugLogType.ClueDecision, `found undecided responder ID: ${responderID}`);
+    debugLog(LogCategory.ClueDecision, `found undecided responder ID: ${responderID}`, LogVerbosity.Verbose);
 
     if (!responderID) {
-        debugLog(DebugLogType.ClueDecision, `done revealing clue decisions`);
+        debugLog(LogCategory.ClueDecision, `done revealing clue decisions`, LogVerbosity.Verbose);
 
         if (session.currentResponderIDs.length || session.getCurrentClue()?.isAllPlayClue()) {
             finishRevealClueDecision(sessionName, showCorrectAnswer);
@@ -494,11 +614,25 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
     let decision = TriviaClueDecision.Incorrect;
 
     try {
-        decision = await session.getClueDecision(responderID);
+        decision = await session.getClueDecision(responderID, minRevealTimeMs);
     }
     catch (e) {
         emitServerError(e, undefined, sessionName);
         return;
+    }
+
+    const responder = session.players[responderID];
+    const decisionInfo = responder?.clueDecisionInfo;
+
+    // "needs more detail" isn't a final decision. this responder is about to respond again and will get a real decision then
+    if (responder && decisionInfo && (decision !== TriviaClueDecision.NeedsMoreDetail)) {
+        sendTelemetryEvent(TelemetryEvent.ClueDecision, sessionName, {
+            player_name: responder.name,
+            player_answer: decisionInfo.response,
+            clue: decisionInfo.clue.question,
+            answer: decisionInfo.clue.answer,
+            clue_value: decisionInfo.clueValue * ((decision === TriviaClueDecision.Correct) ? 1 : -1)
+        });
     }
 
     // if the decision was "needs more detail" this responder is technically still eligible (in fact, they're about to be prompted to respond again)
@@ -513,6 +647,13 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
     }
 
     session.displayingCorrectAnswer = showCorrectAnswer;
+
+    if (decision === TriviaClueDecision.Correct) {
+        playAudio(sessionName, AudioType.CorrectDecision);
+    }
+    else if (decision === TriviaClueDecision.Incorrect) {
+        //playAudio(sessionName, AudioType.IncorrectDecision);
+    }
 
     startPositionChangeAnimation(sessionName);
 
@@ -529,7 +670,7 @@ async function recursiveRevealClueDecision(sessionName: string, showCorrectAnswe
         }
     }
 
-    debugLog(DebugLogType.ClueDecision, `got clue decision: ${decision}. display correct answer?: ${showCorrectAnswer}`);
+    debugLog(LogCategory.ClueDecision, `got clue decision: ${decision}. display correct answer?: ${showCorrectAnswer}`, LogVerbosity.Verbose);
 
     startTimeout(sessionName, SessionTimeoutType.ReadingClueDecision, () => {
         recursiveRevealClueDecision(sessionName, showCorrectAnswer);
@@ -591,7 +732,7 @@ function finishRevealClueDecision(sessionName: string, showCorrectAnswer: boolea
     emitStateUpdate(sessionName);
 }
 
-function finishRound(sessionName: string) {
+async function finishRound(sessionName: string) {
     let session = getSession(sessionName);
     if (!session) {
         return;
@@ -606,6 +747,20 @@ function finishRound(sessionName: string) {
     if (session.state === SessionState.GameOver) {
         announcement = SessionAnnouncement.GameOver;
         playAudio(sessionName, AudioType.LongApplause);
+
+        sendTelemetryEvent(TelemetryEvent.GameFinished, sessionName, {
+            num_players: session.getConnectedPlayerIDs().length,
+            game_duration_sec: session.getGameDurationSec(),
+            session_duration_sec: session.getSessionDurationSec()
+        });
+
+        await updateLeaderboard(sessionName);
+    }
+    else if (session.isFinalRound()) {
+        const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
+        if (didForceSelectFinalClue) {
+            return;
+        }
     }
 
     showAnnouncement(sessionName, announcement, () => {
@@ -617,7 +772,6 @@ function finishRound(sessionName: string) {
         emitTriviaRoundUpdate(sessionName);
 
         if (session.state === SessionState.GameOver) {
-            updateLeaderboard(sessionName);
             return;
         }
 
@@ -646,6 +800,28 @@ function handleVoteToReverseDecision(socket: Socket, sessionName: string, respon
     emitStateUpdate(sessionName);
 }
 
+function handleResponseWindowArrived(socket: Socket, sessionName: string, timeoutType: SessionTimeoutType, windowID: number, slackMs: number) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    const player = session.players[socket.id];
+    if (!player || !Number.isFinite(slackMs)) {
+        return;
+    }
+
+    if (!session.receiveWindowAck(socket.id, windowID)) {
+        return;
+    }
+
+    attemptAccelerateWindowOpen(sessionName);
+
+    slackMs = Math.round(Math.min(Math.max(slackMs, -60000), 60000));
+
+    debugLog(LogCategory.Timeout, `(${player.name}) received ${SessionTimeoutType[timeoutType]} with ${slackMs}ms of slack time remaining`, LogVerbosity.VeryVerbose);
+}
+
 const handlers: Record<PlayerSocket, Function> = {
     [PlayerSocket.Connect]: handleConnect,
     [PlayerSocket.LeaveSession]: handleLeaveSession,
@@ -655,7 +831,8 @@ const handlers: Record<PlayerSocket, Function> = {
     [PlayerSocket.Buzz]: handleBuzz,
     [PlayerSocket.UpdateResponse]: handleUpdateResponse,
     [PlayerSocket.SubmitResponse]: handleSubmitResponse,
-    [PlayerSocket.VoteToReverseDecision]: handleVoteToReverseDecision
+    [PlayerSocket.VoteToReverseDecision]: handleVoteToReverseDecision,
+    [PlayerSocket.ResponseWindowArrived]: handleResponseWindowArrived
 }
 
 export default function handlePlayerEvent(socket: Socket, event: PlayerSocket, ...args: any[]) {

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>jparty! QA</title>
+
+<style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: #14161f;
+        color: #e8e8f0;
+        font: 14px/1.4 system-ui, sans-serif;
+    }
+
+    .topbar {
+        flex: none;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1em;
+        padding: 0.5em 1em;
+        background: #1d2030;
+        border-bottom: 1px solid #333850;
+    }
+
+    .topbar .logo { font-weight: 700; letter-spacing: 0.05em; }
+
+    #session-label {
+        font-family: ui-monospace, Consolas, monospace;
+        background: #262b40;
+        padding: 0.2em 0.6em;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .topbar label { display: flex; align-items: center; gap: 0.4em; color: #a8adc4; }
+
+    .topbar input[type="number"] {
+        width: 3.5em;
+        background: #262b40;
+        color: inherit;
+        border: 1px solid #333850;
+        border-radius: 4px;
+        padding: 0.2em 0.4em;
+    }
+
+    .topbar button {
+        background: #2b5cd9;
+        color: #fff;
+        border: 0;
+        border-radius: 4px;
+        padding: 0.35em 0.8em;
+        cursor: pointer;
+    }
+
+    .topbar button.secondary { background: #3a3f5c; }
+    .topbar button:hover { filter: brightness(1.15); }
+    .topbar button.cheat { background: #7a3fa8; }
+    .topbar .hint { color: #6b7090; margin-left: auto; }
+
+    main {
+        flex: 1;
+        display: flex;
+        align-items: flex-start;
+        gap: 1em;
+        padding: 1em;
+        overflow: auto;
+    }
+
+    .panel {
+        border: 1px solid #333850;
+        border-radius: 6px;
+        background: #1d2030;
+        overflow: hidden;
+        flex: none;
+    }
+
+    .panel-scale {
+        transform-origin: top left;
+        width: max-content;
+    }
+
+    .panel-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+        padding: 0.25em 0.6em;
+        font-weight: 600;
+        background: #262b40;
+    }
+
+    .panel-bar .spacer { flex: 1; }
+
+    .panel-bar button {
+        background: none;
+        border: 0;
+        color: #a8adc4;
+        cursor: pointer;
+        font-size: 1em;
+        padding: 0 0.2em;
+    }
+
+    .panel-bar button:hover { color: #fff; }
+
+    .panel-bar button.cheat {
+        background: #7a3fa8;
+        color: #fff;
+        border-radius: 4px;
+        padding: 0.1em 0.5em;
+        font-size: 0.85em;
+    }
+
+    .panel-bar button.cheat:hover { filter: brightness(1.15); }
+
+    .frame-wrap { overflow: hidden; background: #000; }
+    .frame-wrap iframe { border: 0; display: block; transform-origin: top left; background: #000; }
+
+    #players {
+        flex: 1;
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 0.75em;
+    }
+</style>
+</head>
+<body>
+    <div class="topbar">
+        <span class="logo">jparty! QA dashboard</span>
+        <span id="session-label" title="click to copy">waiting for session&hellip;</span>
+        <label>players <input id="player-count" type="number" min="1" max="12"></label>
+        <label>size <input id="player-scale" type="range" min="0.5" max="1" step="0.05"></label>
+        <label>host font px <input id="host-font-size" type="number" min="8" max="48"></label>
+        <label>player font px <input id="player-font-size" type="number" min="8" max="48"></label>
+        <button id="add-player">+ player</button>
+        <button id="reset" class="secondary">reset all</button>
+        <button id="cheat-skip-round-2" class="cheat" title="cheat: skip the game to round 2">skip to round 2</button>
+        <button id="cheat-skip-round-3" class="cheat" title="cheat: skip the game to round 3">skip to round 3</button>
+        <button id="cheat-skip-timeout" class="cheat" title="cheat: skip the active timeout as though it expired naturally">skip timeout</button>
+    </div>
+
+    <main>
+        <div class="panel" id="host-panel">
+            <div class="panel-bar"><span>host</span></div>
+            <div class="frame-wrap" id="host-frame-wrap">
+                <iframe id="host-frame" allow="autoplay"></iframe>
+            </div>
+        </div>
+
+        <div id="players"></div>
+    </main>
+
+<script>
+(function () {
+    const HOST_W = 1280, HOST_H = 720;
+    const PLAYER_W = 375, PLAYER_H = 640;
+    const LAG_INCREMENT_MS = 250;
+
+    const $ = (selector) => document.querySelector(selector);
+    const uid = () => Math.random().toString(36).slice(2, 10);
+
+    const playersEl = $("#players");
+    const sessionLabel = $("#session-label");
+    const countInput = $("#player-count");
+    const scaleInput = $("#player-scale");
+    const hostFrame = $("#host-frame");
+    const hostFrameWrap = $("#host-frame-wrap");
+    const hostFontInput = $("#host-font-size");
+    const playerFontInput = $("#player-font-size");
+
+    countInput.value = localStorage.getItem("jparty-qa-player-count") || "3";
+    scaleInput.value = localStorage.getItem("jparty-qa-player-scale") || "0.8";
+    hostFontInput.value = localStorage.getItem("jparty-qa-host-font-size") || "14";
+    playerFontInput.value = localStorage.getItem("jparty-qa-player-font-size") || "16";
+
+    let sessionName = "";
+    let playerSeq = 0;
+
+    function sendFontSize(frame, input) {
+        if (frame.contentWindow) {
+            frame.contentWindow.postMessage({ type: "jparty-qa-font-size", fontSizePx: parseFloat(input.value) || 0 }, location.origin);
+        }
+    }
+
+    function sendCheat(frame, cheat) {
+        if (frame.contentWindow) {
+            frame.contentWindow.postMessage({ type: "jparty-qa-cheat", cheat: cheat }, location.origin);
+        }
+    }
+
+    function sendLag(frame, lagMs) {
+        if (frame.contentWindow) {
+            frame.contentWindow.postMessage({ type: "jparty-qa-lag", lagMs: lagMs }, location.origin);
+        }
+    }
+
+    function applyHostFontSize() {
+        sendFontSize(hostFrame, hostFontInput);
+        localStorage.setItem("jparty-qa-host-font-size", hostFontInput.value);
+    }
+
+    function applyPlayerFontSizes() {
+        document.querySelectorAll("#players .panel iframe").forEach((frame) => sendFontSize(frame, playerFontInput));
+        localStorage.setItem("jparty-qa-player-font-size", playerFontInput.value);
+    }
+
+    function playerURL(name, clientID, rejoin) {
+        const params = new URLSearchParams({ qa: "player", session: sessionName, name: name, clientid: clientID });
+
+        if (rejoin) {
+            params.set("rejoin", "1");
+        }
+
+        return "/?" + params.toString();
+    }
+
+    function addPlayer() {
+        if (!sessionName) {
+            return;
+        }
+
+        playerSeq += 1;
+        const name = "player" + playerSeq;
+        const clientID = "qa-" + name + "-" + uid();
+
+        const panel = document.createElement("div");
+        panel.className = "panel";
+        panel.dataset.name = name;
+        panel.dataset.clientid = clientID;
+
+        const bar = document.createElement("div");
+        bar.className = "panel-bar";
+
+        const label = document.createElement("span");
+        label.textContent = name;
+
+        const spacer = document.createElement("span");
+        spacer.className = "spacer";
+
+        const addMoneyBtn = document.createElement("button");
+        addMoneyBtn.textContent = "+ money";
+        addMoneyBtn.className = "cheat";
+        addMoneyBtn.title = "cheat: give this player $100";
+
+        const subtractMoneyBtn = document.createElement("button");
+        subtractMoneyBtn.textContent = "- money";
+        subtractMoneyBtn.className = "cheat";
+        subtractMoneyBtn.title = "cheat: take $100 from this player";
+
+        const addLagBtn = document.createElement("button");
+        addLagBtn.textContent = "+ lag";
+        addLagBtn.className = "cheat";
+        addLagBtn.title = "cheat: add 250ms of simulated lag to this player";
+
+        const subtractLagBtn = document.createElement("button");
+        subtractLagBtn.textContent = "- lag";
+        subtractLagBtn.className = "cheat";
+        subtractLagBtn.title = "cheat: remove 250ms of simulated lag from this player";
+
+        const reconnectBtn = document.createElement("button");
+        reconnectBtn.textContent = "⟳";
+        reconnectBtn.title = "reload this player and reconnect to the session";
+
+        const closeBtn = document.createElement("button");
+        closeBtn.textContent = "✕";
+        closeBtn.title = "remove this player";
+
+        bar.append(label, spacer, addMoneyBtn, subtractMoneyBtn, addLagBtn, subtractLagBtn, reconnectBtn, closeBtn);
+
+        const wrap = document.createElement("div");
+        wrap.className = "frame-wrap";
+
+        const frame = document.createElement("iframe");
+        frame.allow = "autoplay";
+        frame.width = PLAYER_W;
+        frame.height = PLAYER_H;
+        frame.src = playerURL(name, clientID, false);
+
+        wrap.appendChild(frame);
+
+        const scaleBox = document.createElement("div");
+        scaleBox.className = "panel-scale";
+        scaleBox.append(bar, wrap);
+
+        panel.append(scaleBox);
+        playersEl.appendChild(panel);
+
+        let lagMs = 0;
+
+        function updateLag(deltaMs) {
+            lagMs = Math.max(0, lagMs + deltaMs);
+            label.textContent = lagMs ? (name + " (" + lagMs + "ms lag)") : name;
+            sendLag(frame, lagMs);
+
+            // the label width may have changed, so recompute the panel footprint
+            applyPlayerScale();
+        }
+
+        frame.addEventListener("load", () => {
+            sendFontSize(frame, playerFontInput);
+
+            if (lagMs) {
+                sendLag(frame, lagMs);
+            }
+        });
+
+        addMoneyBtn.addEventListener("click", () => sendCheat(frame, "cheat_add_money"));
+        subtractMoneyBtn.addEventListener("click", () => sendCheat(frame, "cheat_subtract_money"));
+        addLagBtn.addEventListener("click", () => updateLag(LAG_INCREMENT_MS));
+        subtractLagBtn.addEventListener("click", () => updateLag(-LAG_INCREMENT_MS));
+        reconnectBtn.addEventListener("click", () => { frame.src = playerURL(name, clientID, true); });
+        closeBtn.addEventListener("click", () => panel.remove());
+
+        applyPlayerScale();
+    }
+
+    window.addEventListener("message", (event) => {
+        if (event.origin !== location.origin) {
+            return;
+        }
+
+        const data = event.data;
+        if (!data || (data.type !== "jparty-qa-session-name") || !data.sessionName || (data.sessionName === sessionName)) {
+            return;
+        }
+
+        const firstSession = !sessionName;
+        sessionName = data.sessionName;
+        sessionLabel.textContent = sessionName;
+
+        if (firstSession) {
+            const count = Math.max(1, Math.min(12, parseInt(countInput.value, 10) || 3));
+            for (let i = 0; i < count; i++) {
+                addPlayer();
+            }
+        }
+        else {
+            document.querySelectorAll("#players .panel").forEach((panel) => {
+                panel.querySelector("iframe").src = playerURL(panel.dataset.name, panel.dataset.clientid, false);
+            });
+        }
+    });
+
+    function applyHostScale() {
+        const scale = Math.min(1, Math.max(320, window.innerWidth * 0.48) / HOST_W);
+
+        hostFrame.width = HOST_W;
+        hostFrame.height = HOST_H;
+        hostFrame.style.transform = "scale(" + scale + ")";
+        hostFrameWrap.style.width = (HOST_W * scale) + "px";
+        hostFrameWrap.style.height = (HOST_H * scale) + "px";
+    }
+
+    function applyPlayerScale() {
+        const scale = parseFloat(scaleInput.value) || 0.8;
+
+        document.querySelectorAll("#players .panel").forEach((panel) => {
+            const scaleBox = panel.querySelector(".panel-scale");
+            scaleBox.style.transform = "scale(" + scale + ")";
+
+            // shrink the panel's footprint (its bordered window) to match the scaled content so panels pack tighter
+            panel.style.width = (scaleBox.offsetWidth * scale) + "px";
+            panel.style.height = (scaleBox.offsetHeight * scale) + "px";
+        });
+
+        localStorage.setItem("jparty-qa-player-scale", scaleInput.value);
+    }
+
+    $("#add-player").addEventListener("click", addPlayer);
+    $("#reset").addEventListener("click", () => location.reload());
+    $("#cheat-skip-round-2").addEventListener("click", () => sendCheat(hostFrame, "cheat_skip_to_round_2"));
+    $("#cheat-skip-round-3").addEventListener("click", () => sendCheat(hostFrame, "cheat_skip_to_round_3"));
+    $("#cheat-skip-timeout").addEventListener("click", () => sendCheat(hostFrame, "cheat_skip_timeout"));
+    scaleInput.addEventListener("input", applyPlayerScale);
+    hostFontInput.addEventListener("input", applyHostFontSize);
+    playerFontInput.addEventListener("input", applyPlayerFontSizes);
+    hostFrame.addEventListener("load", applyHostFontSize);
+    countInput.addEventListener("change", () => localStorage.setItem("jparty-qa-player-count", countInput.value));
+    sessionLabel.addEventListener("click", () => { if (sessionName) navigator.clipboard.writeText(sessionName); });
+    window.addEventListener("resize", applyHostScale);
+
+    applyHostScale();
+    hostFrame.src = "/?qa=host&clientid=" + encodeURIComponent("qa-host-" + uid());
+})();
+</script>
+</body>
+</html>

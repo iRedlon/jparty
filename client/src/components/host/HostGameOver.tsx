@@ -25,8 +25,8 @@ export default function HostGameOver() {
 
     return (
         <Box id={"game-over-box"} className={"box"} padding={"1em"}>
-            <Heading size={"lg"} fontFamily={"logo"}>GAME OVER!</Heading>
-            <Heading size={"sm"} fontFamily={"logo"} marginBottom={"1em"}>thanks for playing</Heading>
+            <Heading fontSize={"3em"} className={"logo-text"}>game over!</Heading>
+            <Heading fontSize={"1.5em"} className={"logo-text"} marginBottom={"1em"}>thanks for playing</Heading>
 
             <HostScoreboard />
 

@@ -61,3 +61,68 @@
         transform: translateY(0);
     }
 }
+
+#category-box,
+#question-box,
+#logo-box,
+#game-settings-preset-box,
+#leaderboard-box,
+#joined-players-box,
+#game-over-box,
+#responder-info-box,
+.announcement-box,
+.scoreboard-player-box,
+.timer-wrapper {
+    will-change: transform;
+}
+
+/* I miss playing Kahoot... */
+@keyframes kaleidoscope-cycle {
+    0% { background-color: #c8518b; }
+    1.79% { background-color: #fe4b5c; }
+    7.14% { background-color: #ff5445; }
+    10.71% { background-color: #f86f17; }
+    14.29% { background-color: #fa7617; }
+    19.64% { background-color: #ffa70b; }
+    21.43% { background-color: #ffa60f; }
+    23.21% { background-color: #e5a916; }
+    25% { background-color: #b7ab23; }
+    26.79% { background-color: #69ae38; }
+    32.14% { background-color: #51b25f; }
+    35.71% { background-color: #28bdc4; }
+    37.5% { background-color: #25bcc7; }
+    44.64% { background-color: #3a9ddd; }
+    50% { background-color: #27bbcb; }
+    53.57% { background-color: #28bcbf; }
+    57.14% { background-color: #53b259; }
+    62.5% { background-color: #70ae37; }
+    64.29% { background-color: #bfab20; }
+    66.07% { background-color: #eca815; }
+    67.86% { background-color: #ffa60d; }
+    69.64% { background-color: #ffa70b; }
+    75% { background-color: #f97515; }
+    78.57% { background-color: #f86d1a; }
+    82.14% { background-color: #ff5447; }
+    87.5% { background-color: #fc4b62; }
+    89.29% { background-color: #bf5393; }
+    91.07% { background-color: #9b57ac; }
+    92.86% { background-color: #8c58b6; }
+    96.43% { background-color: #8d59b3; }
+    98.21% { background-color: #a057a6; }
+    100% { background-color: #c8518b; }
+}
+
+.kaleidoscope-background,
+.kaleidoscope-canvas {
+    animation: kaleidoscope-cycle 28s linear -2s infinite;
+}
+
+.kaleidoscope-background {
+    position: fixed;
+    inset: 0;
+}
+
+.solid-background {
+    position: fixed;
+    inset: 0;
+}

@@ -13,42 +13,29 @@
     padding: 1em;
 }
 
-/* even board panel anims */
-
-.session-state-appear .board-panel-wrapper.even,
-.session-state-appear-done .board-panel-wrapper.even,
-.session-state-enter .board-panel-wrapper.even,
-.session-state-enter-done .board-panel-wrapper.even {
-    animation-name: slide-from-top;
-    animation-duration: 1s;
-    animation-timing-function: ease-in-out;
-    animation-fill-mode: both;
+.board-column {
+    display: flex;
+    flex-direction: column;
+    transition: transform 1s ease-in-out;
+    will-change: transform;
 }
 
-.session-state-exit-active .board-panel-wrapper.even {
-    animation-name: slide-from-top;
-    animation-duration: 1s;
-    animation-timing-function: ease-in-out;
-    animation-direction: reverse;
-    animation-fill-mode: both;
+.board-column.even {
+    transform: translateY(-100vh);
 }
 
-/* odd board panel anims */
-
-.session-state-appear .board-panel-wrapper.odd,
-.session-state-appear-done .board-panel-wrapper.odd, 
-.session-state-enter .board-panel-wrapper.odd,
-.session-state-enter-done .board-panel-wrapper.odd {
-    animation-name: slide-from-bottom;
-    animation-duration: 1s;
-    animation-timing-function: ease-in-out;
-    animation-fill-mode: both;
+.board-column.odd {
+    transform: translateY(100vh);
 }
 
-.session-state-exit-active .board-panel-wrapper.odd {
-    animation-name: slide-from-bottom;
-    animation-duration: 1s;
-    animation-timing-function: ease-in-out;
-    animation-direction: reverse;
-    animation-fill-mode: both;
+.session-state-appear-active .board-column.visible,
+.session-state-appear-done .board-column.visible,
+.session-state-enter-active .board-column.visible,
+.session-state-enter-done .board-column.visible {
+    transform: translateY(0);
+}
+
+.session-state-appear-active .board-column.visible,
+.session-state-enter-active .board-column.visible {
+    transition-delay: 50ms;
 }

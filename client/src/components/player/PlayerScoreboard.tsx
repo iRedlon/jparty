@@ -6,7 +6,7 @@ import { PiCrownSimpleFill } from "react-icons/pi";
 
 import ClueDecisionInfo from "./ClueDecisionInfo";
 import { LayoutContext } from "../common/Layout";
-import { formatDollarValue, getClientID } from "../../misc/client-utils";
+import { formatDollarValueString, getClientID, getScoreFontSize } from "../../misc/client-utils";
 import { Layer } from "../../misc/ui-constants";
 
 import "../../style/components/PlayerScoreboard.css";
@@ -35,7 +35,7 @@ export default function PlayerScoreboard() {
 
     return (
         <>
-            <Heading size={"sm"} fontFamily={"logo"} marginTop={"0.5em"}>scoreboard</Heading>
+            <Heading size={"md"} className={"logo-text"} marginTop={"0.5em"}>scoreboard</Heading>
 
             <Stack direction={"column"} gap={"1em"} alignItems={"center"} marginTop={"0.5em"}>
                 {sortedSessionPlayerIDs.map((playerID: SocketID, index: number) => {
@@ -71,8 +71,8 @@ export default function PlayerScoreboard() {
                                     </Box>
 
                                     <Box textAlign={"left"} whiteSpace={"nowrap"}>
-                                        <Text fontSize={"1.5em"}>
-                                            <i>{formatDollarValue(player.score)}</i>
+                                        <Text fontSize={getScoreFontSize(player.score, 1.5)}>
+                                            <i>{formatDollarValueString(player.score)}</i>
                                         </Text>
                                     </Box>
                                 </Stack>
@@ -86,7 +86,7 @@ export default function PlayerScoreboard() {
                 clueDecisionInfoArray.length > 0 && (
                     <>
                         <Box margin={"1em"} />
-                        <Heading size={"sm"} fontFamily={"logo"}>recent decisions</Heading>
+                        <Heading size={"md"} className={"logo-text"}>recent decisions</Heading>
 
                         <Stack direction={"column"} gap={0}>
                             {clueDecisionInfoArray}

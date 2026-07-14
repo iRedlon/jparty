@@ -2,23 +2,196 @@
 import { AudioType, HostSocket, VoiceType, VolumeType } from "jparty-shared";
 
 import { socket } from "./socket";
+import { LocalStorageKey } from "./ui-constants";
+
+import GameMusic1MP3 from "../assets/game-music-1.mp3";
+import GameMusic2MP3 from "../assets/game-music-2.mp3";
+import GameMusic3MP3 from "../assets/game-music-3.mp3";
+import LobbyMusicMP3 from "../assets/lobby-music.mp3";
+import ThinkingMusicMP3 from "../assets/thinking-music.mp3";
+
 import BuzzWindowTimeoutMP3 from "../assets/buzz-window-timeout.mp3";
 import ApplauseMP3 from "../assets/applause.mp3";
-import GameMusicMP3 from "../assets/game-music.mp3";
-// import LobbyMusicMP3 from "../assets/lobby-music.mp3";
 import LongApplauseMP3 from "../assets/long-applause.mp3";
+import BuzzMP3 from "../assets/buzz.mp3";
+import ClueResponseSubmittedMP3 from "../assets/clue-response-submitted.mp3";
+import WagerResponseSubmittedMP3 from "../assets/wager-response-submitted.mp3";
+import CorrectDecisionMP3 from "../assets/correct-decision.mp3";
+import IncorrectDecisionMP3 from "../assets/incorrect-decision.mp3";
+import ClueSelectedMP3 from "../assets/clue-selected.mp3";
+import FoundWagerBonusMP3 from "../assets/found-wager-bonus.mp3";
+import AllWagerCategoryRevealedMP3 from "../assets/all-wager-category-revealed.mp3";
 
-// music
-// todo: if we want to play a different song on the lobby than during the game... re-implement the "lobby music" audio type
-// const lobbyMusicAudio = new Audio(LobbyMusicMP3);
-const gameMusicAudio = new Audio(GameMusicMP3);
+const musicAudios: { [key in AudioType]?: HTMLAudioElement } = {
+    [AudioType.LobbyMusic]: new Audio(LobbyMusicMP3),
+    [AudioType.GameMusic]: new Audio(GameMusic1MP3),
+    [AudioType.GameMusic2]: new Audio(GameMusic2MP3),
+    [AudioType.GameMusic3]: new Audio(GameMusic3MP3),
+    [AudioType.ThinkingMusic]: new Audio(ThinkingMusicMP3)
+};
+
+const GAME_MUSIC_ROTATION = [AudioType.GameMusic, AudioType.GameMusic2, AudioType.GameMusic3];
+let currentGameMusicAudioType = GAME_MUSIC_ROTATION[0];
+
+const MUSIC_FADE_IN_DURATION_MS = 800;
+const MUSIC_FADE_OUT_DURATION_MS = 800;
+const MUSIC_FADE_TICK_MS = 50;
+
+const musicFadeLevels: { [key in AudioType]?: number } = {
+    [AudioType.LobbyMusic]: 0,
+    [AudioType.GameMusic]: 0,
+    [AudioType.GameMusic2]: 0,
+    [AudioType.GameMusic3]: 0,
+    [AudioType.ThinkingMusic]: 0
+};
+
+let currentMusicAudioType: AudioType | undefined;
+let musicFadeInterval: NodeJS.Timeout | undefined;
+
+let pendingMusicAudioType: AudioType | undefined;
+
+let musicPlaying = false;
+const muteStateListeners = new Set<(muted: boolean) => void>();
+
+const MUSIC_SILENCE_GRACE_MS = 500;
+let musicSilenceTimeout: NodeJS.Timeout | undefined;
+
+function isAnyMusicPlaying() {
+    return Object.values(musicAudios).some((audio) => !!audio && !audio.paused);
+}
+
+function setMusicPlaying(playing: boolean) {
+    if (playing === musicPlaying) {
+        return;
+    }
+
+    musicPlaying = playing;
+    muteStateListeners.forEach((listener) => listener(!musicPlaying));
+}
+
+function recomputeMusicPlaying() {
+    if (isAnyMusicPlaying()) {
+        if (musicSilenceTimeout) {
+            clearTimeout(musicSilenceTimeout);
+            musicSilenceTimeout = undefined;
+        }
+
+        setMusicPlaying(true);
+        return;
+    }
+
+    // nothing's playing right now. wait out a short grace period before considering ourselves muted, so that
+    // momentary silence between tracks doesn't briefly reveal the mute icon
+    if (!musicPlaying || musicSilenceTimeout) {
+        return;
+    }
+
+    musicSilenceTimeout = setTimeout(() => {
+        musicSilenceTimeout = undefined;
+
+        if (!isAnyMusicPlaying()) {
+            setMusicPlaying(false);
+        }
+    }, MUSIC_SILENCE_GRACE_MS);
+}
+
+for (const audio of Object.values(musicAudios)) {
+    if (!audio) {
+        continue;
+    }
+
+    audio.addEventListener("playing", recomputeMusicPlaying);
+    audio.addEventListener("pause", recomputeMusicPlaying);
+    audio.addEventListener("ended", recomputeMusicPlaying);
+}
+
+musicAudios[AudioType.ThinkingMusic]?.addEventListener("ended", () => {
+    if (pendingMusicAudioType !== undefined) {
+        const nextAudioType = pendingMusicAudioType;
+        pendingMusicAudioType = undefined;
+        playAudio(nextAudioType);
+    }
+});
+
+GAME_MUSIC_ROTATION.forEach((audioType, rotationIndex) => {
+    musicAudios[audioType]?.addEventListener("ended", () => {
+        const nextAudioType = GAME_MUSIC_ROTATION[(rotationIndex + 1) % GAME_MUSIC_ROTATION.length];
+
+        currentGameMusicAudioType = nextAudioType;
+
+        if (currentMusicAudioType === audioType) {
+            playAudio(nextAudioType);
+        }
+    });
+});
+
+export function isAudioMuted() {
+    return !musicPlaying;
+}
+
+export function subscribeToMuteState(listener: (muted: boolean) => void) {
+    muteStateListeners.add(listener);
+    listener(!musicPlaying);
+
+    return () => {
+        muteStateListeners.delete(listener);
+    };
+}
 
 // sound FX
-const buzzWindowTimeoutAudio = new Audio(BuzzWindowTimeoutMP3);
-const applauseAudio = new Audio(ApplauseMP3);
-const longApplauseAudio = new Audio(LongApplauseMP3);
+const soundEffectAudios: { [key in AudioType]?: HTMLAudioElement } = {
+    [AudioType.BuzzWindowTimeout]: new Audio(BuzzWindowTimeoutMP3),
+    [AudioType.Applause]: new Audio(ApplauseMP3),
+    [AudioType.LongApplause]: new Audio(LongApplauseMP3),
+    [AudioType.Buzz]: new Audio(BuzzMP3),
+    [AudioType.ClueResponseSubmitted]: new Audio(ClueResponseSubmittedMP3),
+    [AudioType.WagerResponseSubmitted]: new Audio(WagerResponseSubmittedMP3),
+    [AudioType.CorrectDecision]: new Audio(CorrectDecisionMP3),
+    //[AudioType.IncorrectDecision]: new Audio(IncorrectDecisionMP3),
+    [AudioType.ClueSelected]: new Audio(ClueSelectedMP3),
+    [AudioType.FoundWagerBonus]: new Audio(FoundWagerBonusMP3),
+    [AudioType.AllWagerCategoryRevealed]: new Audio(AllWagerCategoryRevealedMP3),
+};
 
-const DEFAULT_VOLUME = 1;
+const NEUTRAL_VOLUME = 0.5;
+const DEFAULT_VOLUME = NEUTRAL_VOLUME;
+
+const baseVolumes: { [key in VolumeType]?: number } = {
+    [VolumeType.Music]: 0.5,
+    [VolumeType.SoundEffects]: 0.75,
+    [VolumeType.Voice]: 0.75
+};
+
+// override per-track if a particular mp3 is unusually loud or quiet
+const baseVolumeOverrides: { [key in AudioType]?: number } = {
+    [AudioType.GameMusic]: 0.05625,
+    [AudioType.GameMusic2]: 0.05625,
+    [AudioType.GameMusic3]: 0.05625,
+    [AudioType.ThinkingMusic]: 0.25,
+    [AudioType.LongApplause]: 0.5,
+    [AudioType.CorrectDecision]: 0.2,
+    [AudioType.IncorrectDecision]: 0.2,
+    [AudioType.AllWagerCategoryRevealed]: 0.4,
+};
+
+function getBaseVolume(audioType: AudioType) {
+    const override = baseVolumeOverrides[audioType];
+    if (override !== undefined) {
+        return override;
+    }
+
+    if (musicAudios[audioType]) {
+        return baseVolumes[VolumeType.Music] ?? 1;
+    }
+
+    if (soundEffectAudios[audioType]) {
+        return baseVolumes[VolumeType.SoundEffects] ?? 1;
+    }
+
+    return 1;
+}
+
+let currentVoiceAudio: HTMLAudioElement | undefined;
 
 export function getVolume(volumeType: VolumeType) {
     const volume = parseFloat(localStorage.getItem(volumeType) || `${DEFAULT_VOLUME}`);
@@ -29,21 +202,82 @@ export function getVolume(volumeType: VolumeType) {
     return volume;
 }
 
-export function getModVolume(volumeType: VolumeType) {
-    const volume = getVolume(volumeType);
-    return volume * getVolume(VolumeType.Master);
+function getVolumeGain(volumeType: VolumeType) {
+    return getVolume(volumeType) / NEUTRAL_VOLUME;
+}
+
+function clampVolume(volume: number) {
+    return Math.max(0, Math.min(1, volume));
+}
+
+function getEffectiveVolume(volumeType: VolumeType, baseVolume: number) {
+    return clampVolume(baseVolume * getVolumeGain(volumeType) * getVolumeGain(VolumeType.Master));
+}
+
+function applyVoiceVolume() {
+    if (currentVoiceAudio) {
+        currentVoiceAudio.volume = getEffectiveVolume(VolumeType.Voice, baseVolumes[VolumeType.Voice] ?? 1);
+    }
+}
+
+function applyMusicVolume(audioType: AudioType) {
+    const musicAudio = musicAudios[audioType];
+    if (musicAudio) {
+        musicAudio.volume = getEffectiveVolume(VolumeType.Music, getBaseVolume(audioType) * (musicFadeLevels[audioType] ?? 0));
+    }
+}
+
+function tickMusicFade() {
+    let anyStillFading = false;
+
+    for (const audioTypeKey of Object.keys(musicAudios)) {
+        const audioType = parseInt(audioTypeKey) as AudioType;
+        const target = (audioType === currentMusicAudioType) ? 1 : 0;
+        const level = musicFadeLevels[audioType] ?? 0;
+
+        if (level === target) {
+            continue;
+        }
+
+        const durationMs = (target > level) ? MUSIC_FADE_IN_DURATION_MS : MUSIC_FADE_OUT_DURATION_MS;
+        const step = (durationMs > 0) ? (MUSIC_FADE_TICK_MS / durationMs) : 1;
+        const newLevel = (target > level) ? Math.min(level + step, 1) : Math.max(level - step, 0);
+
+        musicFadeLevels[audioType] = newLevel;
+        applyMusicVolume(audioType);
+
+        // this track is done fading out, so it can stop playing for real
+        if (newLevel === 0) {
+            musicAudios[audioType]?.pause();
+        }
+
+        if (newLevel !== target) {
+            anyStillFading = true;
+        }
+    }
+
+    if (!anyStillFading && musicFadeInterval) {
+        clearInterval(musicFadeInterval);
+        musicFadeInterval = undefined;
+    }
 }
 
 export function updateVolume(volumeType: VolumeType, volume: number) {
     localStorage.setItem(volumeType, `${volume}`);
 
-    // update the volume for any audios that may be in progress
-    // lobbyMusicAudio.volume = getModVolume(VolumeType.Music);
-    gameMusicAudio.volume = getModVolume(VolumeType.Music);
-    
-    buzzWindowTimeoutAudio.volume = getModVolume(VolumeType.SoundEffects);
-    applauseAudio.volume = getModVolume(VolumeType.SoundEffects);
-    longApplauseAudio.volume = getModVolume(VolumeType.SoundEffects);
+    for (const audioTypeKey of Object.keys(musicAudios)) {
+        applyMusicVolume(parseInt(audioTypeKey) as AudioType);
+    }
+
+    for (const audioTypeKey of Object.keys(soundEffectAudios)) {
+        const audioType = parseInt(audioTypeKey) as AudioType;
+        const audio = soundEffectAudios[audioType];
+        if (audio) {
+            audio.volume = getEffectiveVolume(VolumeType.SoundEffects, getBaseVolume(audioType));
+        }
+    }
+
+    applyVoiceVolume();
 }
 
 // make sure all of our audios default to this client's current volume settings
@@ -52,62 +286,72 @@ updateVolume(VolumeType.Music, getVolume(VolumeType.Music));
 updateVolume(VolumeType.SoundEffects, getVolume(VolumeType.SoundEffects));
 
 export function playAudio(audioType: AudioType) {
-    switch (audioType) {
-        // case AudioType.LobbyMusic:
-        //     {
-        //         if (lobbyMusicAudio.paused || !lobbyMusicAudio.currentTime) {
-        //             gameMusicAudio.pause();
+    if (audioType === AudioType.GameMusic) {
+        audioType = currentGameMusicAudioType;
+    }
 
-        //             lobbyMusicAudio.loop = true;
-        //             lobbyMusicAudio.play();
-        //         }
-        //     }
-        //     break;
-        case AudioType.GameMusic:
-            {
-                if (gameMusicAudio.paused || !gameMusicAudio.currentTime) {
-                    // lobbyMusicAudio.pause();
+    const musicAudio = musicAudios[audioType];
+    if (musicAudio) {
+        // don't interrupt thinking music
+        const thinkingMusic = musicAudios[AudioType.ThinkingMusic];
+        if ((audioType !== AudioType.ThinkingMusic) && thinkingMusic && !thinkingMusic.paused) {
+            pendingMusicAudioType = audioType;
+            return;
+        }
 
-                    gameMusicAudio.loop = true;
-                    gameMusicAudio.play();
-                }
+        currentMusicAudioType = audioType;
+        pendingMusicAudioType = undefined;
+
+        if (musicAudio.paused || !musicAudio.currentTime) {
+            applyMusicVolume(audioType);
+
+            // game music tracks don't loop themselves; their "ended" listeners chain to the next track in the rotation
+            musicAudio.loop = (audioType === AudioType.LobbyMusic);
+
+            if (audioType === AudioType.ThinkingMusic) {
+                musicAudio.currentTime = 0;
             }
-            break;
-        case AudioType.BuzzWindowTimeout:
-            {
-                buzzWindowTimeoutAudio.currentTime = 0;
-                buzzWindowTimeoutAudio.play();
-            }
-            break;
-        case AudioType.Applause:
-            {
-                applauseAudio.currentTime = 0;
-                applauseAudio.play();
-            }
-            break;
-        case AudioType.LongApplause:
-            {
-                longApplauseAudio.currentTime = 0;
-                longApplauseAudio.play();
-            }
-            break;
+
+            musicAudio.play().catch(() => recomputeMusicPlaying());
+        }
+
+        if (!musicFadeInterval) {
+            musicFadeInterval = setInterval(tickMusicFade, MUSIC_FADE_TICK_MS);
+        }
+
+        return;
+    }
+
+    const soundEffectAudio = soundEffectAudios[audioType];
+    if (soundEffectAudio) {
+        // correct decision sound effect should take priority over any other that might be playing right now
+        if (audioType === AudioType.CorrectDecision) {
+            soundEffectAudios[AudioType.ClueResponseSubmitted]?.pause();
+            soundEffectAudios[AudioType.WagerResponseSubmitted]?.pause();
+        }
+
+        soundEffectAudio.currentTime = 0;
+        soundEffectAudio.play();
     }
 }
 
 // audio "stop" is done by pausing the audio. it'll always be restarted the next time it plays anyway
 export function stopAudio(audioType: AudioType) {
-    switch (audioType) {
-        case AudioType.Applause:
-            {
-                applauseAudio.pause();
-            }
-            break;
-        case AudioType.LongApplause:
-            {
-                longApplauseAudio.pause();
-            }
-            break;
+    if (audioType === AudioType.GameMusic) {
+        audioType = currentGameMusicAudioType;
     }
+
+    const musicAudio = musicAudios[audioType];
+    if (musicAudio) {
+        if (currentMusicAudioType === audioType) {
+            currentMusicAudioType = undefined;
+        }
+
+        musicFadeLevels[audioType] = 0;
+        musicAudio.pause();
+    }
+
+    soundEffectAudios[audioType]?.pause();
 }
 
 function getSpeechSynthesisVoice(voiceType: VoiceType) {
@@ -117,7 +361,7 @@ function getSpeechSynthesisVoice(voiceType: VoiceType) {
     }
 
     // these Google voices will only be available while using Chrome or a Google device. use them if we possibly can, the alternative default will be whatever
-    // is built in to this client's device. Most likely that's Microsoft David but who knows
+    // is built in to this client's device
     let voiceURI = "";
     switch (voiceType) {
         case VoiceType.ClassicMasculine:
@@ -143,35 +387,77 @@ function getSpeechSynthesisVoice(voiceType: VoiceType) {
     return voices[0];
 }
 
-export function playOpenAIVoice(audioBase64: string) {
-    const audioBlob = new Blob([Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0))], { type: "audio/mpeg" }); //  converts the base64 string back into a binary blob
-    const audioUrl = URL.createObjectURL(audioBlob); // URL for the blob so it can be used as a source
-    const audio = new Audio(audioUrl);
+const SPEECH_SYNTHESIS_START_DELAY_MS = 1000;
 
-    audio.volume = getModVolume(VolumeType.Voice);
+let speechSynthesisStartTimeout: NodeJS.Timeout | undefined;
+
+function stopVoiceInProgress() {
+    if (speechSynthesisStartTimeout) {
+        clearTimeout(speechSynthesisStartTimeout);
+        speechSynthesisStartTimeout = undefined;
+    }
+
+    if (currentVoiceAudio) {
+        currentVoiceAudio.pause();
+        URL.revokeObjectURL(currentVoiceAudio.src);
+        currentVoiceAudio = undefined;
+    }
+
+    window.speechSynthesis.cancel();
+}
+
+export function playOpenAIVoice(voiceType: VoiceType, voiceLine: string) {
+    stopVoiceInProgress();
+
+    // stream the audio straight from the server so playback can begin before the whole file is ready
+    const sessionName = localStorage[LocalStorageKey.SessionName] || "";
+    const audio = new Audio(`/api/voice?sessionName=${encodeURIComponent(sessionName)}&voiceType=${voiceType}&voiceLine=${encodeURIComponent(voiceLine)}`);
+
+    currentVoiceAudio = audio;
+
+    applyVoiceVolume();
     audio.play().catch(e => console.error(`audio playback failed: ${e.message}`));
 
-    audio.onloadedmetadata = () => {
-        socket.emit(HostSocket.UpdateVoiceDuration, audio.duration);
+    audio.onended = () => {
+        socket.emit(HostSocket.UpdateVoiceDuration, voiceLine, 0);
+    }
+
+    audio.onerror = () => {
+        // the API stream failed for some reason... fall back to the browser's built-in voice
+        playSpeechSynthesisVoice(voiceType, voiceLine);
     }
 }
 
 let utteranceStarted = false;
 let utteranceStartedInterval: NodeJS.Timeout;
 
+const MAX_UTTERANCE_RETRIES = 3;
+
 export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string) {
+    stopVoiceInProgress();
+    speechSynthesisStartTimeout = setTimeout(() => playSpeechSynthesisVoiceInternal(voiceType, voiceLine), SPEECH_SYNTHESIS_START_DELAY_MS);
+}
+
+function playSpeechSynthesisVoiceInternal(voiceType: VoiceType, voiceLine: string, retryCount: number = 0) {
     const voice = getSpeechSynthesisVoice(voiceType);
     if (!voice) {
         return;
     }
 
+    if (retryCount >= MAX_UTTERANCE_RETRIES) {
+        clearInterval(utteranceStartedInterval);
+        socket.emit(HostSocket.UpdateVoiceDuration, voiceLine, 0);
+        return;
+    }
+
     const utterance = new SpeechSynthesisUtterance(voiceLine);
 
-    utterance.volume = getModVolume(VolumeType.Voice);
+    utterance.volume = getEffectiveVolume(VolumeType.Voice, baseVolumes[VolumeType.Voice] ?? 1);
     utterance.voice = voice;
-    utterance.rate = 1.2;
+    utterance.rate = 1;
     utterance.onstart = () => {
         utteranceStarted = true;
+        clearInterval(utteranceStartedInterval);
     }
     utterance.onend = () => {
         // this utterance has ended so our new duration should be... nothing cause we're done!
@@ -186,11 +472,11 @@ export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string
         if (!utteranceStarted) {
             // utterances randomly fail to start once in a while... not much I can do about an external API so just manually solving this
             // by recursing in order to retry the failed voice line
-            playSpeechSynthesisVoice(voiceType, voiceLine);
+            playSpeechSynthesisVoiceInternal(voiceType, voiceLine, retryCount + 1);
         }
     }, 500);
 
     utteranceStarted = false;
-    window.speechSynthesis.cancel();
+    stopVoiceInProgress();
     window.speechSynthesis.speak(utterance);
 }

@@ -1,5 +1,5 @@
 
-import { Box } from "@chakra-ui/react";
+import { Box, Text } from "@chakra-ui/react";
 import { PlayerResponseType, TriviaCategory, TriviaClue } from "jparty-shared";
 import { useContext } from "react";
 
@@ -23,6 +23,11 @@ export default function HostWager({ triviaCategory, triviaClue, numSubmittedResp
 
     return (
         <>
+            <Text id={"wager-category-preamble"} fontFamily={"clue"} fontSize={"2em"} color={"white"} textShadow={"2px 2px black"}>
+                the category will be...
+            </Text>
+            <Box margin={"0.5em"} />
+
             <CategoryBox triviaCategory={triviaCategory} triviaClue={triviaClue} />
             <Box margin={"1em"} />
 

@@ -1,0 +1,113 @@
+
+import { CheatSocket, HostServerSocket, ServerSocket, SessionAnnouncement, SessionState, SessionTimeoutType, TriviaClueDecision } from "jparty-shared";
+import { Socket } from "socket.io";
+
+import { attemptForceSelectFinalClue, recursiveReadCategoryName } from "./handle-player-event.js";
+import { emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, restartTimeout, showAnnouncement, startPositionChangeAnimation } from "./session-utils.js";
+import { io } from "../controller.js";
+
+const CHEAT_MONEY_INCREMENT = 100;
+
+function handleAdjustMoney(socket: Socket, sessionName: string, increment: number) {
+    let session = getSession(sessionName);
+    if (!session || !session.players[socket.id]) {
+        return;
+    }
+
+    const decision = (increment > 0) ? TriviaClueDecision.Correct : TriviaClueDecision.Incorrect;
+    session.updatePlayerScore(socket.id, Math.abs(increment), decision);
+
+    startPositionChangeAnimation(sessionName);
+}
+
+function handleSkipToRound(socket: Socket, sessionName: string, targetRoundIndex: number) {
+    let session = getSession(sessionName);
+    if (!session || !session.triviaGame) {
+        return;
+    }
+
+    if ((session.state === SessionState.Lobby) || (session.state === SessionState.GameOver)) {
+        return;
+    }
+
+    // only skip forward
+    if ((targetRoundIndex <= session.roundIndex) || (targetRoundIndex >= session.triviaGame.rounds.length)) {
+        return;
+    }
+
+    session.stopAllTimeouts();
+    io.in(sessionName).emit(ServerSocket.StopTimeout);
+    session.setCurrentAnnouncement(undefined);
+    io.in(sessionName).emit(HostServerSocket.HideAnnouncement, true);
+
+    session.roundIndex = targetRoundIndex;
+    session.wagerBonusCount = (targetRoundIndex === 1) ? 1 : 3;
+    session.resetClueSelection();
+    session.resetPlayerSubmissions();
+
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateReadingCategoryIndex, -1);
+    emitStateUpdate(sessionName);
+
+    const announcement = session.isFinalRound() ? SessionAnnouncement.StartFinalRound : SessionAnnouncement.StartRound;
+
+    if (session.isFinalRound()) {
+        emitTriviaRoundUpdate(sessionName);
+
+        const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
+        if (didForceSelectFinalClue) {
+            return;
+        }
+    }
+
+    showAnnouncement(sessionName, announcement, () => {
+        let session = getSession(sessionName);
+        if (!session) {
+            return;
+        }
+
+        emitTriviaRoundUpdate(sessionName);
+
+        const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
+        if (didForceSelectFinalClue) {
+            return;
+        }
+
+        session.readCategoryNames();
+        emitStateUpdate(sessionName);
+        recursiveReadCategoryName(sessionName);
+    });
+}
+
+function handleSkipTimeout(socket: Socket, sessionName: string) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    if (session.timeoutInfo[SessionTimeoutType.TossupWindow]) {
+        restartTimeout(sessionName, SessionTimeoutType.TossupWindow, 0);
+        return;
+    }
+
+    for (const timeoutType in session.timeoutInfo) {
+        restartTimeout(sessionName, parseInt(timeoutType), 0);
+    }
+}
+
+const handlers: Record<CheatSocket, Function> = {
+    [CheatSocket.AddMoney]: (socket: Socket, sessionName: string) => handleAdjustMoney(socket, sessionName, CHEAT_MONEY_INCREMENT),
+    [CheatSocket.SubtractMoney]: (socket: Socket, sessionName: string) => handleAdjustMoney(socket, sessionName, -CHEAT_MONEY_INCREMENT),
+    [CheatSocket.SkipToRound2]: (socket: Socket, sessionName: string) => handleSkipToRound(socket, sessionName, 1),
+    [CheatSocket.SkipToRound3]: (socket: Socket, sessionName: string) => handleSkipToRound(socket, sessionName, 2),
+    [CheatSocket.SkipTimeout]: (socket: Socket, sessionName: string) => handleSkipTimeout(socket, sessionName)
+}
+
+export default function handleCheatEvent(socket: Socket, event: CheatSocket, ...args: any[]) {
+    try {
+        const sessionName = (socket as any).sessionName;
+        handlers[event](socket, sessionName, ...args);
+    }
+    catch (e) {
+        emitServerError(e, socket);
+    }
+}
