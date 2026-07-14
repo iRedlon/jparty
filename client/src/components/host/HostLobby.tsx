@@ -155,6 +155,7 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
             <Stack id={"lobby-center-column"} direction={"column"}>
                 <Box id={"logo-box"} className={"box"} padding={"2em"}>
                     <Heading className={"logo-text"} fontSize={"4em"}>jparty!</Heading>
+                    <Heading className={"logo-text"} fontSize={"1.5em"}><i>a couch co-op Jeopardy! game</i></Heading>
                     {<Link href={PATCH_NOTES_LINK} isExternal>
                         <i><u>version 1.1 patch notes</u></i> <ExternalLinkIcon mx={"2px"} />
                     </Link>}
