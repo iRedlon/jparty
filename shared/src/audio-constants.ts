@@ -14,7 +14,7 @@ export function getVoiceDurationMs(text: string) {
 
 export const MIN_VOICE_SPEED = 0.5;
 export const MAX_VOICE_SPEED = 2;
-export const DEFAULT_VOICE_SPEED = 1.25;
+export const DEFAULT_VOICE_SPEED = 1;
 
 export function clampVoiceSpeed(voiceSpeed: number) {
     if (!Number.isFinite(voiceSpeed)) {
