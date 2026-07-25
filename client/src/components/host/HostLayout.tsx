@@ -15,7 +15,7 @@ import Announcement from "./HostAnnouncement";
 import { LayoutContext } from "../common/Layout";
 import ServerMessageAlert from "../common/ServerMessage";
 import Timer from "../common/Timer";
-import { playAudio, playOpenAIVoice, playSpeechSynthesisVoice, subscribeToMuteState, isAudioMuted } from "../../misc/audio";
+import { playAudio, playOpenAIVoice, playSpeechSynthesisVoice, subscribeToMuteState, isAudioMuted, unlockVoiceAudio } from "../../misc/audio";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { estimateClientTimeMs, socket } from "../../misc/socket";
 import { Layer } from "../../misc/ui-constants";
@@ -221,12 +221,12 @@ export default function HostLayout() {
         playAudio(audioType);
     }
 
-    const handlePlayVoice = (voiceType: VoiceType, voiceLine: string, streamAudio?: boolean) => {
+    const handlePlayVoice = (voiceType: VoiceType, voiceLine: string, streamAudio?: boolean, voiceSpeed?: number) => {
         if (streamAudio) {
-            playOpenAIVoice(voiceType, voiceLine);
+            playOpenAIVoice(voiceType, voiceLine, voiceSpeed);
         }
         else {
-            playSpeechSynthesisVoice(voiceType, voiceLine);
+            playSpeechSynthesisVoice(voiceType, voiceLine, voiceSpeed);
         }
     }
 
@@ -256,6 +256,8 @@ export default function HostLayout() {
 
     const handleUserInteraction = () => {
         playAudio(getMusicAudioType());
+
+        unlockVoiceAudio();
     }
 
     // returns both the JSX component and a state representing the specific component that was returned

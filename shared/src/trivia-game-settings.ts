@@ -1,10 +1,10 @@
 
-import { TriviaCategoryType, TriviaClueBonus, TriviaGameDifficulty, TriviaRoundType } from "./trivia-game-constants";
-import { getEnumKeys, getEnumSize } from "./utils";
+import { TriviaClueBonus, TriviaGameDifficulty, TriviaRoundType } from "./trivia-game-constants";
+import { getEnumKeys } from "./utils";
 
 export class TriviaGameSettings {
     static MIN_CLUE_YEAR = 1985;
-    static MAX_CLUE_YEAR = 2023;
+    static MAX_CLUE_YEAR = 2026;
 
     static MIN_BUZZ_WINDOW_DURATION_SEC = 1;
     static MAX_BUZZ_WINDOW_DURATION_SEC = 10;
@@ -19,7 +19,6 @@ export class TriviaGameSettings {
     static MAX_NUM_ROUNDS = 10;
 
     static ESTIMATED_MINUTES_PER_CLUE = 0.6;
-    static MAX_BANNED_CATEGORY_TYPES_IN_RATED_ROUND = 3;
 
     constructor(
         public minClueYear: number,
@@ -68,10 +67,6 @@ export class TriviaGameSettings {
 
             if (roundSettings.type != defaultRoundSettings.type) {
                 return { isRated: false, notRatedReason: `round ${roundIndex + 1} has wrong type` };
-            }
-
-            if (roundSettings.bannedCategoryTypes.length > TriviaGameSettings.MAX_BANNED_CATEGORY_TYPES_IN_RATED_ROUND) {
-                return { isRated: false, notRatedReason: `round ${roundIndex + 1} has too many banned category types` };
             }
 
             if (roundSettings.numCategories != defaultRoundSettings.numCategories) {
@@ -171,7 +166,6 @@ export class TriviaRoundSettings {
 
     constructor(
         public type: TriviaRoundType,
-        public bannedCategoryTypes: TriviaCategoryType[],
         public numCategories: number,
         public numClues: number,
         public clueValueStep: number,
@@ -180,7 +174,7 @@ export class TriviaRoundSettings {
 
     static clone(source: TriviaRoundSettings) {
         const clonedClueBonusCounts = JSON.parse(JSON.stringify(source.clueBonusCounts));
-        return new TriviaRoundSettings(source.type, [...source.bannedCategoryTypes], source.numCategories, source.numClues, source.clueValueStep, clonedClueBonusCounts);
+        return new TriviaRoundSettings(source.type, source.numCategories, source.numClues, source.clueValueStep, clonedClueBonusCounts);
     }
 
     getTotalNumClues() {
@@ -208,11 +202,6 @@ export class TriviaRoundSettings {
         return Math.abs(this.getTotalNumClues() - this.getTotalNumCluesWithAnyBonus(exclude));
     }
 
-    areCategoryTypesInvalid() {
-        const numCategoryTypes = getEnumSize(TriviaCategoryType);
-        return this.bannedCategoryTypes.length >= numCategoryTypes;
-    }
-
     isNumCategoriesInvalid() {
         return this.numCategories < TriviaRoundSettings.MIN_NUM_CATEGORIES_PER_ROUND ||
             this.numCategories > TriviaRoundSettings.MAX_NUM_CATEGORIES_PER_ROUND;
@@ -233,16 +222,11 @@ export class TriviaRoundSettings {
     }
 
     isInvalid() {
-        return (this.areCategoryTypesInvalid() ||
-            this.isNumCategoriesInvalid() ||
+        return (this.isNumCategoriesInvalid() ||
             this.isNumCluesInvalid() ||
             this.isClueValueStepInvalid() ||
             this.areClueBonusCountsInvalid());
     }
-}
-
-export interface TriviaCategorySettings {
-    type: TriviaCategoryType;
 }
 
 export enum TriviaGameSettingsPreset {
@@ -252,28 +236,28 @@ export enum TriviaGameSettingsPreset {
 }
 
 // normal game settings
-export const NORMAL_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 6, 5, 200, { [TriviaClueBonus.Wager]: 1 });
-export const NORMAL_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 6, 5, 400, { [TriviaClueBonus.Wager]: 2 });
-export const NORMAL_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 1, 1, 0, { [TriviaClueBonus.AllWager]: 1 });
+export const NORMAL_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 6, 5, 200, { [TriviaClueBonus.Wager]: 1 });
+export const NORMAL_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 6, 5, 400, { [TriviaClueBonus.Wager]: 2 });
+export const NORMAL_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 1, 1, 0, { [TriviaClueBonus.AllWager]: 1 });
 export const NORMAL_ROUND_SETTINGS = [NORMAL_SINGLE_ROUND_SETTINGS, NORMAL_DOUBLE_ROUND_SETTINGS, NORMAL_FINAL_ROUND_SETTINGS];
-export const NORMAL_GAME_SETTINGS = new TriviaGameSettings(2000, TriviaGameDifficulty.Normal, 5, 15, 3, NORMAL_ROUND_SETTINGS);
+export const NORMAL_GAME_SETTINGS = new TriviaGameSettings(2010, TriviaGameDifficulty.Normal, 5, 15, 3, NORMAL_ROUND_SETTINGS);
 
 // party game settings
-export const PARTY_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 5, 3, 200,
+export const PARTY_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 5, 3, 200,
     { [TriviaClueBonus.Wager]: 1, [TriviaClueBonus.AllPlay]: 4 });
-export const PARTY_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 5, 3, 400,
+export const PARTY_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 5, 3, 400,
     { [TriviaClueBonus.Wager]: 2, [TriviaClueBonus.AllPlay]: 4 });
-export const PARTY_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 1, 1, 0,
+export const PARTY_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 1, 1, 0,
     { [TriviaClueBonus.AllWager]: 1 });
 export const PARTY_ROUND_SETTINGS = [PARTY_SINGLE_ROUND_SETTINGS, PARTY_DOUBLE_ROUND_SETTINGS, PARTY_FINAL_ROUND_SETTINGS];
-export const PARTY_GAME_SETTINGS = new TriviaGameSettings(2000, TriviaGameDifficulty.Easy, 5, 15, 3, PARTY_ROUND_SETTINGS);
+export const PARTY_GAME_SETTINGS = new TriviaGameSettings(2010, TriviaGameDifficulty.Easy, 5, 15, 3, PARTY_ROUND_SETTINGS);
 
-// test game settings (used as a scratchpad for testing, only available in debug mode)
-export const TEST_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 1, 2, 500,
+// test game settings (use as a scratchpad for testing, only available in debug mode)
+export const TEST_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 1, 2, 500,
     { [TriviaClueBonus.AllPlay]: 1 });
-export const TEST_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 2, 1, 1000,
+export const TEST_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 2, 1, 1000,
     { [TriviaClueBonus.Wager]: 0 });
-export const TEST_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, [], 1, 1, 0,
+export const TEST_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 1, 1, 0,
     { [TriviaClueBonus.AllWager]: 1 });
 export const TEST_ROUND_SETTINGS = [TEST_SINGLE_ROUND_SETTINGS, TEST_DOUBLE_ROUND_SETTINGS, TEST_FINAL_ROUND_SETTINGS];
-export const TEST_GAME_SETTINGS = new TriviaGameSettings(2000, TriviaGameDifficulty.Easy, 5, 15, 3, TEST_ROUND_SETTINGS);
+export const TEST_GAME_SETTINGS = new TriviaGameSettings(2010, TriviaGameDifficulty.Easy, 5, 15, 3, TEST_ROUND_SETTINGS);

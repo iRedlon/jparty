@@ -1,6 +1,6 @@
 
 import {
-    AttemptReconnectResult, getEnumSize, getRandomChoice, getSortedSessionPlayerIDs, getVoiceDurationMs, getWeightedRandomKey, Host, MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD, 
+    AttemptReconnectResult, DEFAULT_VOICE_SPEED, getEnumSize, getRandomChoice, getSortedSessionPlayerIDs, getVoiceDurationMs, getWeightedRandomKey, Host, MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD,
     Player, PlayerResponseType, PlayerState, SessionAnnouncement, SessionHosts, SessionPlayers, SessionState, SessionTimeoutType, SocketID,
     TriviaClue, TriviaClueBonus, TriviaClueDecision, TriviaClueDecisionInfo, TriviaGame, TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
 } from "jparty-shared";
@@ -81,6 +81,7 @@ export class Session {
     responseWindowOpenTimeMs: number;
     displayingCorrectAnswer: boolean;
     voiceType: VoiceType;
+    voiceSpeed: number;
     currentVoiceLine: string;
     currentVoiceLineFinished: boolean;
 
@@ -113,6 +114,7 @@ export class Session {
         this.gameCount = 0;
         this.resetGame();
         this.voiceType = VoiceType.ModernMasculine;
+        this.voiceSpeed = DEFAULT_VOICE_SPEED;
     }
 
     resetGame() {
@@ -514,6 +516,10 @@ export class Session {
         return Session.MIN_ANNOUNCEMENT_DURATION_MS;
     }
 
+    getCurrentVoiceLineDurationMs() {
+        return getVoiceDurationMs(this.currentVoiceLine) / this.voiceSpeed;
+    }
+
     getTimeoutDurationMs(timeoutType: SessionTimeoutType) {
         let durationMs = 0;
 
@@ -525,19 +531,19 @@ export class Session {
             case SessionTimeoutType.ReadingCategoryName:
             case SessionTimeoutType.ReadingClueSelection:
                 {
-                    durationMs = getVoiceDurationMs(this.currentVoiceLine);
+                    durationMs = this.getCurrentVoiceLineDurationMs();
                 }
                 break;
             case SessionTimeoutType.Announcement:
                 {
-                    durationMs = Math.max(getVoiceDurationMs(this.currentVoiceLine), this.getMinAnnouncementDurationMs());
+                    durationMs = Math.max(this.getCurrentVoiceLineDurationMs(), this.getMinAnnouncementDurationMs());
                 }
                 break;
             case SessionTimeoutType.ReadingClue:
                 {
                     // this is either the clue question itself, or the short intro line that precedes an all wager clue
                     if (this.currentVoiceLine) {
-                        durationMs = getVoiceDurationMs(this.currentVoiceLine);
+                        durationMs = this.getCurrentVoiceLineDurationMs();
                     }
                 }
                 break;
@@ -568,7 +574,7 @@ export class Session {
                     durationMs = this.getRevealClueDecisionDurationMs();
 
                     if (!this.currentVoiceLineFinished) {
-                        durationMs = Math.max(durationMs, getVoiceDurationMs(this.currentVoiceLine));
+                        durationMs = Math.max(durationMs, this.getCurrentVoiceLineDurationMs());
                     }
                 }
                 break;
@@ -913,6 +919,8 @@ export class Session {
     }
 
     selectClue(categoryIndex: number, clueIndex: number) {
+        this.clearPlayerClueDecisions();
+
         this.categoryIndex = categoryIndex;
         this.clueIndex = clueIndex;
 
@@ -1240,7 +1248,9 @@ export class Session {
             this.updatePlayerScore(responderID, clueDecisionInfo.clueValue, clueDecisionInfo.decision);
         }
 
-        this.state = SessionState.ReadingClueDecision;
+        if (!this.getCurrentClue()?.isAllPlayClue()) {
+            this.state = SessionState.ReadingClueDecision;
+        }
 
         // no spotlight responder on an all play clue. we just show a list of all the correct responder names
         this.spotlightResponderID = this.getCurrentClue()?.isAllPlayClue() ? "" : responderID;

@@ -6,8 +6,7 @@ import {
   Flex,
   Heading,
   ListItem,
-  Radio,
-  RadioGroup,
+  Select,
   Slider,
   SliderFilledTrack,
   SliderThumb,
@@ -20,11 +19,18 @@ import {
   Wrap,
   WrapItem,
 } from "@chakra-ui/react";
-import { HostSocket, PlayerSocket, VoiceType, VolumeType } from "jparty-shared";
-import { useContext, useState } from "react";
+import { DEFAULT_VOICE_SPEED, HostSocket, MAX_VOICE_SPEED, MIN_VOICE_SPEED, PlayerSocket, VoiceType, VolumeType } from "jparty-shared";
+import { useContext, useEffect, useState } from "react";
 
 import { LayoutContext } from "./Layout";
-import { getVolume, updateVolume } from "../../misc/audio";
+import {
+  getAutomaticClassicVoice,
+  getAvailableClassicVoices,
+  getClassicVoiceOverrideURI,
+  getVolume,
+  updateClassicVoiceOverrideURI,
+  updateVolume,
+} from "../../misc/audio";
 import {
   BACKGROUND_THEME_DISPLAY_NAMES,
   BACKGROUND_THEME_SWATCHES,
@@ -48,6 +54,27 @@ import {
 // but as a UI value: it needs to be on the scale of 0 to 100
 const VOLUME_STATE_MULTIPLIER = 100;
 
+const VOICE_SPEED_SLIDER_MAX = 100;
+const VOICE_SPEED_SLIDER_STEP = 5;
+
+function voiceSpeedToSliderPosition(voiceSpeed: number) {
+  const speedRatio = Math.log(voiceSpeed / MIN_VOICE_SPEED);
+  const sliderRatio = Math.log(MAX_VOICE_SPEED / MIN_VOICE_SPEED);
+
+  return Math.round((speedRatio / sliderRatio) * VOICE_SPEED_SLIDER_MAX);
+}
+
+function sliderPositionToVoiceSpeed(sliderPosition: number) {
+  const voiceSpeed =
+    MIN_VOICE_SPEED *
+    Math.pow(
+      MAX_VOICE_SPEED / MIN_VOICE_SPEED,
+      sliderPosition / VOICE_SPEED_SLIDER_MAX
+    );
+
+  return Math.round(voiceSpeed * 100) / 100;
+}
+
 export function emitLeaveSession(isPlayer: boolean) {
   if (localStorage[LocalStorageKey.SessionName]) {
     socket.emit(isPlayer ? PlayerSocket.LeaveSession : HostSocket.LeaveSession);
@@ -60,14 +87,19 @@ export function emitLeaveSession(isPlayer: boolean) {
 
 interface MenuPanel_SettingsProps {
   voiceType?: VoiceType;
+  voiceSpeed?: number;
   modernVoicesDisabled?: boolean;
 }
 
 export default function MenuPanel_Settings({
   voiceType,
+  voiceSpeed,
   modernVoicesDisabled,
 }: MenuPanel_SettingsProps) {
   const context = useContext(LayoutContext);
+
+  const [isConfirmingLeaveSession, setIsConfirmingLeaveSession] =
+    useState(false);
 
   const [masterVolume, setMasterVolume] = useState(
     getVolume(VolumeType.Master) * VOLUME_STATE_MULTIPLIER
@@ -81,6 +113,49 @@ export default function MenuPanel_Settings({
   const [soundEffectsVolume, setSoundEffectsVolume] = useState(
     getVolume(VolumeType.SoundEffects) * VOLUME_STATE_MULTIPLIER
   );
+
+  const [voiceSpeedPosition, setVoiceSpeedPosition] = useState(
+    voiceSpeedToSliderPosition(voiceSpeed ?? DEFAULT_VOICE_SPEED)
+  );
+
+  useEffect(() => {
+    const newVoiceSpeed = voiceSpeed ?? DEFAULT_VOICE_SPEED;
+
+    setVoiceSpeedPosition((currentPosition) =>
+      sliderPositionToVoiceSpeed(currentPosition) === newVoiceSpeed
+        ? currentPosition
+        : voiceSpeedToSliderPosition(newVoiceSpeed)
+    );
+  }, [voiceSpeed]);
+
+  const [classicVoiceURI, setClassicVoiceURI] = useState(
+    getClassicVoiceOverrideURI()
+  );
+  const [classicVoices, setClassicVoices] = useState(
+    getAvailableClassicVoices()
+  );
+
+  // speech synthesis voices can load in asynchronously after the page does
+  useEffect(() => {
+    if (!window.speechSynthesis) {
+      return;
+    }
+
+    const handleVoicesChanged = () =>
+      setClassicVoices(getAvailableClassicVoices());
+
+    handleVoicesChanged();
+    window.speechSynthesis.addEventListener(
+      "voiceschanged",
+      handleVoicesChanged
+    );
+
+    return () =>
+      window.speechSynthesis.removeEventListener(
+        "voiceschanged",
+        handleVoicesChanged
+      );
+  }, []);
 
   const [backgroundTheme, setBackgroundTheme] = useState(getBackgroundTheme());
   const [backgroundParticlesEnabled, setBackgroundParticlesEnabled] = useState(
@@ -121,6 +196,118 @@ export default function MenuPanel_Settings({
     socket.emit(HostSocket.UpdateVoiceType, voiceType);
   };
 
+  const emitUpdateVoiceSpeed = (sliderPosition: number) => {
+    socket.emit(
+      HostSocket.UpdateVoiceSpeed,
+      sliderPositionToVoiceSpeed(sliderPosition)
+    );
+  };
+
+  const getHostVoiceOptions = (masculine: boolean) => {
+    let options: { value: string; label: string }[] = [];
+
+    if (!modernVoicesDisabled) {
+      options.push(
+        masculine
+          ? { value: VoiceType.ModernMasculine, label: "OpenAI Echo" }
+          : { value: VoiceType.ModernFeminine, label: "OpenAI Nova" }
+      );
+    }
+
+    const classicVoiceType = masculine
+      ? VoiceType.ClassicMasculine
+      : VoiceType.ClassicFeminine;
+
+    for (const voice of masculine
+      ? classicVoices.masculine
+      : classicVoices.feminine) {
+      options.push({
+        value: `${classicVoiceType}:${voice.voiceURI}`,
+        label: voice.name,
+      });
+    }
+
+    return options;
+  };
+
+  const masculineVoiceOptions = getHostVoiceOptions(true);
+  const feminineVoiceOptions = getHostVoiceOptions(false);
+
+  const getHostVoiceValueFromSession = () => {
+    if (
+      !modernVoicesDisabled &&
+      (voiceType === VoiceType.ModernMasculine ||
+        voiceType === VoiceType.ModernFeminine)
+    ) {
+      return voiceType;
+    }
+
+    const isFeminine =
+      voiceType === VoiceType.ClassicFeminine ||
+      voiceType === VoiceType.ModernFeminine;
+
+    const classicVoiceType = isFeminine
+      ? VoiceType.ClassicFeminine
+      : VoiceType.ClassicMasculine;
+
+    const voiceGroup = isFeminine
+      ? classicVoices.feminine
+      : classicVoices.masculine;
+
+    if (
+      classicVoiceURI &&
+      voiceGroup.some((voice) => voice.voiceURI === classicVoiceURI)
+    ) {
+      return `${classicVoiceType}:${classicVoiceURI}`;
+    }
+
+    const automaticVoice = getAutomaticClassicVoice(classicVoiceType);
+    return automaticVoice ? `${classicVoiceType}:${automaticVoice.voiceURI}` : "";
+  };
+
+  const [hostVoiceValue, setHostVoiceValue] = useState(
+    getHostVoiceValueFromSession
+  );
+
+  useEffect(() => {
+    setHostVoiceValue(getHostVoiceValueFromSession());
+  }, [voiceType, modernVoicesDisabled]);
+
+  useEffect(() => {
+    const isValidOption = [
+      ...masculineVoiceOptions,
+      ...feminineVoiceOptions,
+    ].some((option) => option.value === hostVoiceValue);
+
+    if (!isValidOption) {
+      setHostVoiceValue(getHostVoiceValueFromSession());
+    }
+  }, [classicVoices]);
+
+  const selectHostVoice = (value: string) => {
+    setHostVoiceValue(value);
+
+    if (
+      value === VoiceType.ModernMasculine ||
+      value === VoiceType.ModernFeminine
+    ) {
+      emitUpdateVoiceType(value as VoiceType);
+      return;
+    }
+
+    const separatorIndex = value.indexOf(":");
+    if (separatorIndex < 0) {
+      return;
+    }
+
+    const classicVoiceType = value.substring(0, separatorIndex) as VoiceType;
+    const voiceURI = value.substring(separatorIndex + 1);
+
+    setClassicVoiceURI(voiceURI);
+    updateClassicVoiceOverrideURI(voiceURI);
+    emitUpdateVoiceType(classicVoiceType);
+  };
+
   const cardBg = useColorModeValue("white", "gray.900");
   const subtleBg = useColorModeValue("gray.50", "whiteAlpha.50");
   const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
@@ -145,17 +332,40 @@ export default function MenuPanel_Settings({
                   <Text>
                     You are in session: <b>{context.sessionName}</b>
                   </Text>
-                  <Button
-                    onClick={() =>
-                      confirm("Are you sure?") &&
-                      emitLeaveSession(context.isPlayer)
-                    }
-                    colorScheme="red"
-                    w="full"
-                    borderRadius="lg"
-                  >
-                    Leave session
-                  </Button>
+
+                  {!isConfirmingLeaveSession && (
+                    <Button
+                      onClick={() => setIsConfirmingLeaveSession(true)}
+                      colorScheme="red"
+                      w="full"
+                      borderRadius="lg"
+                    >
+                      Leave session
+                    </Button>
+                  )}
+
+                  {isConfirmingLeaveSession && (
+                    <>
+                      <Text>Are you sure?</Text>
+                      <Stack direction="row">
+                        <Button
+                          onClick={() => emitLeaveSession(context.isPlayer)}
+                          colorScheme="red"
+                          w="full"
+                          borderRadius="lg"
+                        >
+                          Yes, leave session
+                        </Button>
+                        <Button
+                          onClick={() => setIsConfirmingLeaveSession(false)}
+                          w="full"
+                          borderRadius="lg"
+                        >
+                          Cancel
+                        </Button>
+                      </Stack>
+                    </>
+                  )}
                 </Stack>
               )}
             </Box>
@@ -193,7 +403,7 @@ export default function MenuPanel_Settings({
               </Box>
             </Box>
 
-            {/* Host settings */}
+            {/* Volume */}
             {!context.isPlayer && (
               <Box
                 bg={cardBg}
@@ -210,7 +420,6 @@ export default function MenuPanel_Settings({
 
                 <Box px={{ base: 4, md: 5 }} py={{ base: 4, md: 5 }}>
                   <Stack spacing={5}>
-                    {/* Master */}
                     <Box>
                       <Heading size="sm" mb={1}>
                         Master
@@ -228,7 +437,6 @@ export default function MenuPanel_Settings({
                       </Slider>
                     </Box>
 
-                    {/* Music */}
                     <Box>
                       <Heading size="sm" mb={1}>
                         Music
@@ -244,82 +452,6 @@ export default function MenuPanel_Settings({
                       </Slider>
                     </Box>
 
-                    {/* Voice */}
-                    <Box>
-                      <Heading size="sm" mb={1}>
-                        Host voice
-                      </Heading>
-                      <Slider
-                        value={voiceVolume}
-                        onChange={(v) => updateVolumeState(VolumeType.Voice, v)}
-                      >
-                        <SliderTrack>
-                          <SliderFilledTrack />
-                        </SliderTrack>
-                        <SliderThumb outline="gray solid 1px" />
-                      </Slider>
-
-                      <Text mt={3} fontSize="sm" color={muted}>
-                        <i>
-                          "Modern" voices stream OpenAI text-to-speech. "Classic" voices use your browser's built-in screen reader
-                        </i>
-                      </Text>
-
-                      <Box
-                        mt={3}
-                        bg={subtleBg}
-                        borderRadius="xl"
-                        p={3}
-                        borderWidth="1px"
-                        borderColor={borderColor}
-                      >
-                        <RadioGroup
-                          isDisabled={context.isSpectator}
-                          onChange={emitUpdateVoiceType}
-                          value={voiceType}
-                        >
-                          <Wrap spacing={4} justify="center">
-                            {!modernVoicesDisabled && (
-                              <>
-                                <WrapItem>
-                                  <Radio value={VoiceType.ModernMasculine}>
-                                    Modern (Masculine)
-                                  </Radio>
-                                </WrapItem>
-                                <WrapItem>
-                                  <Radio value={VoiceType.ModernFeminine}>
-                                    Modern (Feminine)
-                                  </Radio>
-                                </WrapItem>
-                              </>
-                            )}
-
-                            <WrapItem>
-                              <Radio value={VoiceType.ClassicMasculine}>
-                                Classic (Masculine)
-                              </Radio>
-                            </WrapItem>
-                            <WrapItem>
-                              <Radio value={VoiceType.ClassicFeminine}>
-                                Classic (Feminine)
-                              </Radio>
-                            </WrapItem>
-                          </Wrap>
-
-                          {modernVoicesDisabled && (
-                            <Text mt={3} fontSize="sm" color={muted}>
-                              <i>
-                                Modern voices are currently disabled due
-                                to API limits. Use Google Chrome for best
-                                classic voice experience
-                              </i>
-                            </Text>
-                          )}
-                        </RadioGroup>
-                      </Box>
-                    </Box>
-
-                    {/* Sound FX */}
                     <Box>
                       <Heading size="sm" mb={1}>
                         Sound FX
@@ -329,6 +461,95 @@ export default function MenuPanel_Settings({
                         onChange={(v) =>
                           updateVolumeState(VolumeType.SoundEffects, v)
                         }
+                      >
+                        <SliderTrack>
+                          <SliderFilledTrack />
+                        </SliderTrack>
+                        <SliderThumb outline="gray solid 1px" />
+                      </Slider>
+                    </Box>
+                  </Stack>
+                </Box>
+              </Box>
+            )}
+
+            {!context.isPlayer && (
+              <Box
+                bg={cardBg}
+                borderWidth="1px"
+                borderColor={borderColor}
+                borderRadius="2xl"
+                boxShadow="md"
+              >
+                <Box px={{ base: 4, md: 5 }} py={{ base: 3, md: 4 }}>
+                  <Heading size="md">Host voice</Heading>
+                </Box>
+
+                <Divider />
+
+                <Box px={{ base: 4, md: 5 }} py={{ base: 4, md: 5 }}>
+                  <Stack spacing={5}>
+                    <Box>
+                      <Heading size="sm" mb={1}>
+                        Voice
+                      </Heading>
+                      <Select
+                        isDisabled={context.isSpectator}
+                        value={hostVoiceValue}
+                        onChange={(e) => selectHostVoice(e.target.value)}
+                      >
+                        <optgroup label="Masculine">
+                          {masculineVoiceOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Feminine">
+                          {feminineVoiceOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </optgroup>
+                      </Select>
+
+                      {modernVoicesDisabled && (
+                        <Text mt={2} fontSize="sm" color={muted}>
+                          <i>
+                            OpenAI voices are currently disabled due to API
+                            limits. Use Google Chrome for the best voice
+                            experience
+                          </i>
+                        </Text>
+                      )}
+                    </Box>
+
+                    <Box>
+                      <Heading size="sm" mb={1}>Speed</Heading>
+                      <Slider
+                        isDisabled={context.isSpectator}
+                        value={voiceSpeedPosition}
+                        min={0}
+                        max={VOICE_SPEED_SLIDER_MAX}
+                        step={VOICE_SPEED_SLIDER_STEP}
+                        onChange={setVoiceSpeedPosition}
+                        onChangeEnd={emitUpdateVoiceSpeed}
+                      >
+                        <SliderTrack>
+                          <SliderFilledTrack />
+                        </SliderTrack>
+                        <SliderThumb outline="gray solid 1px" />
+                      </Slider>
+                    </Box>
+
+                    <Box>
+                      <Heading size="sm" mb={1}>
+                        Volume
+                      </Heading>
+                      <Slider
+                        value={voiceVolume}
+                        onChange={(v) => updateVolumeState(VolumeType.Voice, v)}
                       >
                         <SliderTrack>
                           <SliderFilledTrack />
@@ -394,6 +615,7 @@ export default function MenuPanel_Settings({
 
                 <Flex justify="center" mt={5}>
                   <Checkbox
+                    isDisabled={backgroundTheme === BackgroundTheme.Kaleidoscope}
                     isChecked={backgroundParticlesEnabled}
                     onChange={(e) =>
                       selectBackgroundParticlesEnabled(e.target.checked)

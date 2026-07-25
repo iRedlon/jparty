@@ -574,6 +574,7 @@ async function batchRevealClueDecision(sessionName: string, decisionsPromise: Pr
     }
 
     session.displayingCorrectAnswer = true;
+    session.state = SessionState.ReadingClueDecision;
 
     // this emits a state update, revealing every decision and score change at once
     startPositionChangeAnimation(sessionName);

@@ -10,7 +10,6 @@ import { fileURLToPath } from "url";
 
 import { handleSubmitFeedback } from "./api-requests/feedback.js";
 import { streamVoiceAudio } from "./api-requests/tts.js";
-//import { cleanupTriviaData } from "./api-requests/trivia-db.js";
 import { debugLog, LogCategory, LogVerbosity } from "./misc/log.js";
 import handleCheatEvent from "./session/handle-cheat-event.js";
 import handleHostEvent from "./session/handle-host-event.js";

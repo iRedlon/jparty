@@ -54,8 +54,9 @@ Environment variables are set by a .env file at the roots of the server and clie
 - Telemetry is disabled entirely when the GA environment variables are unset. Note that new event params must also be registered as custom dimensions in GA before they'll show up in reports
 
 ## _[Trivia Database](../server/api-requests/generate-trivia-game.ts)_
-- jparty has its own database for trivia clues. It's organized as follows: category type -> categories -> clue difficulty -> clues
-- For example: within the "Science" category type, we have an array of categories including one called "Solar System". Within "Solar System" we have an array of clues including one of difficulty=1 (easiest) which is "The Earth orbits around this star"
+- jparty has its own database for trivia clues. It holds two collections: "categories" (organized as categories -> clue difficulty -> clues) and "final-clues" (a flat collection of final jeopardy clues)
+- For example: within "categories" we have one called "Solar System". Within "Solar System" we have an array of clues including one of difficulty=1 (easiest) which is "The Earth orbits around this star"
+- `TRIVIA_DB_NAME` chooses which database all of this reads and writes, so an environment can be pointed at a copy of the data (i.e. "trivia-staging") without any code change. It defaults to "trivia"
 
 ## _Buzz Tossup_
 - A new feature in jparty is a catchup mechanic intended to handle "buzz tossups" in a more even way

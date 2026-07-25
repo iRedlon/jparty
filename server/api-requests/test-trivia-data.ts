@@ -1,12 +1,13 @@
 
-import { TriviaCategorySchema, TriviaCategoryType, TriviaClueDifficulty, TriviaClueSchema } from "jparty-shared";
+import { TriviaCategorySchema, TriviaClueDifficulty, TriviaClueSchema, TriviaFinalClueSchema } from "jparty-shared";
 
 const NUM_TEST_CLUES_PER_DIFFICULTY = 10;
 
 let nextTestCategoryID = 0;
 let nextTestClueID = 0;
+let nextTestFinalClueID = 0;
 
-export function getTestCategorySchema(type: TriviaCategoryType): TriviaCategorySchema {
+export function getTestCategorySchema(): TriviaCategorySchema {
     const categoryID = nextTestCategoryID++;
 
     let clues = {} as Record<TriviaClueDifficulty, TriviaClueSchema[]>;
@@ -30,8 +31,19 @@ export function getTestCategorySchema(type: TriviaCategoryType): TriviaCategoryS
 
     return {
         id: categoryID,
-        name: `test ${TriviaCategoryType[type].toLowerCase()} #${categoryID}`,
-        type: type,
+        name: `test category #${categoryID}`,
         clues: clues
+    };
+}
+
+export function getTestFinalClueSchema(): TriviaFinalClueSchema {
+    const finalClueID = nextTestFinalClueID++;
+
+    return {
+        id: finalClueID,
+        category_name: `test final category #${finalClueID}`,
+        question: `this is test final clue #${finalClueID}. its correct answer is "final answer ${finalClueID}"`,
+        answer: `final answer ${finalClueID}`,
+        year: new Date().getFullYear()
     };
 }

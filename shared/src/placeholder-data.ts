@@ -1,11 +1,10 @@
 
 import { TriviaCategory, TriviaRound } from "./trivia-game";
-import { NORMAL_SINGLE_ROUND_SETTINGS, TriviaCategorySettings } from "./trivia-game-settings";
+import { NORMAL_SINGLE_ROUND_SETTINGS } from "./trivia-game-settings";
 
 // used for testing a disconnected client with realistic trivia data
 const PLACEHOLDER_TRIVIA_ROUND_CATEGORIES: TriviaCategory[] = [
     {
-        settings: { type: 2 } as TriviaCategorySettings,
         id: 11196,
         name: 'also a 2-letter postal abbreviation',
         clues: [
@@ -57,7 +56,6 @@ const PLACEHOLDER_TRIVIA_ROUND_CATEGORIES: TriviaCategory[] = [
         ]
     } as TriviaCategory,
     {
-        settings: { type: 2 },
         id: 9639,
         name: "jerusalem's noble sanctuary",
         clues: [
@@ -109,7 +107,6 @@ const PLACEHOLDER_TRIVIA_ROUND_CATEGORIES: TriviaCategory[] = [
         ]
     } as TriviaCategory,
     {
-        settings: { type: 6 },
         id: 5263,
         name: 'anagrammed british cities',
         clues: [
@@ -161,7 +158,6 @@ const PLACEHOLDER_TRIVIA_ROUND_CATEGORIES: TriviaCategory[] = [
         ]
     } as TriviaCategory,
     {
-        settings: { type: 3 },
         id: 773,
         name: 'animals in literature',
         completed: true,
@@ -219,7 +215,6 @@ const PLACEHOLDER_TRIVIA_ROUND_CATEGORIES: TriviaCategory[] = [
         ]
     } as TriviaCategory,
     {
-        settings: { type: 2 },
         id: 6575,
         name: 'presidential fast facts',
         clues: [
@@ -271,7 +266,6 @@ const PLACEHOLDER_TRIVIA_ROUND_CATEGORIES: TriviaCategory[] = [
         ]
     } as TriviaCategory,
     {
-        settings: { type: 0 },
         id: 15218,
         name: 'california wine',
         clues: [

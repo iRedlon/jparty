@@ -12,7 +12,7 @@ import {
   TabPanel,
   useDisclosure,
 } from "@chakra-ui/react";
-import { HostServerSocket, SessionState, VoiceType } from "jparty-shared";
+import { DEFAULT_VOICE_SPEED, HostServerSocket, SessionState, VoiceType } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
 
 import GameSettings from "./GameSettings";
@@ -26,15 +26,18 @@ import { Layer } from "../../misc/ui-constants";
 
 export default function HostMenu() {
   const context = useContext(LayoutContext);
-  const [voiceType, setVoiceType] = useState(VoiceType.ClassicMasculine);
+  const [voiceType, setVoiceType] = useState(VoiceType.ModernMasculine);
+  const [voiceSpeed, setVoiceSpeed] = useState(DEFAULT_VOICE_SPEED);
   const [modernVoicesDisabled, setModernVoicesDisabled] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   useEffect(() => {
     socket.on(HostServerSocket.UpdateVoiceType, handleUpdateVoiceType);
+    socket.on(HostServerSocket.UpdateVoiceSpeed, handleUpdateVoiceSpeed);
 
     return () => {
       socket.off(HostServerSocket.UpdateVoiceType, handleUpdateVoiceType);
+      socket.off(HostServerSocket.UpdateVoiceSpeed, handleUpdateVoiceSpeed);
     };
   }, []);
 
@@ -44,6 +47,10 @@ export default function HostMenu() {
   ) => {
     setVoiceType(voiceType);
     setModernVoicesDisabled(modernVoicesDisabled);
+  };
+
+  const handleUpdateVoiceSpeed = (voiceSpeed: number) => {
+    setVoiceSpeed(voiceSpeed);
   };
 
   const menuTabs = [
@@ -58,6 +65,7 @@ export default function HostMenu() {
     <MenuPanel_Settings
       key={"settings-tab-panel"}
       voiceType={voiceType}
+      voiceSpeed={voiceSpeed}
       modernVoicesDisabled={modernVoicesDisabled}
     />,
     // <TabPanel key={"game-settings-tab-panel"}>

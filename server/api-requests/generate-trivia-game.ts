@@ -1,12 +1,12 @@
 
 import {
     CLUE_DIFFICULTY_DISTRIBUTIONS,
-    getEnumSize, getRandomChoice, getRandomNum, getWeightedRandomNum,
-    RATED_CLUE_BONUS_POSITION_DISTRIBUTION, RATED_CLUE_DIFFICULTY_ORDER, TriviaCategory, TriviaCategorySettings, TriviaCategoryType,
+    getRandomChoice, getRandomNum, getWeightedRandomNum,
+    RATED_CLUE_BONUS_POSITION_DISTRIBUTION, RATED_CLUE_DIFFICULTY_ORDER, TriviaCategory, TriviaCategorySchema,
     TriviaClueBonus, TriviaClue, TriviaClueDifficulty, TriviaCluePosition, TriviaClueSchema, TriviaGame, TriviaGameSettings, TriviaRoundSettings, TriviaRound,
 } from "jparty-shared";
 
-import { getCategoryTypeCandidateCount, getRandomCategorySchema } from "./trivia-db.js";
+import { getRandomCategorySchema, getRandomFinalClueSchema } from "./trivia-db.js";
 import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 import { formatText, getQuotedCategoryTexts } from "../misc/text-utils.js";
 
@@ -54,7 +54,7 @@ function rollClueDifficultyOrder(gameSettings: TriviaGameSettings, roundSettings
     return clueDifficultyOrder.sort((a, b) => { return a - b; });
 }
 
-async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSettings: TriviaRoundSettings, categorySettings: TriviaCategorySettings, deadlineMs: number) {
+async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSettings: TriviaRoundSettings, deadlineMs: number) {
     checkGameGenerationTimeout(deadlineMs);
 
     const clueDifficultyOrder = rollClueDifficultyOrder(gameSettings, roundSettings);
@@ -62,7 +62,7 @@ async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSet
     let categorySchema;
 
     try {
-        categorySchema = await getRandomCategorySchema(categorySettings.type, gameSettings.minClueYear, clueDifficultyOrder);
+        categorySchema = await getRandomCategorySchema(gameSettings.minClueYear, clueDifficultyOrder);
     }
     catch (e) {
         throw e;
@@ -79,7 +79,7 @@ async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSet
         categorySchema.clues[difficulty] = (categorySchema.clues[difficulty] || []).filter((clueSchema: TriviaClueSchema) => !likelyToBeImageClue(clueSchema.question));
     }
 
-    let triviaCategory = new TriviaCategory(categorySettings, categorySchema);
+    let triviaCategory = new TriviaCategory(categorySchema);
 
     // generate a clue for each difficulty in the rolled order
     let clueIndex = 0;
@@ -134,48 +134,62 @@ async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSet
     return triviaCategory;
 }
 
-async function rollCategoryTypeOrder(gameSettings: TriviaGameSettings, roundSettings: TriviaRoundSettings) {
-    // weight each category type by the size of its candidate pool so that every category in the
-    // database has an equal chance of being selected
-    let categoryTypeDistribution: Record<number, number> = {};
+function isFinalWagerRound(roundSettings: TriviaRoundSettings) {
+    return (roundSettings.numCategories === 1) &&
+        (roundSettings.numClues === 1) &&
+        ((roundSettings.clueBonusCounts[TriviaClueBonus.AllWager] || 0) > 0);
+}
 
-    for (let type = 0; type < getEnumSize(TriviaCategoryType); type++) {
-        if (roundSettings.bannedCategoryTypes.includes(type)) {
-            // we prevent a banned type from being selected by setting its weight to 0
-            categoryTypeDistribution[type] = 0;
-            continue;
-        }
-
-        categoryTypeDistribution[type] = await getCategoryTypeCandidateCount(type, gameSettings.minClueYear);
+async function generateFinalWagerCategory(gameSettings: TriviaGameSettings, roundSettings: TriviaRoundSettings) {
+    const finalClueSchema = await getRandomFinalClueSchema(gameSettings.minClueYear);
+    if (!finalClueSchema) {
+        return;
     }
 
-    let categoryTypeOrder: TriviaCategoryType[] = [];
-    for (let categoryIndex = 0; categoryIndex < roundSettings.numCategories; categoryIndex++) {
-        categoryTypeOrder.push(getWeightedRandomNum(categoryTypeDistribution));
-    }
+    const categorySchema: TriviaCategorySchema = {
+        id: finalClueSchema.id,
+        name: formatText(finalClueSchema.category_name),
+        clues: {} as Record<TriviaClueDifficulty, TriviaClueSchema[]>
+    };
 
-    return categoryTypeOrder;
+    let triviaCategory = new TriviaCategory(categorySchema);
+
+    const clueSchema: TriviaClueSchema = {
+        id: finalClueSchema.id,
+        category_id: finalClueSchema.id,
+        question: finalClueSchema.question,
+        answer: finalClueSchema.answer,
+        difficulty: TriviaClueDifficulty.Hardest,
+        year: finalClueSchema.year
+    };
+
+    triviaCategory.clues = [generateTriviaClue(roundSettings, clueSchema, 0)];
+
+    return triviaCategory;
 }
 
 async function generateTriviaRound(gameSettings: TriviaGameSettings, roundSettings: TriviaRoundSettings, deadlineMs: number) {
     let triviaRound = new TriviaRound(roundSettings, []);
 
-    const categoryTypeOrder = await rollCategoryTypeOrder(gameSettings, roundSettings);
+    if (isFinalWagerRound(roundSettings)) {
+        const finalWagerCategory = await generateFinalWagerCategory(gameSettings, roundSettings);
 
-    // generate a category for each type that was rolled above
-    let categoryIndex = 0;
+        if (finalWagerCategory) {
+            triviaRound.categories.push(finalWagerCategory);
+            return triviaRound;
+        }
+    }
+
     let usedCategoryIDs: number[] = [];
     let hasQuotationCategory = false;
 
     while (triviaRound.categories.length < roundSettings.numCategories) {
         checkGameGenerationTimeout(deadlineMs);
 
-        let categorySettings = { type: categoryTypeOrder[categoryIndex] } as TriviaCategorySettings;
-
         let triviaCategory;
 
         try {
-            triviaCategory = await generateTriviaCategory(gameSettings, roundSettings, categorySettings, deadlineMs);
+            triviaCategory = await generateTriviaCategory(gameSettings, roundSettings, deadlineMs);
         }
         catch (e) {
             throw e;
@@ -200,7 +214,6 @@ async function generateTriviaRound(gameSettings: TriviaGameSettings, roundSettin
 
         triviaRound.categories.push(triviaCategory);
         usedCategoryIDs.push(triviaCategory.id);
-        categoryIndex++;
     }
 
     return triviaRound;
@@ -264,6 +277,9 @@ function addClueBonuses(triviaGame: TriviaGame) {
 }
 
 export async function generateTriviaGame(gameSettings: TriviaGameSettings) {
+
+    debugLog(LogCategory.TriviaDatabase, `started generating trivia game`, LogVerbosity.Normal);
+
     let triviaGame = new TriviaGame(gameSettings, []);
 
     // terminate this game generation attempt if it takes too long

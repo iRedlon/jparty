@@ -5,10 +5,12 @@ export enum LocalStorageKey {
     ClientID = "clientID",
     IsPlayer = "isPlayer",
     SessionName = "sessionName",
-    CategoryIndex = "categoryIndex", // this was the last category index selected by this player
+    CategoryIndex = "categoryIndex",
     BackgroundTheme = "backgroundTheme",
     BackgroundParticles = "backgroundParticles",
     UIScale = "uiScale",
+    ClassicVoiceURI = "classicVoiceURI",
+
 }
 
 // z-index values for UI components
@@ -20,6 +22,7 @@ export enum Layer {
     ServerMessageAlert = "99999"
 }
 
+export const JARCHIVE_LINK = "https://j-archive.com";
 export const SOURCE_CODE_LINK = "https://github.com/iRedlon/jparty";
 export const PATCH_NOTES_LINK = "https://github.com/iRedlon/jparty/blob/main/documentation/patch-notes.md";
 export const KNOWN_ISSUES_LINK = "https://github.com/iRedlon/jparty/blob/main/documentation/known-issues.md";

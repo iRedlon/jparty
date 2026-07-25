@@ -17,20 +17,13 @@ export default function PlayerScoreboard() {
     const sortedSessionPlayerIDs = getSortedSessionPlayerIDs(context.sessionPlayers);
     const numPlayers = sortedSessionPlayerIDs.length;
 
-    const triviaCategory = context.triviaRound?.categories[context.categoryIndex];
-    const triviaClue = triviaCategory?.clues[context.clueIndex];
-
     const clueDecisionInfoArray = getSortedSessionPlayerIDs(context.sessionPlayers).map((playerID: SocketID) => {
         const player = context.sessionPlayers[playerID];
         if (!player || !player.clueDecisionInfo || player.clueDecisionInfo.decision === TriviaClueDecision.NeedsMoreDetail) {
             return;
         }
 
-        if (player.clueDecisionInfo.clue.id !== triviaClue?.id) {
-            return;
-        }
-
-        return <ClueDecisionInfo playerID={playerID} />;
+        return <ClueDecisionInfo key={player.clientID} playerID={playerID} />;
     }).filter(el => !!el);
 
     return (

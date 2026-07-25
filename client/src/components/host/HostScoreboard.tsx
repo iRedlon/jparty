@@ -1,7 +1,7 @@
 
 import { Box, Stack, Text } from "@chakra-ui/react";
-import { getSortedSessionPlayerIDs, LeaderboardType, SocketID } from "jparty-shared";
-import { useContext } from "react";
+import { getSortedSessionPlayerIDs, LeaderboardType, SessionState, SocketID } from "jparty-shared";
+import { useContext, useRef } from "react";
 import { PiCrownSimpleFill } from "react-icons/pi";
 
 import { LayoutContext } from "../common/Layout";
@@ -16,10 +16,17 @@ const LEADERBOARD_SPOT_LABELS: Record<LeaderboardType, string> = {
 export default function HostScoreboard() {
     const context = useContext(LayoutContext);
 
+    const frozenSessionPlayersRef = useRef(context.sessionPlayers);
+    if (context.sessionState === SessionState.GameOver) {
+        frozenSessionPlayersRef.current = context.sessionPlayers;
+    }
+
+    const sessionPlayers = frozenSessionPlayersRef.current;
+
     return (
         <Stack direction={"column"} gap={"1em"} width={"fit-content"} marginLeft={"auto"} marginRight={"auto"}>
-            {getSortedSessionPlayerIDs(context.sessionPlayers).map((playerID: SocketID, index: number) => {
-                const player = context.sessionPlayers[playerID];
+            {getSortedSessionPlayerIDs(sessionPlayers).map((playerID: SocketID, index: number) => {
+                const player = sessionPlayers[playerID];
                 const isEvenPlayerIndex = index % 2 == 0;
 
                 if (index > 2) {

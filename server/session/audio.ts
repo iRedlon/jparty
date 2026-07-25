@@ -248,7 +248,7 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType, de
             return;
         }
 
-        io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayVoice, session.voiceType, voiceLine, streamAudio);
+        io.to(Object.keys(session.hosts)).emit(HostServerSocket.PlayVoice, session.voiceType, voiceLine, streamAudio, session.voiceSpeed);
     }
 
     if (delayMs > 0) {

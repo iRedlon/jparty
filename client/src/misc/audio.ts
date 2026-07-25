@@ -1,5 +1,5 @@
 
-import { AudioType, HostSocket, VoiceType, VolumeType } from "jparty-shared";
+import { AudioType, DEFAULT_VOICE_SPEED, HostSocket, VoiceType, VolumeType } from "jparty-shared";
 
 import { socket } from "./socket";
 import { LocalStorageKey } from "./ui-constants";
@@ -354,37 +354,101 @@ export function stopAudio(audioType: AudioType) {
     soundEffectAudios[audioType]?.pause();
 }
 
+const FEMININE_VOICE_NAME_HINTS = [
+    "female", "zira", "hazel", "susan", "heera", "catherine", "samantha", "victoria", "karen", "moira", "tessa",
+    "fiona", "kate", "serena", "allison", "ava", "nicky", "zoe", "aria", "jenny", "michelle", "libby", "sonia",
+    "natasha", "clara", "emma", "olivia", "amber", "ashley", "elizabeth", "emily", "jane", "molly", "sara",
+    "stephanie", "salli", "joanna", "kendra", "kimberly", "ivy", "anna", "flo", "sandy", "shelley", "martha"
+];
+
+const MASCULINE_VOICE_NAME_HINTS = [
+    "male", "david", "mark", "george", "james", "richard", "ravi", "sean", "alex", "daniel", "fred", "aaron",
+    "arthur", "gordon", "rishi", "oliver", "liam", "ryan", "guy", "christopher", "eric", "brandon", "jacob",
+    "roger", "steffan", "thomas", "william", "matthew", "grandpa", "reed", "eddy"
+];
+
+export interface ClassicVoiceGroups {
+    masculine: SpeechSynthesisVoice[];
+    feminine: SpeechSynthesisVoice[];
+}
+
+export function getAvailableClassicVoices(): ClassicVoiceGroups {
+    const groups: ClassicVoiceGroups = { masculine: [], feminine: [] };
+
+    if (!window.speechSynthesis) {
+        return groups;
+    }
+
+    const seenVoiceURIs = new Set<string>();
+
+    for (const voice of window.speechSynthesis.getVoices()) {
+        if (!voice.lang.toLowerCase().startsWith("en") || seenVoiceURIs.has(voice.voiceURI)) {
+            continue;
+        }
+
+        seenVoiceURIs.add(voice.voiceURI);
+
+        const name = voice.name.toLowerCase();
+
+        // check feminine hints first: "female" contains "male"
+        if (FEMININE_VOICE_NAME_HINTS.some(hint => name.includes(hint))) {
+            groups.feminine.push(voice);
+        }
+        else if (MASCULINE_VOICE_NAME_HINTS.some(hint => name.includes(hint))) {
+            groups.masculine.push(voice);
+        }
+    }
+
+    for (const group of [groups.masculine, groups.feminine]) {
+        group.sort((a: SpeechSynthesisVoice, b: SpeechSynthesisVoice) => a.name.localeCompare(b.name));
+    }
+
+    return groups;
+}
+
+export function getClassicVoiceOverrideURI(): string {
+    return localStorage[LocalStorageKey.ClassicVoiceURI] || "";
+}
+
+export function updateClassicVoiceOverrideURI(voiceURI: string) {
+    if (voiceURI) {
+        localStorage[LocalStorageKey.ClassicVoiceURI] = voiceURI;
+    }
+    else {
+        localStorage.removeItem(LocalStorageKey.ClassicVoiceURI);
+    }
+}
+
+// these Google voices will only be available while using Chrome. use them if we possibly can, the alternative default will be whatever
+// is built in to this client's device
+const PREFERRED_CLASSIC_VOICE_URIS: { [key in VoiceType]?: string } = {
+    [VoiceType.ClassicMasculine]: "Google UK English Male",
+    [VoiceType.ClassicFeminine]: "Google UK English Female"
+};
+
+export function getAutomaticClassicVoice(voiceType: VoiceType) {
+    const voiceGroups = getAvailableClassicVoices();
+    const voiceGroup = (voiceType === VoiceType.ClassicFeminine) ? voiceGroups.feminine : voiceGroups.masculine;
+    const preferredVoiceURI = PREFERRED_CLASSIC_VOICE_URIS[voiceType];
+
+    return voiceGroup.find(voice => voice.voiceURI === preferredVoiceURI) || voiceGroup[0];
+}
+
 function getSpeechSynthesisVoice(voiceType: VoiceType) {
     const voices = window.speechSynthesis.getVoices();
     if (!voices.length) {
         return;
     }
 
-    // these Google voices will only be available while using Chrome or a Google device. use them if we possibly can, the alternative default will be whatever
-    // is built in to this client's device
-    let voiceURI = "";
-    switch (voiceType) {
-        case VoiceType.ClassicMasculine:
-            {
-                voiceURI = "Google UK English Male";
-            }
-            break;
-        case VoiceType.ClassicFeminine:
-            {
-                voiceURI = "Google UK English Female";
-            }
-            break;
-    }
-
-    for (let i = 0; i < voices.length; i++) {
-        const voice = voices[i];
-
-        if (voice.voiceURI === voiceURI) {
-            return voice;
+    const overrideURI = getClassicVoiceOverrideURI();
+    if (overrideURI) {
+        const overrideVoice = voices.find(voice => voice.voiceURI === overrideURI);
+        if (overrideVoice) {
+            return overrideVoice;
         }
     }
 
-    return voices[0];
+    return getAutomaticClassicVoice(voiceType) || voices[0];
 }
 
 const SPEECH_SYNTHESIS_START_DELAY_MS = 1000;
@@ -398,25 +462,41 @@ function stopVoiceInProgress() {
     }
 
     if (currentVoiceAudio) {
+        // detach the handlers before pausing so that interrupting a stream doesn't trigger the fallback voice
+        currentVoiceAudio.onended = null;
+        currentVoiceAudio.onerror = null;
         currentVoiceAudio.pause();
-        URL.revokeObjectURL(currentVoiceAudio.src);
         currentVoiceAudio = undefined;
     }
 
     window.speechSynthesis.cancel();
 }
 
-export function playOpenAIVoice(voiceType: VoiceType, voiceLine: string) {
+const modernVoiceAudio = new Audio();
+let modernVoiceAudioUnlocked = false;
+
+// a tiny silent wav
+const SILENT_AUDIO_DATA_URI = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+
+export function unlockVoiceAudio() {
+    if (modernVoiceAudioUnlocked) {
+        return;
+    }
+
+    modernVoiceAudioUnlocked = true;
+
+    if (!modernVoiceAudio.paused) {
+        return;
+    }
+
+    modernVoiceAudio.src = SILENT_AUDIO_DATA_URI;
+    modernVoiceAudio.play().catch(() => {});
+}
+
+export function playOpenAIVoice(voiceType: VoiceType, voiceLine: string, voiceSpeed: number = DEFAULT_VOICE_SPEED) {
     stopVoiceInProgress();
 
-    // stream the audio straight from the server so playback can begin before the whole file is ready
-    const sessionName = localStorage[LocalStorageKey.SessionName] || "";
-    const audio = new Audio(`/api/voice?sessionName=${encodeURIComponent(sessionName)}&voiceType=${voiceType}&voiceLine=${encodeURIComponent(voiceLine)}`);
-
-    currentVoiceAudio = audio;
-
-    applyVoiceVolume();
-    audio.play().catch(e => console.error(`audio playback failed: ${e.message}`));
+    const audio = modernVoiceAudio;
 
     audio.onended = () => {
         socket.emit(HostSocket.UpdateVoiceDuration, voiceLine, 0);
@@ -424,8 +504,21 @@ export function playOpenAIVoice(voiceType: VoiceType, voiceLine: string) {
 
     audio.onerror = () => {
         // the API stream failed for some reason... fall back to the browser's built-in voice
-        playSpeechSynthesisVoice(voiceType, voiceLine);
+        playSpeechSynthesisVoice(voiceType, voiceLine, voiceSpeed);
     }
+
+    // stream the audio straight from the server so playback can begin before the whole file is ready
+    const sessionName = localStorage[LocalStorageKey.SessionName] || "";
+    audio.src = `/api/voice?sessionName=${encodeURIComponent(sessionName)}&voiceType=${voiceType}&voiceLine=${encodeURIComponent(voiceLine)}`;
+    audio.defaultPlaybackRate = voiceSpeed;
+    audio.playbackRate = voiceSpeed;
+
+    currentVoiceAudio = audio;
+
+    applyVoiceVolume();
+
+    // if playback was blocked for some reason: fall back to the built-in voice
+    audio.play().catch(() => playSpeechSynthesisVoice(voiceType, voiceLine, voiceSpeed));
 }
 
 let utteranceStarted = false;
@@ -433,12 +526,12 @@ let utteranceStartedInterval: NodeJS.Timeout;
 
 const MAX_UTTERANCE_RETRIES = 3;
 
-export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string) {
+export function playSpeechSynthesisVoice(voiceType: VoiceType, voiceLine: string, voiceSpeed: number = DEFAULT_VOICE_SPEED) {
     stopVoiceInProgress();
-    speechSynthesisStartTimeout = setTimeout(() => playSpeechSynthesisVoiceInternal(voiceType, voiceLine), SPEECH_SYNTHESIS_START_DELAY_MS);
+    speechSynthesisStartTimeout = setTimeout(() => playSpeechSynthesisVoiceInternal(voiceType, voiceLine, voiceSpeed), SPEECH_SYNTHESIS_START_DELAY_MS);
 }
 
-function playSpeechSynthesisVoiceInternal(voiceType: VoiceType, voiceLine: string, retryCount: number = 0) {
+function playSpeechSynthesisVoiceInternal(voiceType: VoiceType, voiceLine: string, voiceSpeed: number, retryCount: number = 0) {
     const voice = getSpeechSynthesisVoice(voiceType);
     if (!voice) {
         return;
@@ -454,7 +547,7 @@ function playSpeechSynthesisVoiceInternal(voiceType: VoiceType, voiceLine: strin
 
     utterance.volume = getEffectiveVolume(VolumeType.Voice, baseVolumes[VolumeType.Voice] ?? 1);
     utterance.voice = voice;
-    utterance.rate = 1;
+    utterance.rate = voiceSpeed;
     utterance.onstart = () => {
         utteranceStarted = true;
         clearInterval(utteranceStartedInterval);
@@ -472,7 +565,7 @@ function playSpeechSynthesisVoiceInternal(voiceType: VoiceType, voiceLine: strin
         if (!utteranceStarted) {
             // utterances randomly fail to start once in a while... not much I can do about an external API so just manually solving this
             // by recursing in order to retry the failed voice line
-            playSpeechSynthesisVoiceInternal(voiceType, voiceLine, retryCount + 1);
+            playSpeechSynthesisVoiceInternal(voiceType, voiceLine, voiceSpeed, retryCount + 1);
         }
     }, 500);
 

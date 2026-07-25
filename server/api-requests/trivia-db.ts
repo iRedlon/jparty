@@ -1,14 +1,16 @@
 
 import dotenv from "dotenv";
-import { TriviaCategorySchema, TriviaCategoryType, TriviaClueDifficulty } from "jparty-shared";
+import { TriviaCategorySchema, TriviaClueDifficulty, TriviaFinalClueSchema } from "jparty-shared";
 import { MongoClient } from "mongodb";
 
-import { getTestCategorySchema } from "./test-trivia-data";
+import { getTestCategorySchema, getTestFinalClueSchema } from "./test-trivia-data";
 import { debugLog, formatDebugLog, LogCategory, LogVerbosity } from "../misc/log";
 
-const MONGO_TRIVIA_DB_NAME = "trivia";
-
 dotenv.config();
+
+export const TRIVIA_DB_NAME = process.env.TRIVIA_DB_NAME || "trivia";
+export const CATEGORY_COLLECTION_NAME = "categories";
+export const FINAL_CLUE_COLLECTION_NAME = "final-clues";
 
 const client: MongoClient | undefined = process.env.MONGO_CONNECTION_STRING ? new MongoClient(process.env.MONGO_CONNECTION_STRING) : undefined;
 
@@ -38,16 +40,16 @@ const CATEGORY_ID_CACHE_DURATION_MS = 10 * 60 * 1000;
 type CategoryIDCacheEntry = { idsPromise: Promise<any[]>, expirationTimeMs: number };
 const categoryIDCache: Record<string, CategoryIDCacheEntry> = {};
 
-function getCandidateCategoryIDs(type: TriviaCategoryType, minYear: number, minRequiredCluesPerDifficulty: number) {
-    const cacheKey = `${type}:${minYear}:${minRequiredCluesPerDifficulty}`;
+function getCandidateCategoryIDs(minYear: number, minRequiredCluesPerDifficulty: number) {
+    const cacheKey = `${minYear}:${minRequiredCluesPerDifficulty}`;
 
     const cachedEntry = categoryIDCache[cacheKey];
     if (cachedEntry && (Date.now() < cachedEntry.expirationTimeMs)) {
         return cachedEntry.idsPromise;
     }
 
-    const db = client!.db(MONGO_TRIVIA_DB_NAME);
-    const categoryTypeCollection = db.collection(TriviaCategoryType[type].toLowerCase());
+    const db = client!.db(TRIVIA_DB_NAME);
+    const categoryCollection = db.collection(CATEGORY_COLLECTION_NAME);
 
     // build a filter to remove the clues from each difficulty that are older than the minimum year
     let clueYearFilter: Record<string, Object> = {};
@@ -69,7 +71,7 @@ function getCandidateCategoryIDs(type: TriviaCategoryType, minYear: number, minR
         minRequiredCluesMatch[`clues.${difficulty}.${minRequiredCluesPerDifficulty - 1}`] = { $exists: true }
     }
 
-    const idsPromise = categoryTypeCollection.aggregate([
+    const idsPromise = categoryCollection.aggregate([
         { $set: clueYearFilter },
         { $match: minRequiredCluesMatch },
         { $project: { _id: 1 } }
@@ -81,30 +83,22 @@ function getCandidateCategoryIDs(type: TriviaCategoryType, minYear: number, minR
     return idsPromise;
 }
 
-export async function getCategoryTypeCandidateCount(type: TriviaCategoryType, minYear: number) {
-    if (!client) {
-        return 1;
-    }
-
-    const candidateIDs = await getCandidateCategoryIDs(type, minYear, 1);
-    return candidateIDs.length;
-}
-
-export async function getRandomCategorySchema(type: TriviaCategoryType, minYear: number, clueDifficultyOrder: TriviaClueDifficulty[]) {
+export async function getRandomCategorySchema(minYear: number, clueDifficultyOrder: TriviaClueDifficulty[]) {
     // no database means no real trivia. serve test data instead
     if (!client) {
-        return getTestCategorySchema(type);
+        return getTestCategorySchema();
     }
 
-    const db = client.db(MONGO_TRIVIA_DB_NAME);
-    const categoryTypeCollection = db.collection(TriviaCategoryType[type].toLowerCase());
+    const db = client.db(TRIVIA_DB_NAME);
+    const categoryCollection = db.collection(CATEGORY_COLLECTION_NAME);
 
     const minRequiredCluesPerDifficulty = getMinRequiredCluesPerDifficulty(clueDifficultyOrder);
-    const candidateIDs = await getCandidateCategoryIDs(type, minYear, minRequiredCluesPerDifficulty);
+
+    const candidateIDs = await getCandidateCategoryIDs(minYear, minRequiredCluesPerDifficulty);
 
     for (let attempt = 0; (attempt < 3) && candidateIDs.length; attempt++) {
         const categoryID = candidateIDs[Math.floor(Math.random() * candidateIDs.length)];
-        const categorySchema = await categoryTypeCollection.findOne({ _id: categoryID }) as TriviaCategorySchema | null;
+        const categorySchema = await categoryCollection.findOne({ _id: categoryID }) as TriviaCategorySchema | null;
         if (!categorySchema) {
             continue;
         }
@@ -128,51 +122,23 @@ export async function getRandomCategorySchema(type: TriviaCategoryType, minYear:
     throw new Error(formatDebugLog("couldn't generate a category with those settings"));
 }
 
-// categories were organized into types by ChatGPT and it didn't do that good of a job
-// put any trivia data that needs to be manually moved into this function so the operation happens on server startup
-export function cleanupTriviaData() {
-    if (process.env.NODE_ENV === "production") {
-        return;
-    }
-
-    try {
-        // updateCategoryType(29, TriviaCategoryType.Miscellaneous, TriviaCategoryType.Geography);
-    }
-    catch (e) {
-        console.error(e);
-    }
-}
-
-async function updateCategoryType(categoryID: number, oldType: TriviaCategoryType, newType: TriviaCategoryType) {
+export async function getRandomFinalClueSchema(minYear: number) {
     if (!client) {
-        return;
+        return getTestFinalClueSchema();
     }
 
-    try {
-        const db = client.db(MONGO_TRIVIA_DB_NAME);
-        const oldCategoryCollection = db.collection(TriviaCategoryType[oldType].toLowerCase());
-        const newCategoryCollection = db.collection(TriviaCategoryType[newType].toLowerCase());
+    const db = client.db(TRIVIA_DB_NAME);
+    const finalClueCollection = db.collection(FINAL_CLUE_COLLECTION_NAME);
 
-        const categorySchema = await oldCategoryCollection.findOne({ id: categoryID }) as TriviaCategorySchema | null;
-        if (!categorySchema) {
-            debugLog(LogCategory.TriviaDatabase, `failed to find category ID: ${categoryID}, in category type: ${TriviaCategoryType[oldType]}`, LogVerbosity.Normal);
-            return;
-        }
+    const docs = await finalClueCollection.aggregate([
+        { $match: { year: { $gte: minYear } } },
+        { $sample: { size: 1 } }
+    ]).toArray();
 
-        const insertResult = await newCategoryCollection.insertOne(categorySchema);
-        if (!insertResult.acknowledged) {
-            debugLog(LogCategory.TriviaDatabase, `failed to insert category ID: ${categoryID}, into category type: ${TriviaCategoryType[newType]}`, LogVerbosity.Normal);
-            return;
-        }
-
-        const deleteResult = await oldCategoryCollection.deleteOne({ id: categoryID });
-        if (!deleteResult.acknowledged) {
-            debugLog(LogCategory.TriviaDatabase, `failed to remove category ID: ${categoryID}, from category type: ${TriviaCategoryType[oldType]}`, LogVerbosity.Normal);
-            return;
-        }
-
-        debugLog(LogCategory.TriviaDatabase, `moved category ID: ${categoryID}, from category type: ${TriviaCategoryType[oldType]} to category type: ${TriviaCategoryType[newType]}`, LogVerbosity.Normal);
-    } catch (e) {
-        throw e
+    if (!docs.length) {
+        debugLog(LogCategory.TriviaDatabase, `no final clues available with min year: ${minYear}`, LogVerbosity.Verbose);
+        return undefined;
     }
+
+    return docs[0] as unknown as TriviaFinalClueSchema;
 }

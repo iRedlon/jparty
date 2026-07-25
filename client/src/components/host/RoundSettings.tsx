@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  Checkbox,
   Divider,
   FormControl,
   FormErrorMessage,
@@ -20,8 +19,6 @@ import {
 } from "@chakra-ui/react";
 import {
   getEnumKeys,
-  getEnumSize,
-  TriviaCategoryType,
   TriviaClueBonus,
   TriviaGameSettings,
   TriviaRoundSettings,
@@ -107,24 +104,6 @@ export default function RoundSettings({
       // most round settings are just number values we can simply update with a key/value pair
       // there are some exceptions where a round setting stores nested data and needs custom logic in order to be updated
       switch (key) {
-        case "bannedCategoryTypes": {
-          const categoryType = numValue as TriviaCategoryType;
-          const useCategoryType = param as boolean;
-
-          if (useCategoryType) {
-            // this category type is NOT banned. filter it from our list of banned types
-            newGameSettings.roundSettings[roundIndex].bannedCategoryTypes =
-              newGameSettings.roundSettings[
-                roundIndex
-              ].bannedCategoryTypes.filter((type) => type != categoryType);
-          } else {
-            // this category type IS banned. add it to our list of banned types
-            newGameSettings.roundSettings[roundIndex].bannedCategoryTypes.push(
-              categoryType
-            );
-          }
-          break;
-        }
         case "clueBonusCounts": {
           const triviaClueBonus = parseInt(param) as TriviaClueBonus;
           newGameSettings.roundSettings[roundIndex].clueBonusCounts[
@@ -174,59 +153,6 @@ export default function RoundSettings({
       <FormHelperText textAlign="center">
         {TRIVIA_ROUND_TYPE_DESCRIPTIONS[roundSettings.type]}
       </FormHelperText>
-    </FormControl>
-  );
-
-  const categoryTypeCheckboxRow = (
-    minCategoryType: TriviaCategoryType,
-    maxCategoryType: TriviaCategoryType
-  ) =>
-    getEnumKeys(TriviaCategoryType).map((_) => {
-      const triviaCategoryType: TriviaCategoryType = parseInt(_);
-      if (
-        triviaCategoryType < minCategoryType ||
-        triviaCategoryType > maxCategoryType
-      ) {
-        return;
-      }
-
-      return (
-        <Checkbox
-          value={triviaCategoryType}
-          onChange={(e) =>
-            updateRoundSettings("bannedCategoryTypes")(e.target.checked)(
-              e.target.value
-            )
-          }
-          isDisabled={!canUpdateSettings()}
-          isChecked={
-            !roundSettings.bannedCategoryTypes.includes(triviaCategoryType)
-          }
-          id={`round-${roundIndex}-category-type-checkbox-${triviaCategoryType}`}
-          key={triviaCategoryType}
-        >
-          {TriviaCategoryType[triviaCategoryType]}
-        </Checkbox>
-      );
-    });
-
-  const categoryTypesForm = (
-    // split the checkboxes of category types into a top and bottom row for readability
-    <FormControl isInvalid={roundSettings.areCategoryTypesInvalid()}>
-      <FormLabel textAlign="center" me={0}>
-        Category types
-      </FormLabel>
-      <Stack spacing={2} align="center">
-        <Stack direction="row" justify="center">
-          {categoryTypeCheckboxRow(0, 3)}
-        </Stack>
-        <Stack direction="row" justify="center">
-          {categoryTypeCheckboxRow(4, getEnumSize(TriviaCategoryType))}
-        </Stack>
-      </Stack>
-      <FormErrorMessage justifyContent="center">
-        There must be at least one possible category type
-      </FormErrorMessage>
     </FormControl>
   );
 
@@ -327,10 +253,6 @@ export default function RoundSettings({
 
           <Box bg={sectionBg} p={4} borderRadius="xl">
             {roundTypeForm}
-          </Box>
-
-          <Box bg={sectionBg} p={4} borderRadius="xl">
-            {categoryTypesForm}
           </Box>
 
           <Box bg={sectionBg} p={4} borderRadius="xl">
