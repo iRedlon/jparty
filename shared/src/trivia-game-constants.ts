@@ -10,28 +10,6 @@ export enum TriviaRoundType {
 }
 
 // DO NOT TOUCH: trivia database relies on these enum values
-export enum TriviaCategoryType {
-    Geography,
-    Entertainment,
-    History,
-    Art,
-    Science,
-    Sports,
-    Miscellaneous
-}
-
-// probability of each category type being chosen when generating a random category
-export const DEFAULT_CATEGORY_TYPE_DISTRIBUTION: Record<TriviaCategoryType, number> = {
-    [TriviaCategoryType.Geography]: 0.1,
-    [TriviaCategoryType.Entertainment]: 0.3,
-    [TriviaCategoryType.History]: 0.15,
-    [TriviaCategoryType.Art]: 0.1,
-    [TriviaCategoryType.Science]: 0.07,
-    [TriviaCategoryType.Sports]: 0.03,
-    [TriviaCategoryType.Miscellaneous]: 0.25
-}
-
-// DO NOT TOUCH: trivia database relies on these enum values
 export enum TriviaClueDifficulty {
     Easiest = 1,
     Easy,

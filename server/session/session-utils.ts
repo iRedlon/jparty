@@ -121,6 +121,7 @@ export function joinSessionAsHost(socket: Socket, sessionName: string) {
     joinSession(socket, sessionName);
 
     socket.emit(HostServerSocket.UpdateVoiceType, session.voiceType, !process.env.USE_OPENAI_TTS /* modernVoicesDisabled */);
+    socket.emit(HostServerSocket.UpdateVoiceSpeed, session.voiceSpeed);
 
     if (socket.id !== session.creatorSocketID) {
         socket.emit(ServerSocket.BeginSpectate);

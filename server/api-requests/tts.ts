@@ -51,7 +51,7 @@ export async function streamVoiceAudio(req: Request, res: Response) {
                 model: TTS_MODEL,
                 voice: (voiceType === VoiceType.ModernFeminine) ? "nova" : "echo",
                 input: voiceLine,
-                response_format: "wav"
+                response_format: "mp3"
             })
         });
 
@@ -62,7 +62,7 @@ export async function streamVoiceAudio(req: Request, res: Response) {
             throw new Error(formatDebugLog(`failed to fetch TTS audio: ${errorText}`));
         }
 
-        res.setHeader("Content-Type", "audio/wav");
+        res.setHeader("Content-Type", "audio/mpeg");
 
         const audioStream = Readable.fromWeb(response.body as any);
 

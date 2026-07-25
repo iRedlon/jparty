@@ -12,6 +12,18 @@ export function getVoiceDurationMs(text: string) {
     return ESTIMATE_VOICE_DURATION_BASE_MS + (text.length * ESTIMATE_VOICE_DURATION_MS_PER_CHARACTER);
 }
 
+export const MIN_VOICE_SPEED = 0.5;
+export const MAX_VOICE_SPEED = 2;
+export const DEFAULT_VOICE_SPEED = 1.25;
+
+export function clampVoiceSpeed(voiceSpeed: number) {
+    if (!Number.isFinite(voiceSpeed)) {
+        return DEFAULT_VOICE_SPEED;
+    }
+
+    return Math.min(Math.max(voiceSpeed, MIN_VOICE_SPEED), MAX_VOICE_SPEED);
+}
+
 export enum VolumeType {
     Master = "master_volume",
     Music = "music_volume",

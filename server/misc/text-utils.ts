@@ -30,12 +30,13 @@ export function formatText(text: string) {
     text = text.replace(/<[^>]*>?/gm, "");
 
     // strip quote escapes AKA backslashes
-    text = text.replace(String.fromCharCode(92), "");
+    text = text.replace(/\\/g, "");
 
     text = cleanTextUtils.strip.emoji(text);
-    text = cleanTextUtils.strip.extraSpace(text);
-    text = cleanTextUtils.strip.nonASCII(text);
+
     text = cleanTextUtils.replace.exoticChars(text);
+    text = cleanTextUtils.strip.nonASCII(text);
+    text = cleanTextUtils.strip.extraSpace(text);
 
     return text;
 }

@@ -1,5 +1,5 @@
 
-import { Box, Button, Heading } from "@chakra-ui/react";
+import { Box, Button, Heading, Stack, Text } from "@chakra-ui/react";
 import { PlayerSocket, SessionState } from "jparty-shared";
 import { useContext, useEffect, useState } from "react";
 
@@ -16,6 +16,8 @@ interface PlayerIdleProps {
 export default function PlayerIdle({ setIsEditingSignature, promptStartGame }: PlayerIdleProps) {
     const context = useContext(LayoutContext);
     const [isLoading, setIsLoading] = useState(false);
+
+    const [isConfirmingStartGame, setIsConfirmingStartGame] = useState(false);
 
     const handleEditSignature = () => {
         // prevent an accidental tap if a player was spamming the buzzer and gets switched to the idle screen
@@ -34,10 +36,7 @@ export default function PlayerIdle({ setIsEditingSignature, promptStartGame }: P
     }, [context.sessionState]);
 
     const emitStartGame = () => {
-        if (!confirm("Are you sure? (Make sure everyone has joined and that your host computer is unmuted)")) {
-            return;
-        }
-
+        setIsConfirmingStartGame(false);
         setIsLoading(true);
 
         socket.emit(PlayerSocket.StartGame, () => {
@@ -52,9 +51,20 @@ export default function PlayerIdle({ setIsEditingSignature, promptStartGame }: P
             {(context.sessionState === SessionState.Lobby) && <>
                 <Button onClick={handleEditSignature} size={"sm"} margin={"0.5em"}>edit signature</Button><br/>
             </>}
-            
-            {promptStartGame && <Button onClick={emitStartGame} isLoading={isLoading} margin={"0.5em"} colorScheme={"blue"}>start game</Button>}
-            
+
+            {promptStartGame && !isConfirmingStartGame &&
+                <Button onClick={() => setIsConfirmingStartGame(true)} isLoading={isLoading} margin={"0.5em"} colorScheme={"blue"}>start game</Button>}
+
+            {promptStartGame && isConfirmingStartGame && (
+                <Box className={"child-box"} padding={"0.5em"} margin={"0.5em"}>
+                    <Text>are you sure? make sure everyone has joined and that your host computer is unmuted</Text>
+                    <Stack direction={"row"} justifyContent={"center"}>
+                        <Button onClick={emitStartGame} size={"sm"} margin={"0.5em"} colorScheme={"blue"}>yes, start game</Button>
+                        <Button onClick={() => setIsConfirmingStartGame(false)} size={"sm"} margin={"0.5em"}>not yet</Button>
+                    </Stack>
+                </Box>
+            )}
+
             <PlayerScoreboard />
         </Box>
     );

@@ -85,15 +85,23 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
     const [spectateSessionName, setSpectateSessionName] = useState("");
     const [currentLeaderboardType, setCurrentLeaderboardType] = useState(LeaderboardType.AllTime);
 
-    const handleSelectGameSettingsPreset = (preset: TriviaGameSettingsPreset) => {
-        socket.emit(HostSocket.UpdateGameSettingsPreset, preset);
+    const [pendingGameSettingsPreset, setPendingGameSettingsPreset] = useState<TriviaGameSettingsPreset | undefined>();
 
-        if (gameSettingsPreset === TriviaGameSettingsPreset.Custom && !confirm("Are you sure? Your custom game settings will be lost")) {
+    const applyGameSettingsPreset = (preset: TriviaGameSettingsPreset) => {
+        setPendingGameSettingsPreset(undefined);
+
+        socket.emit(HostSocket.UpdateGameSettingsPreset, preset);
+        setGameSettingsPreset(preset);
+        setGamePreviewCategoryNames(undefined);
+    }
+
+    const handleSelectGameSettingsPreset = (preset: TriviaGameSettingsPreset) => {
+        if (gameSettingsPreset === TriviaGameSettingsPreset.Custom) {
+            setPendingGameSettingsPreset(preset);
             return;
         }
 
-        setGameSettingsPreset(preset);
-        setGamePreviewCategoryNames(undefined);
+        applyGameSettingsPreset(preset);
     }
 
     const emitGenerateGamePreview = () => {
@@ -214,7 +222,19 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                         </Tooltip>
                     </Stack>
 
-                    <Box width={"21em"} height={"4.5em"} marginLeft={"auto"} marginRight={"auto"} marginTop={"0.5em"} marginBottom={"0.5em"} 
+                    {pendingGameSettingsPreset !== undefined && (
+                        <Box className={"child-box"} width={"fit-content"} marginLeft={"auto"} marginRight={"auto"} padding={"0.5em"} marginBottom={"0.5em"}>
+                            <Text>are you sure? your custom game settings will be lost</Text>
+                            <Stack direction={"row"} justifyContent={"center"}>
+                                <Button onClick={() => applyGameSettingsPreset(pendingGameSettingsPreset)} size={"sm"} margin={"0.5em"} colorScheme={"red"}>
+                                    yes, switch mode
+                                </Button>
+                                <Button onClick={() => setPendingGameSettingsPreset(undefined)} size={"sm"} margin={"0.5em"}>cancel</Button>
+                            </Stack>
+                        </Box>
+                    )}
+
+                    <Box width={"21em"} height={"4.5em"} marginLeft={"auto"} marginRight={"auto"} marginTop={"0.5em"} marginBottom={"0.5em"}
                         display={"flex"} justifyContent={"center"} alignItems={"center"}>
                         {gamePreviewCategoryNames ? (
                             <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} gap={"1em"}>

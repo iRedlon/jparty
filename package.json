@@ -10,7 +10,8 @@
         "heroku-postbuild": "npm run build && cd client && npm run build",
         "build-all": "npm run heroku-postbuild",
         "debug": "cross-env DEBUG_MODE=true npx tsx ./build/server/controller.js",
-        "prod": "npx tsx ./build/server/controller.js"
+        "prod": "npx tsx ./build/server/controller.js",
+        "update-trivia-db": "npx tsx ./build/server/api-requests/trivia-db-utils.ts 2026 --write"
     },
     "dependencies": {
         "@types/compression": "^1.7.5",

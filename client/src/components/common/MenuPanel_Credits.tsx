@@ -11,7 +11,7 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 
-import { SOURCE_CODE_LINK } from "../../misc/ui-constants";
+import { JARCHIVE_LINK, SOURCE_CODE_LINK } from "../../misc/ui-constants";
 
 type CreditRowProps = {
   label: string;
@@ -97,11 +97,28 @@ export default function MenuPanel_Credits() {
               </CreditRow>
 
               <CreditRow label="Trivia Clues">
+                  <Link
+                    href={JARCHIVE_LINK}
+                    isExternal
+                    fontSize="sm"
+                    fontWeight="semibold"
+                    color={muted}
+                    _hover={{ color: "inherit", textDecoration: "none" }}
+                  >
+                  <HStack spacing={1}>
+                    <Text as="u">J! Archive</Text>
+                    <ExternalLinkIcon />
+                  </HStack>
+                </Link>
                 <Text>J! Archive</Text>
               </CreditRow>
 
-              <CreditRow label="Voice">
-                <Text>OpenAI Text to Speech</Text>
+              <CreditRow label="Clue Decisions">
+                <Text>OpenAI gpt-5.4-nano</Text>
+              </CreditRow>
+
+              <CreditRow label="Host Voices">
+                <Text>OpenAI tts-1</Text>
               </CreditRow>
 
               <CreditRow label="Music">

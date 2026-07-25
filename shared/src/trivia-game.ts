@@ -1,7 +1,7 @@
 
 import { Player } from "./session-constants";
 import { TriviaClueBonus, TriviaClueDecision, TriviaClueDifficulty } from "./trivia-game-constants";
-import { TriviaCategorySettings, TriviaGameSettings, TriviaRoundSettings } from "./trivia-game-settings";
+import { TriviaGameSettings, TriviaRoundSettings } from "./trivia-game-settings";
 
 export class TriviaGame {
     constructor(
@@ -95,24 +95,21 @@ export class TriviaCluePosition {
 export interface TriviaCategorySchema {
     id: number,
     name: string,
-    type: number,
     clues: Record<TriviaClueDifficulty, TriviaClueSchema[]>
 }
 
 export class TriviaCategory {
-    settings: TriviaCategorySettings;
     id: number;
     name: string;
     clues: TriviaClue[];
     completed?: boolean;
 
-    constructor(settings?: TriviaCategorySettings, schema?: TriviaCategorySchema, completed?: boolean) {
+    constructor(schema?: TriviaCategorySchema, completed?: boolean) {
         // default constructor
-        if (settings === undefined || schema === undefined) {
+        if (schema === undefined) {
             return;
         }
 
-        this.settings = settings;
         this.id = schema.id;
         this.name = schema.name;
         this.clues = [];
@@ -166,6 +163,15 @@ export interface TriviaClueSchema {
     question: string,
     answer: string,
     difficulty: number,
+    year: number
+}
+
+// DO NOT TOUCH: mongo schema
+export interface TriviaFinalClueSchema {
+    id: number,
+    category_name: string,
+    question: string,
+    answer: string,
     year: number
 }
 

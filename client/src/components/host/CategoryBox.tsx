@@ -1,6 +1,6 @@
 
 import { Box, Heading } from "@chakra-ui/react";
-import { SessionState, TriviaCategory, TriviaCategoryType, TriviaClue, TriviaClueBonus } from "jparty-shared";
+import { SessionState, TriviaCategory, TriviaClue, TriviaClueBonus } from "jparty-shared";
 
 import { DebugCommand, handleDebugCommand } from "../../misc/debug-command";
 import { formatDollarValueString } from "../../misc/client-utils";
@@ -24,7 +24,6 @@ export default function CategoryBox({ triviaCategory, triviaClue }: CategoryBoxP
             <Heading size={"lg"} fontFamily={"clue"}>{triviaCategory.name.toUpperCase()} {clueValueString}</Heading>
 
             <Heading size={"sm"} fontFamily={"clue"}>
-                {/* type: {TriviaCategoryType[triviaCategory.settings.type]}{"\t-\t"} */}
                 <i>from the year {triviaClue.year}</i>
             </Heading>
         </Box>

@@ -1,6 +1,6 @@
 
 import {
-    HostServerSocket, HostSocket, HostSocketCallback, NORMAL_GAME_SETTINGS, PARTY_GAME_SETTINGS, ServerSocket, ServerSocketMessage,
+    clampVoiceSpeed, HostServerSocket, HostSocket, HostSocketCallback, NORMAL_GAME_SETTINGS, PARTY_GAME_SETTINGS, ServerSocket, ServerSocketMessage,
     SessionState, TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
 } from "jparty-shared";
 import { generate as generateRandomWord } from "random-words";
@@ -105,6 +105,20 @@ function handleUpdateVoiceType(socket: Socket, sessionName: string, voiceType: V
 
     session.voiceType = voiceType;
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateVoiceType, voiceType, !process.env.USE_OPENAI_TTS /* modernVoicesDisabled */);
+}
+
+function handleUpdateVoiceSpeed(socket: Socket, sessionName: string, voiceSpeed: number) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    voiceSpeed = clampVoiceSpeed(voiceSpeed);
+
+    debugLog(LogCategory.Voice, `updating session (${sessionName}) to use voice speed: ${voiceSpeed}`, LogVerbosity.Verbose);
+
+    session.voiceSpeed = voiceSpeed;
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateVoiceSpeed, voiceSpeed);
 }
 
 function handleUpdateVoiceDuration(socket: Socket, sessionName: string, voiceLine: string, durationSec: number) {
@@ -222,6 +236,7 @@ const handlers: Record<HostSocket, Function> = {
     [HostSocket.Connect]: handleConnect,
     [HostSocket.UpdateGameSettingsPreset]: handleUpdateGameSettingsPreset,
     [HostSocket.UpdateVoiceType]: handleUpdateVoiceType,
+    [HostSocket.UpdateVoiceSpeed]: handleUpdateVoiceSpeed,
     [HostSocket.UpdateVoiceDuration]: handleUpdateVoiceDuration,
     [HostSocket.AttemptSpectate]: handleAttemptSpectate,
     [HostSocket.LeaveSession]: handleLeaveSession,
