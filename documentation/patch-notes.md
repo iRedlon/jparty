@@ -24,6 +24,12 @@
 
 ---
 
+### Improved host voice controls
+- Dropdown to pick the host voice from OpenAI and browser options
+- New slider to change host voice speed
+
+---
+
 ### Leaderboard upgrades
 - Each leaderboard now tracks its total games played and total money earned
 - Players who claim a leaderboard spot are indicated as such on the final scoreboard and mentioned by the host voice
@@ -43,7 +49,6 @@
 
 - Prevents a category from containing two clues with the same answer
 - Adds a naive filter to skip likely image-dependent clues by checking for keywords like "seen here" and "pictured here"
-- Changed category type distribution to be a bit more even
 - Host voice points out quotation category names i.e. a category whose clues all contain a quoted segment from the category name
 
 ---
