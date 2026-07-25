@@ -97,20 +97,17 @@ export default function MenuPanel_Credits() {
               </CreditRow>
 
               <CreditRow label="Trivia Clues">
-                  <Link
-                    href={JARCHIVE_LINK}
-                    isExternal
-                    fontSize="sm"
-                    fontWeight="semibold"
-                    color={muted}
-                    _hover={{ color: "inherit", textDecoration: "none" }}
-                  >
-                  <HStack spacing={1}>
+                <Link
+                  href={JARCHIVE_LINK}
+                  isExternal
+                  color={muted}
+                  _hover={{ color: "inherit", textDecoration: "none" }}
+                >
+                  <HStack justify="center">
                     <Text as="u">J! Archive</Text>
                     <ExternalLinkIcon />
                   </HStack>
                 </Link>
-                <Text>J! Archive</Text>
               </CreditRow>
 
               <CreditRow label="Clue Decisions">
