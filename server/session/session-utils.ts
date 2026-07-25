@@ -490,7 +490,14 @@ export function emitGamePreviewUpdate(sessionName: string, socket?: Socket) {
         return;
     }
 
-    const categoryNames = session.triviaGame ? session.triviaGame.rounds[0].categories.map(category => category.name) : [];
+    let categoryNames = undefined;
+
+    if (session.triviaGame) {
+        categoryNames = session.triviaGame.rounds[0].categories.map(category => category.name);
+    }
+    else if (session.gamePreviewFailed) {
+        categoryNames = [];
+    }
 
     if (socket) {
         socket.emit(HostServerSocket.UpdateGamePreview, categoryNames);

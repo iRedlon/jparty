@@ -222,8 +222,8 @@ export default function HostLayout() {
         setMaxClueYear(maxClueYear);
     }
 
-    const handleUpdateGamePreview = (categoryNames: string[]) => {
-        setGamePreviewCategoryNames(categoryNames);
+    const handleUpdateGamePreview = (categoryNames: string[] | null) => {
+        setGamePreviewCategoryNames(categoryNames ?? undefined);
     }
 
     const handlePlayAudio = (audioType: AudioType) => {

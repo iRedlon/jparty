@@ -74,6 +74,7 @@ export class Session {
     triviaGame: TriviaGame | undefined;
 
     gamePreviewToken: number;
+    gamePreviewFailed: boolean;
     players: SessionPlayers;
     timeoutInfo: SessionTimeoutInfo;
 
@@ -128,6 +129,7 @@ export class Session {
         this.triviaGameSettings = getPresetGameSettings(TriviaGameSettingsPreset.Normal);
         this.triviaGame = undefined;
         this.gamePreviewToken = 0;
+        this.gamePreviewFailed = false;
         this.resetPlayers();
         this.timeoutInfo = {};
         this.readingCategoryIndex = 0;

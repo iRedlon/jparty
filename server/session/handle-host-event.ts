@@ -34,6 +34,7 @@ async function generateGamePreview(socket: Socket, sessionName: string) {
 
     session.gamePreviewToken++;
     const gamePreviewToken = session.gamePreviewToken;
+    session.gamePreviewFailed = false;
 
     let triviaGame;
 
@@ -42,7 +43,12 @@ async function generateGamePreview(socket: Socket, sessionName: string) {
     }
     catch (e) {
         emitServerError(e, socket);
-        emitGamePreviewUpdate(sessionName);
+
+        if (session.gamePreviewToken === gamePreviewToken) {
+            session.gamePreviewFailed = true;
+            emitGamePreviewUpdate(sessionName);
+        }
+
         return;
     }
 
