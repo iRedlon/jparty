@@ -1,12 +1,12 @@
 
 import {
-    clampVoiceSpeed, HostServerSocket, HostSocket, HostSocketCallback, NORMAL_GAME_SETTINGS, PARTY_GAME_SETTINGS, ServerSocket, ServerSocketMessage,
+    clampVoiceSpeed, getPresetGameSettings, HostServerSocket, HostSocket, HostSocketCallback, isClueYearRangeValid, ServerSocket, ServerSocketMessage,
     SessionState, TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
 } from "jparty-shared";
 import { generate as generateRandomWord } from "random-words";
 import { Socket } from "socket.io";
 
-import { createSession, deleteSession, emitGamePreviewUpdate, emitLeaderboardUpdate, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost, updateVoiceDuration } from "./session-utils.js";
+import { createSession, deleteSession, emitClueYearRangeUpdate, emitGamePreviewUpdate, emitLeaderboardUpdate, emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, joinSessionAsHost, updateVoiceDuration } from "./session-utils.js";
 import { generateTriviaGame } from "../api-requests/generate-trivia-game.js";
 import { io } from "../controller.js";
 import { debugLog, LogCategory, LogVerbosity } from "../misc/log.js";
@@ -32,18 +32,13 @@ async function generateGamePreview(socket: Socket, sessionName: string) {
         return;
     }
 
-    const gameSettingsPreset = session.triviaGameSettingsPreset;
-
-    let gameSettings = NORMAL_GAME_SETTINGS;
-
-    if (gameSettingsPreset === TriviaGameSettingsPreset.Party) {
-        gameSettings = PARTY_GAME_SETTINGS;
-    }
+    session.gamePreviewToken++;
+    const gamePreviewToken = session.gamePreviewToken;
 
     let triviaGame;
 
     try {
-        triviaGame = await generateTriviaGame(TriviaGameSettings.clone(gameSettings));
+        triviaGame = await generateTriviaGame(TriviaGameSettings.clone(session.triviaGameSettings));
     }
     catch (e) {
         emitServerError(e, socket);
@@ -51,7 +46,7 @@ async function generateGamePreview(socket: Socket, sessionName: string) {
         return;
     }
 
-    if ((session.state !== SessionState.Lobby) || (session.triviaGameSettingsPreset !== gameSettingsPreset)) {
+    if ((session.state !== SessionState.Lobby) || (session.gamePreviewToken !== gamePreviewToken)) {
         return;
     }
 
@@ -88,9 +83,35 @@ function handleUpdateGameSettingsPreset(socket: Socket, sessionName: string, gam
 
     session.triviaGameSettingsPreset = gameSettingsPreset;
 
+    session.setGameSettings(getPresetGameSettings(gameSettingsPreset));
+
     io.to(Object.keys(session.hosts)).except(socket.id).emit(HostServerSocket.UpdateGameSettingsPreset, gameSettingsPreset, true /* fromServer */);
+    emitClueYearRangeUpdate(sessionName);
 
     // if we have a trivia game already it must have been made with the old preset. discard it and roll a fresh preview
+    session.triviaGame = undefined;
+    generateGamePreview(socket, sessionName);
+}
+
+function handleUpdateClueYearRange(socket: Socket, sessionName: string, minClueYear: number, maxClueYear: number) {
+    let session = getSession(sessionName);
+    if (!session || (session.state !== SessionState.Lobby)) {
+        return;
+    }
+
+    if (socket.id !== session.creatorSocketID) {
+        return;
+    }
+
+    if (!isClueYearRangeValid(minClueYear, maxClueYear)) {
+        return;
+    }
+
+    session.setClueYearRange(minClueYear, maxClueYear);
+
+    emitClueYearRangeUpdate(sessionName);
+
+    // the categories we already have were pulled from the old year range. discard them and roll a fresh preview
     session.triviaGame = undefined;
     generateGamePreview(socket, sessionName);
 }
@@ -212,8 +233,10 @@ async function handleGenerateCustomGame(socket: Socket, sessionName: string, gam
     }
 
     session.triviaGameSettingsPreset = TriviaGameSettingsPreset.Custom;
+    session.setGameSettings(cleanGameSettings);
 
     io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateGameSettingsPreset, TriviaGameSettingsPreset.Custom);
+    emitClueYearRangeUpdate(sessionName);
     socket.emit(ServerSocket.Message, new ServerSocketMessage("Custom settings were saved successfully"));
     emitTriviaRoundUpdate(sessionName);
     callback(true);
@@ -229,12 +252,17 @@ function handlePlayAgain(socket: Socket, sessionName: string) {
     emitStateUpdate(sessionName);
     emitTriviaRoundUpdate(sessionName);
     emitLeaderboardUpdate(socket);
+
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateGameSettingsPreset, session.triviaGameSettingsPreset, true /* fromServer */);
+    emitClueYearRangeUpdate(sessionName);
+
     generateGamePreview(socket, sessionName);
 }
 
 const handlers: Record<HostSocket, Function> = {
     [HostSocket.Connect]: handleConnect,
     [HostSocket.UpdateGameSettingsPreset]: handleUpdateGameSettingsPreset,
+    [HostSocket.UpdateClueYearRange]: handleUpdateClueYearRange,
     [HostSocket.UpdateVoiceType]: handleUpdateVoiceType,
     [HostSocket.UpdateVoiceSpeed]: handleUpdateVoiceSpeed,
     [HostSocket.UpdateVoiceDuration]: handleUpdateVoiceDuration,

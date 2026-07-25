@@ -54,5 +54,5 @@
 ---
 
 ### Everything else
-- Custom games are temporarily unavailable while they get reworked; the normal and party presets remain
+- Custom games are temporarily unavailable while they get reworked; but trivia year range is now adjustable on the host lobby screen
 - Lots and lots of small bug fixes

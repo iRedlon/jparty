@@ -40,8 +40,8 @@ const CATEGORY_ID_CACHE_DURATION_MS = 10 * 60 * 1000;
 type CategoryIDCacheEntry = { idsPromise: Promise<any[]>, expirationTimeMs: number };
 const categoryIDCache: Record<string, CategoryIDCacheEntry> = {};
 
-function getCandidateCategoryIDs(minYear: number, minRequiredCluesPerDifficulty: number) {
-    const cacheKey = `${minYear}:${minRequiredCluesPerDifficulty}`;
+function getCandidateCategoryIDs(minYear: number, maxYear: number, minRequiredCluesPerDifficulty: number) {
+    const cacheKey = `${minYear}:${maxYear}:${minRequiredCluesPerDifficulty}`;
 
     const cachedEntry = categoryIDCache[cacheKey];
     if (cachedEntry && (Date.now() < cachedEntry.expirationTimeMs)) {
@@ -51,14 +51,19 @@ function getCandidateCategoryIDs(minYear: number, minRequiredCluesPerDifficulty:
     const db = client!.db(TRIVIA_DB_NAME);
     const categoryCollection = db.collection(CATEGORY_COLLECTION_NAME);
 
-    // build a filter to remove the clues from each difficulty that are older than the minimum year
+    // build a filter to remove the clues from each difficulty that fall outside of the year range
     let clueYearFilter: Record<string, Object> = {};
     for (let difficulty = TriviaClueDifficulty.Easiest; difficulty <= TriviaClueDifficulty.Hardest; difficulty++) {
         clueYearFilter[`clues.${difficulty}`] = {
             $filter: {
                 input: `$clues.${difficulty}`,
                 as: "clue",
-                cond: { $gte: ["$$clue.year", minYear] }
+                cond: {
+                    $and: [
+                        { $gte: ["$$clue.year", minYear] },
+                        { $lte: ["$$clue.year", maxYear] }
+                    ]
+                }
             }
         }
     }
@@ -83,7 +88,7 @@ function getCandidateCategoryIDs(minYear: number, minRequiredCluesPerDifficulty:
     return idsPromise;
 }
 
-export async function getRandomCategorySchema(minYear: number, clueDifficultyOrder: TriviaClueDifficulty[]) {
+export async function getRandomCategorySchema(minYear: number, maxYear: number, clueDifficultyOrder: TriviaClueDifficulty[]) {
     // no database means no real trivia. serve test data instead
     if (!client) {
         return getTestCategorySchema();
@@ -94,7 +99,7 @@ export async function getRandomCategorySchema(minYear: number, clueDifficultyOrd
 
     const minRequiredCluesPerDifficulty = getMinRequiredCluesPerDifficulty(clueDifficultyOrder);
 
-    const candidateIDs = await getCandidateCategoryIDs(minYear, minRequiredCluesPerDifficulty);
+    const candidateIDs = await getCandidateCategoryIDs(minYear, maxYear, minRequiredCluesPerDifficulty);
 
     for (let attempt = 0; (attempt < 3) && candidateIDs.length; attempt++) {
         const categoryID = candidateIDs[Math.floor(Math.random() * candidateIDs.length)];
@@ -106,7 +111,7 @@ export async function getRandomCategorySchema(minYear: number, clueDifficultyOrd
         let hasEnoughClues = true;
 
         for (let difficulty = TriviaClueDifficulty.Easiest; difficulty <= TriviaClueDifficulty.Hardest; difficulty++) {
-            const filteredClues = (categorySchema.clues[difficulty] || []).filter(clue => clue.year >= minYear);
+            const filteredClues = (categorySchema.clues[difficulty] || []).filter(clue => (clue.year >= minYear) && (clue.year <= maxYear));
             categorySchema.clues[difficulty] = filteredClues;
 
             if (filteredClues.length < minRequiredCluesPerDifficulty) {
@@ -122,7 +127,7 @@ export async function getRandomCategorySchema(minYear: number, clueDifficultyOrd
     throw new Error(formatDebugLog("couldn't generate a category with those settings"));
 }
 
-export async function getRandomFinalClueSchema(minYear: number) {
+export async function getRandomFinalClueSchema(minYear: number, maxYear: number) {
     if (!client) {
         return getTestFinalClueSchema();
     }
@@ -131,12 +136,12 @@ export async function getRandomFinalClueSchema(minYear: number) {
     const finalClueCollection = db.collection(FINAL_CLUE_COLLECTION_NAME);
 
     const docs = await finalClueCollection.aggregate([
-        { $match: { year: { $gte: minYear } } },
+        { $match: { year: { $gte: minYear, $lte: maxYear } } },
         { $sample: { size: 1 } }
     ]).toArray();
 
     if (!docs.length) {
-        debugLog(LogCategory.TriviaDatabase, `no final clues available with min year: ${minYear}`, LogVerbosity.Verbose);
+        debugLog(LogCategory.TriviaDatabase, `no final clues available between years: ${minYear} and ${maxYear}`, LogVerbosity.Verbose);
         return undefined;
     }
 

@@ -3,7 +3,7 @@ import { TriviaClueBonus, TriviaGameDifficulty, TriviaRoundType } from "./trivia
 import { getEnumKeys } from "./utils";
 
 export class TriviaGameSettings {
-    static MIN_CLUE_YEAR = 1985;
+    static MIN_CLUE_YEAR = 1983;
     static MAX_CLUE_YEAR = 2026;
 
     static MIN_BUZZ_WINDOW_DURATION_SEC = 1;
@@ -22,6 +22,7 @@ export class TriviaGameSettings {
 
     constructor(
         public minClueYear: number,
+        public maxClueYear: number,
         public difficulty: TriviaGameDifficulty,
         public buzzWindowDurationSec: number,
         public responseDurationSec: number,
@@ -31,7 +32,7 @@ export class TriviaGameSettings {
 
     static clone(source: TriviaGameSettings) {
         const clonedRoundSettings = source.roundSettings.map(roundSettings => TriviaRoundSettings.clone(roundSettings));
-        return new TriviaGameSettings(source.minClueYear, source.difficulty,
+        return new TriviaGameSettings(source.minClueYear, source.maxClueYear, source.difficulty,
             source.buzzWindowDurationSec, source.responseDurationSec, source.revealDecisionDurationSec,
             clonedRoundSettings);
     }
@@ -104,7 +105,14 @@ export class TriviaGameSettings {
 
     isMinClueYearInvalid() {
         return this.minClueYear < TriviaGameSettings.MIN_CLUE_YEAR ||
-            this.minClueYear > TriviaGameSettings.MAX_CLUE_YEAR;
+            this.minClueYear > TriviaGameSettings.MAX_CLUE_YEAR ||
+            this.minClueYear > this.maxClueYear;
+    }
+
+    isMaxClueYearInvalid() {
+        return this.maxClueYear < TriviaGameSettings.MIN_CLUE_YEAR ||
+            this.maxClueYear > TriviaGameSettings.MAX_CLUE_YEAR ||
+            this.maxClueYear < this.minClueYear;
     }
 
     isBuzzWindowDurationInvalid() {
@@ -124,6 +132,7 @@ export class TriviaGameSettings {
 
     isInvalid() {
         if (this.isMinClueYearInvalid() ||
+            this.isMaxClueYearInvalid() ||
             this.isBuzzWindowDurationInvalid() ||
             this.isResponseDurationInvalid() ||
             this.isRevealDecisionDurationInvalid()) {
@@ -240,7 +249,7 @@ export const NORMAL_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundT
 export const NORMAL_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 6, 5, 400, { [TriviaClueBonus.Wager]: 2 });
 export const NORMAL_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 1, 1, 0, { [TriviaClueBonus.AllWager]: 1 });
 export const NORMAL_ROUND_SETTINGS = [NORMAL_SINGLE_ROUND_SETTINGS, NORMAL_DOUBLE_ROUND_SETTINGS, NORMAL_FINAL_ROUND_SETTINGS];
-export const NORMAL_GAME_SETTINGS = new TriviaGameSettings(2010, TriviaGameDifficulty.Normal, 5, 15, 3, NORMAL_ROUND_SETTINGS);
+export const NORMAL_GAME_SETTINGS = new TriviaGameSettings(2010, TriviaGameSettings.MAX_CLUE_YEAR, TriviaGameDifficulty.Normal, 5, 15, 3, NORMAL_ROUND_SETTINGS);
 
 // party game settings
 export const PARTY_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 5, 3, 200,
@@ -250,7 +259,7 @@ export const PARTY_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundTy
 export const PARTY_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 1, 1, 0,
     { [TriviaClueBonus.AllWager]: 1 });
 export const PARTY_ROUND_SETTINGS = [PARTY_SINGLE_ROUND_SETTINGS, PARTY_DOUBLE_ROUND_SETTINGS, PARTY_FINAL_ROUND_SETTINGS];
-export const PARTY_GAME_SETTINGS = new TriviaGameSettings(2016, TriviaGameDifficulty.Easy, 5, 15, 3, PARTY_ROUND_SETTINGS);
+export const PARTY_GAME_SETTINGS = new TriviaGameSettings(2020, TriviaGameSettings.MAX_CLUE_YEAR, TriviaGameDifficulty.Easy, 5, 15, 3, PARTY_ROUND_SETTINGS);
 
 // test game settings (use as a scratchpad for testing, only available in debug mode)
 export const TEST_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 1, 2, 500,
@@ -260,4 +269,24 @@ export const TEST_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundTyp
 export const TEST_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 1, 1, 0,
     { [TriviaClueBonus.AllWager]: 1 });
 export const TEST_ROUND_SETTINGS = [TEST_SINGLE_ROUND_SETTINGS, TEST_DOUBLE_ROUND_SETTINGS, TEST_FINAL_ROUND_SETTINGS];
-export const TEST_GAME_SETTINGS = new TriviaGameSettings(2010, TriviaGameDifficulty.Easy, 5, 15, 3, TEST_ROUND_SETTINGS);
+export const TEST_GAME_SETTINGS = new TriviaGameSettings(2010, TriviaGameSettings.MAX_CLUE_YEAR, TriviaGameDifficulty.Easy, 5, 15, 3, TEST_ROUND_SETTINGS);
+
+export function getPresetGameSettings(preset: TriviaGameSettingsPreset) {
+    return TriviaGameSettings.clone((preset === TriviaGameSettingsPreset.Party) ? PARTY_GAME_SETTINGS : NORMAL_GAME_SETTINGS);
+}
+
+export function isClueYearRangeValid(minClueYear: number, maxClueYear: number) {
+    return Number.isInteger(minClueYear) && Number.isInteger(maxClueYear) &&
+        (minClueYear >= TriviaGameSettings.MIN_CLUE_YEAR) &&
+        (maxClueYear <= TriviaGameSettings.MAX_CLUE_YEAR) &&
+        (minClueYear <= maxClueYear);
+}
+
+export function getClueYearOptions() {
+    let years: number[] = [];
+    for (let year = TriviaGameSettings.MAX_CLUE_YEAR; year >= TriviaGameSettings.MIN_CLUE_YEAR; year--) {
+        years.push(year);
+    }
+
+    return years;
+}

@@ -1,9 +1,9 @@
 
 import { ExternalLinkIcon, RepeatIcon } from "@chakra-ui/icons";
-import { Box, Button, Divider, Heading, Input, Link, ListItem, Stack, Text, Tooltip, UnorderedList } from "@chakra-ui/react";
+import { Box, Button, Divider, Heading, Input, Link, ListItem, Select, Stack, Text, Tooltip, UnorderedList } from "@chakra-ui/react";
 import {
-    getSortedSessionPlayerIDs, HostSocket, LeaderboardPlayers, LeaderboardPlayerSchema, LeaderboardStatsSchema, LeaderboardType,
-    Player, SocketID, TriviaGameSettingsPreset
+    getClueYearOptions, getPresetGameSettings, getSortedSessionPlayerIDs, HostSocket, LeaderboardPlayers, LeaderboardPlayerSchema,
+    LeaderboardStatsSchema, LeaderboardType, Player, SocketID, TriviaGameSettingsPreset
 } from "jparty-shared";
 import { QRCodeSVG } from "qrcode.react";
 import { useContext, useRef, useState } from "react";
@@ -15,6 +15,8 @@ import { socket } from "../../misc/socket";
 import { LocalStorageKey, PATCH_NOTES_LINK } from "../../misc/ui-constants";
 
 import "../../style/components/HostLobby.css";
+
+const CLUE_YEAR_OPTIONS = getClueYearOptions();
 
 function JoinedPlayerBox(player: Player) {
     let nameFontSize = "2em";
@@ -63,6 +65,18 @@ function LeaderboardPlayerBox(leaderboardType: LeaderboardType, leaderboardPlaye
     );
 }
 
+function clueYearSelect(value: number, onSelect: (year: number) => void, id: string, isDisabled: boolean) {
+    return (
+        <Select id={id} value={value} onChange={(e) => onSelect(parseInt(e.target.value))} isDisabled={isDisabled}
+            size={"sm"} width={"5.5em"} borderRadius={"md"} textAlign={"center"} cursor={"pointer"}>
+
+            {CLUE_YEAR_OPTIONS.map(year => (
+                <option key={`${id}-${year}`} value={year}>{year}</option>
+            ))}
+        </Select>
+    );
+}
+
 interface HostLobbyProps {
     allTimeLeaderboardPlayers: LeaderboardPlayers | undefined;
     monthlyLeaderboardPlayers: LeaderboardPlayers | undefined;
@@ -72,13 +86,18 @@ interface HostLobbyProps {
     weeklyLeaderboardStats: LeaderboardStatsSchema | undefined;
     gameSettingsPreset: TriviaGameSettingsPreset;
     setGameSettingsPreset: Function;
+    minClueYear: number;
+    setMinClueYear: Function;
+    maxClueYear: number;
+    setMaxClueYear: Function;
     gamePreviewCategoryNames: string[] | undefined;
     setGamePreviewCategoryNames: Function;
 }
 
 export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboardPlayers, weeklyLeaderboardPlayers,
     allTimeLeaderboardStats, monthlyLeaderboardStats, weeklyLeaderboardStats,
-    gameSettingsPreset, setGameSettingsPreset, gamePreviewCategoryNames, setGamePreviewCategoryNames }: HostLobbyProps) {
+    gameSettingsPreset, setGameSettingsPreset, minClueYear, setMinClueYear, maxClueYear, setMaxClueYear,
+    gamePreviewCategoryNames, setGamePreviewCategoryNames }: HostLobbyProps) {
     const joinedPlayersBoxRef = useRef(null);
 
     const context = useContext(LayoutContext);
@@ -92,8 +111,28 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
 
         socket.emit(HostSocket.UpdateGameSettingsPreset, preset);
         setGameSettingsPreset(preset);
+
+        // each preset comes with its own default clue year range
+        const presetGameSettings = getPresetGameSettings(preset);
+        setMinClueYear(presetGameSettings.minClueYear);
+        setMaxClueYear(presetGameSettings.maxClueYear);
+
         setGamePreviewCategoryNames(undefined);
     }
+
+    const emitUpdateClueYearRange = (newMinClueYear: number, newMaxClueYear: number) => {
+        if (context.isSpectator || ((newMinClueYear === minClueYear) && (newMaxClueYear === maxClueYear))) {
+            return;
+        }
+
+        socket.emit(HostSocket.UpdateClueYearRange, newMinClueYear, newMaxClueYear);
+        setMinClueYear(newMinClueYear);
+        setMaxClueYear(newMaxClueYear);
+        setGamePreviewCategoryNames(undefined);
+    }
+
+    const selectMinClueYear = (year: number) => emitUpdateClueYearRange(year, Math.max(year, maxClueYear));
+    const selectMaxClueYear = (year: number) => emitUpdateClueYearRange(Math.min(year, minClueYear), year);
 
     const handleSelectGameSettingsPreset = (preset: TriviaGameSettingsPreset) => {
         if (gameSettingsPreset === TriviaGameSettingsPreset.Custom) {
@@ -222,6 +261,18 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
                         </Tooltip>
                     </Stack>
 
+                     <Stack direction={"column"} alignItems={"center"} gap={"0.4em"} marginTop={"0.5em"} marginBottom={"1em"}>
+                        <Text><i>using Jeopardy! categories aired between</i></Text>
+
+                        <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} gap={"0.4em"}>
+                            {clueYearSelect(minClueYear, selectMinClueYear, "min-clue-year", context.isSpectator)}
+
+                            <Text><i>and</i></Text>
+
+                            {clueYearSelect(maxClueYear, selectMaxClueYear, "max-clue-year", context.isSpectator)}
+                        </Stack>
+                    </Stack>
+
                     {pendingGameSettingsPreset !== undefined && (
                         <Box className={"child-box"} width={"fit-content"} marginLeft={"auto"} marginRight={"auto"} padding={"0.5em"} marginBottom={"0.5em"}>
                             <Text>are you sure? your custom game settings will be lost</Text>
@@ -236,7 +287,9 @@ export default function HostLobby({ allTimeLeaderboardPlayers, monthlyLeaderboar
 
                     <Box width={"21em"} height={"4.5em"} marginLeft={"auto"} marginRight={"auto"} marginTop={"0.5em"} marginBottom={"0.5em"}
                         display={"flex"} justifyContent={"center"} alignItems={"center"}>
-                        {gamePreviewCategoryNames ? (
+                        {gamePreviewCategoryNames && !gamePreviewCategoryNames.length ? (
+                            <Text><i>not enough clues between {minClueYear} and {maxClueYear}. try a wider range</i></Text>
+                        ) : gamePreviewCategoryNames ? (
                             <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} gap={"1em"}>
                                 <UnorderedList justifyContent={"center"} listStyleType={"none"} margin={0} width={"10em"}>
                                     {gamePreviewCategoryNames.slice(0, 3).map((categoryName, index) => (

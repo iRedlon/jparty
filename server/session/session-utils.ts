@@ -129,6 +129,7 @@ export function joinSessionAsHost(socket: Socket, sessionName: string) {
 
     emitLeaderboardUpdate(socket);
     socket.emit(HostServerSocket.UpdateGameSettingsPreset, session.triviaGameSettingsPreset, true /* fromServer */);
+    emitClueYearRangeUpdate(sessionName, socket);
     socket.emit(HostServerSocket.UpdateReadingCategoryIndex, session.readingCategoryIndex);
 
     if (session.state === SessionState.Lobby) {
@@ -465,6 +466,22 @@ export function emitTriviaRoundUpdate(sessionName: string) {
     }
 
     io.in(sessionName).emit(ServerSocket.UpdateTriviaRound, session.getCurrentRound());
+}
+
+export function emitClueYearRangeUpdate(sessionName: string, socket?: Socket) {
+    let session = getSession(sessionName);
+    if (!session) {
+        return;
+    }
+
+    const { minClueYear, maxClueYear } = session.triviaGameSettings;
+
+    if (socket) {
+        socket.emit(HostServerSocket.UpdateClueYearRange, minClueYear, maxClueYear);
+    }
+    else {
+        io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateClueYearRange, minClueYear, maxClueYear);
+    }
 }
 
 export function emitGamePreviewUpdate(sessionName: string, socket?: Socket) {

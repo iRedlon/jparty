@@ -1,7 +1,7 @@
 
 import {
     AttemptReconnectResult, DEFAULT_VOICE_SPEED, getEnumSize, getRandomChoice, getSortedSessionPlayerIDs, getVoiceDurationMs, getWeightedRandomKey, Host, MAX_EARNED_REVERSAL_SCORE_FOR_LEADERBOARD,
-    Player, PlayerResponseType, PlayerState, SessionAnnouncement, SessionHosts, SessionPlayers, SessionState, SessionTimeoutType, SocketID,
+    getPresetGameSettings, Player, PlayerResponseType, PlayerState, SessionAnnouncement, SessionHosts, SessionPlayers, SessionState, SessionTimeoutType, SocketID,
     TriviaClue, TriviaClueBonus, TriviaClueDecision, TriviaClueDecisionInfo, TriviaGame, TriviaGameSettings, TriviaGameSettingsPreset, VoiceType
 } from "jparty-shared";
 
@@ -69,7 +69,11 @@ export class Session {
     name: string;
     state: SessionState;
     triviaGameSettingsPreset: TriviaGameSettingsPreset;
+
+    triviaGameSettings: TriviaGameSettings;
     triviaGame: TriviaGame | undefined;
+
+    gamePreviewToken: number;
     players: SessionPlayers;
     timeoutInfo: SessionTimeoutInfo;
 
@@ -121,7 +125,9 @@ export class Session {
         this.lastUpdatedTimeMs = Date.now();
         this.state = SessionState.Lobby;
         this.triviaGameSettingsPreset = TriviaGameSettingsPreset.Normal;
+        this.triviaGameSettings = getPresetGameSettings(TriviaGameSettingsPreset.Normal);
         this.triviaGame = undefined;
+        this.gamePreviewToken = 0;
         this.resetPlayers();
         this.timeoutInfo = {};
         this.readingCategoryIndex = 0;
@@ -709,6 +715,15 @@ export class Session {
     // ======================
     // trivia game logistics
     // ======================
+    setGameSettings(gameSettings: TriviaGameSettings) {
+        this.triviaGameSettings = TriviaGameSettings.clone(gameSettings);
+    }
+
+    setClueYearRange(minClueYear: number, maxClueYear: number) {
+        this.triviaGameSettings.minClueYear = minClueYear;
+        this.triviaGameSettings.maxClueYear = maxClueYear;
+    }
+
     async generateTriviaGame(gameSettings: TriviaGameSettings) {
         try {
             this.triviaGame = await generateTriviaGame(TriviaGameSettings.clone(gameSettings));

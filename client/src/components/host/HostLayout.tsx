@@ -1,6 +1,6 @@
 
 import { Box, Center, Flex } from "@chakra-ui/react";
-import { AudioType, HostServerSocket, LeaderboardPlayers, LeaderboardStatsSchema, LeaderboardType, ServerSocket, SessionAnnouncement, SessionState, SessionTimeoutType, TriviaClueBonus, TriviaGameSettingsPreset, VoiceType } from "jparty-shared";
+import { AudioType, HostServerSocket, LeaderboardPlayers, LeaderboardStatsSchema, LeaderboardType, NORMAL_GAME_SETTINGS, ServerSocket, SessionAnnouncement, SessionState, SessionTimeoutType, TriviaClueBonus, TriviaGameSettingsPreset, VoiceType } from "jparty-shared";
 import { useContext, useEffect, useRef, useState } from "react";
 import { GoMute } from "react-icons/go";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
@@ -49,6 +49,8 @@ export default function HostLayout() {
     const [numResponders, setNumResponders] = useState(0);
     const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
     const [gameSettingsPreset, setGameSettingsPreset] = useState(TriviaGameSettingsPreset.Normal);
+    const [minClueYear, setMinClueYear] = useState(NORMAL_GAME_SETTINGS.minClueYear);
+    const [maxClueYear, setMaxClueYear] = useState(NORMAL_GAME_SETTINGS.maxClueYear);
     const [gamePreviewCategoryNames, setGamePreviewCategoryNames] = useState<string[] | undefined>();
     const [responseWindowOpenTimeMs, setResponseWindowOpenTimeMs] = useState<number | undefined>();
     const [responseWindowOpen, setResponseWindowOpen] = useState(false);
@@ -65,6 +67,7 @@ export default function HostLayout() {
         socket.on(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
         socket.on(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
         socket.on(HostServerSocket.UpdateGameSettingsPreset, handleServerUpdateGameSettingsPreset);
+        socket.on(HostServerSocket.UpdateClueYearRange, handleUpdateClueYearRange);
         socket.on(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
         socket.on(ServerSocket.StartTimeout, handleStartTimeout);
         socket.on(ServerSocket.StopTimeout, handleStopTimeout);
@@ -92,6 +95,7 @@ export default function HostLayout() {
             socket.off(HostServerSocket.UpdateNumSubmittedResponders, handleUpdateNumSubmittedResponders);
             socket.off(HostServerSocket.RevealClueDecision, handleRevealClueDecision);
             socket.off(HostServerSocket.UpdateGameSettingsPreset, handleServerUpdateGameSettingsPreset);
+            socket.off(HostServerSocket.UpdateClueYearRange, handleUpdateClueYearRange);
             socket.off(HostServerSocket.UpdateGamePreview, handleUpdateGamePreview);
             socket.off(ServerSocket.StartTimeout, handleStartTimeout);
             socket.off(ServerSocket.StopTimeout, handleStopTimeout);
@@ -213,6 +217,11 @@ export default function HostLayout() {
         setGamePreviewCategoryNames(undefined);
     }
 
+    const handleUpdateClueYearRange = (minClueYear: number, maxClueYear: number) => {
+        setMinClueYear(minClueYear);
+        setMaxClueYear(maxClueYear);
+    }
+
     const handleUpdateGamePreview = (categoryNames: string[]) => {
         setGamePreviewCategoryNames(categoryNames);
     }
@@ -276,6 +285,7 @@ export default function HostLayout() {
                     monthlyLeaderboardStats={monthlyLeaderboardStats}
                     weeklyLeaderboardStats={weeklyLeaderboardStats}
                     gameSettingsPreset={gameSettingsPreset} setGameSettingsPreset={setGameSettingsPreset}
+                    minClueYear={minClueYear} setMinClueYear={setMinClueYear} maxClueYear={maxClueYear} setMaxClueYear={setMaxClueYear}
                     gamePreviewCategoryNames={gamePreviewCategoryNames} setGamePreviewCategoryNames={setGamePreviewCategoryNames} />, HostComponentState.Lobby] :
                 [<></>, HostComponentState.None];
         }

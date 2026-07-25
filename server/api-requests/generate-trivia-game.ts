@@ -62,7 +62,7 @@ async function generateTriviaCategory(gameSettings: TriviaGameSettings, roundSet
     let categorySchema;
 
     try {
-        categorySchema = await getRandomCategorySchema(gameSettings.minClueYear, clueDifficultyOrder);
+        categorySchema = await getRandomCategorySchema(gameSettings.minClueYear, gameSettings.maxClueYear, clueDifficultyOrder);
     }
     catch (e) {
         throw e;
@@ -141,7 +141,7 @@ function isFinalWagerRound(roundSettings: TriviaRoundSettings) {
 }
 
 async function generateFinalWagerCategory(gameSettings: TriviaGameSettings, roundSettings: TriviaRoundSettings) {
-    const finalClueSchema = await getRandomFinalClueSchema(gameSettings.minClueYear);
+    const finalClueSchema = await getRandomFinalClueSchema(gameSettings.minClueYear, gameSettings.maxClueYear);
     if (!finalClueSchema) {
         return;
     }

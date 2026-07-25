@@ -157,16 +157,31 @@ export default function GameSettings({ onCloseHostMenu }: GameSettingsProps) {
     </Stack>
   );
 
-  const minClueYearForm = numberInputForm(
-    "Minimum clue year",
-    "",
-    "minClueYear",
-    gameSettings.minClueYear,
-    TriviaGameSettings.MIN_CLUE_YEAR,
-    TriviaGameSettings.MAX_CLUE_YEAR,
-    () => !canUpdateSettings(),
-    () => gameSettings.isMinClueYearInvalid(),
-    updateGameSettings
+  const clueYearForms = (
+    <Stack direction="row" justify="center" spacing={6}>
+      {numberInputForm(
+        "Minimum clue year",
+        "",
+        "minClueYear",
+        gameSettings.minClueYear,
+        TriviaGameSettings.MIN_CLUE_YEAR,
+        TriviaGameSettings.MAX_CLUE_YEAR,
+        () => !canUpdateSettings(),
+        () => gameSettings.isMinClueYearInvalid(),
+        updateGameSettings
+      )}
+      {numberInputForm(
+        "Maximum clue year",
+        "",
+        "maxClueYear",
+        gameSettings.maxClueYear,
+        TriviaGameSettings.MIN_CLUE_YEAR,
+        TriviaGameSettings.MAX_CLUE_YEAR,
+        () => !canUpdateSettings(),
+        () => gameSettings.isMaxClueYearInvalid(),
+        updateGameSettings
+      )}
+    </Stack>
   );
 
   const difficultyForm = (
@@ -281,7 +296,7 @@ export default function GameSettings({ onCloseHostMenu }: GameSettingsProps) {
 
             <Box bg={sectionBg} p={4} borderRadius="xl">
               <Stack spacing={4}>
-                {minClueYearForm}
+                {clueYearForms}
                 {difficultyForm}
               </Stack>
             </Box>

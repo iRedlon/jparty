@@ -1,7 +1,7 @@
 
 import {
-    AudioType, HostServerSocket, NORMAL_GAME_SETTINGS, PARTY_GAME_SETTINGS, PlayerResponseType, PlayerSocket, PlayerSocketCallback, ServerSocket, ServerSocketMessage,
-    SessionAnnouncement, SessionState, SessionTimeoutType, SocketID, TriviaClueBonus, TriviaClueDecision, TriviaGameSettingsPreset, VoiceLineType
+    AudioType, HostServerSocket, PlayerResponseType, PlayerSocket, PlayerSocketCallback, ServerSocket, ServerSocketMessage,
+    SessionAnnouncement, SessionState, SessionTimeoutType, SocketID, TriviaClueBonus, TriviaClueDecision, VoiceLineType
 } from "jparty-shared";
 import { Socket } from "socket.io";
 
@@ -85,14 +85,8 @@ async function handleStartGame(socket: Socket, sessionName: string, callback: Pl
     }
 
     if (!session.triviaGame) {
-        let gameSettings = NORMAL_GAME_SETTINGS;
-
-        if (session.triviaGameSettingsPreset === TriviaGameSettingsPreset.Party) {
-            gameSettings = PARTY_GAME_SETTINGS;
-        }
-
         try {
-            await session.generateTriviaGame(gameSettings);
+            await session.generateTriviaGame(session.triviaGameSettings);
         }
         catch (e) {
             emitServerError(e, socket);
