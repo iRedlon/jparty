@@ -27,9 +27,9 @@ export const RATED_CLUE_DIFFICULTY_ORDER = [
 ];
 
 export const EASY_CLUE_DIFFICULTY_DISTRIBUTION = {
-    [TriviaClueDifficulty.Easiest]: 0.4,
-    [TriviaClueDifficulty.Easy]: 0.4,
-    [TriviaClueDifficulty.Normal]: 0.2,
+    [TriviaClueDifficulty.Easiest]: 0.45,
+    [TriviaClueDifficulty.Easy]: 0.45,
+    [TriviaClueDifficulty.Normal]: 0.1,
     [TriviaClueDifficulty.Hard]: 0,
     [TriviaClueDifficulty.Hardest]: 0
 }
@@ -66,11 +66,11 @@ export enum TriviaClueBonus {
 // rated games only use wager bonuses, which we prefer to have on more difficult clues
 // for custom games, we choose clue bonus positions randomly
 export const RATED_CLUE_BONUS_POSITION_DISTRIBUTION = {
-    0: 0.05,
-    1: 0.2,
-    2: 0.4,
-    3: 0.2,
-    4: 0.15
+    0: 0,
+    1: 0.25,
+    2: 0.5,
+    3: 0.25,
+    4: 0
 }
 
 // DO NOT TOUCH: string values need to be the exact return format of the OpenAI decision bot

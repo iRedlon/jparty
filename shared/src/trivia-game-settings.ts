@@ -244,13 +244,13 @@ export const NORMAL_GAME_SETTINGS = new TriviaGameSettings(2010, TriviaGameDiffi
 
 // party game settings
 export const PARTY_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 5, 3, 200,
-    { [TriviaClueBonus.Wager]: 1, [TriviaClueBonus.AllPlay]: 4 });
+    { [TriviaClueBonus.Wager]: 1, [TriviaClueBonus.AllPlay]: 2 });
 export const PARTY_DOUBLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 5, 3, 400,
-    { [TriviaClueBonus.Wager]: 2, [TriviaClueBonus.AllPlay]: 4 });
+    { [TriviaClueBonus.Wager]: 2, [TriviaClueBonus.AllPlay]: 3 });
 export const PARTY_FINAL_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 1, 1, 0,
     { [TriviaClueBonus.AllWager]: 1 });
 export const PARTY_ROUND_SETTINGS = [PARTY_SINGLE_ROUND_SETTINGS, PARTY_DOUBLE_ROUND_SETTINGS, PARTY_FINAL_ROUND_SETTINGS];
-export const PARTY_GAME_SETTINGS = new TriviaGameSettings(2010, TriviaGameDifficulty.Easy, 5, 15, 3, PARTY_ROUND_SETTINGS);
+export const PARTY_GAME_SETTINGS = new TriviaGameSettings(2016, TriviaGameDifficulty.Easy, 5, 15, 3, PARTY_ROUND_SETTINGS);
 
 // test game settings (use as a scratchpad for testing, only available in debug mode)
 export const TEST_SINGLE_ROUND_SETTINGS = new TriviaRoundSettings(TriviaRoundType.Standard, 1, 2, 500,
