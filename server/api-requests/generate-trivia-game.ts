@@ -178,6 +178,10 @@ async function generateTriviaRound(gameSettings: TriviaGameSettings, roundSettin
             triviaRound.categories.push(finalWagerCategory);
             return triviaRound;
         }
+
+        debugLog(LogCategory.TriviaDatabase,
+            `couldn't find a final clue between ${gameSettings.minClueYear} and ${gameSettings.maxClueYear}, falling back to a normal category`,
+            LogVerbosity.Normal);
     }
 
     let usedCategoryIDs: number[] = [];
@@ -219,6 +223,13 @@ async function generateTriviaRound(gameSettings: TriviaGameSettings, roundSettin
     return triviaRound;
 }
 
+// rated games prefer their bonuses in the middle of the board. that preference only means something if the round is
+// deep enough to have those positions in the first place: a final round is a single clue sitting at position 0
+function canUseRatedClueBonusPosition(roundSettings: TriviaRoundSettings) {
+    return Object.entries(RATED_CLUE_BONUS_POSITION_DISTRIBUTION)
+        .some(([_, weight]) => (parseInt(_) < roundSettings.numClues) && (weight > 0));
+}
+
 // apply clue bonuses to the specified number of clues after the game is fully generated from static data
 function addClueBonuses(triviaGame: TriviaGame) {
     for (let roundIndex = 0; roundIndex < triviaGame.settings.roundSettings.length; roundIndex++) {
@@ -241,9 +252,11 @@ function addClueBonuses(triviaGame: TriviaGame) {
             let assignAttempts = 0;
             const maxAssignAttempts = 1000;
 
+            const useRatedCluePosition = triviaGame.settings.getRating().isRated && canUseRatedClueBonusPosition(roundSettings);
+
             while ((cluesAssigned < bonusCount) && (++assignAttempts <= maxAssignAttempts)) {
                 const categoryIndex = getRandomNum(roundSettings.numCategories);
-                const clueIndex = triviaGame.settings.getRating().isRated ? getWeightedRandomNum(RATED_CLUE_BONUS_POSITION_DISTRIBUTION) : getRandomNum(roundSettings.numClues);
+                const clueIndex = useRatedCluePosition ? getWeightedRandomNum(RATED_CLUE_BONUS_POSITION_DISTRIBUTION) : getRandomNum(roundSettings.numClues);
 
                 // our weight RNG may give us an index that doesn't exist within this category
                 if (clueIndex >= roundSettings.numClues) {
@@ -271,6 +284,12 @@ function addClueBonuses(triviaGame: TriviaGame) {
                 usedCategoryIDs.push(categoryIndex);
                 usedCluePositions.push(JSON.stringify(position));
                 cluesAssigned++;
+            }
+
+            if (cluesAssigned < bonusCount) {
+                debugLog(LogCategory.TriviaDatabase,
+                    `failed to add ${bonusCount - cluesAssigned}/${bonusCount} ${TriviaClueBonus[clueBonus]} bonuses to round ${roundIndex + 1}`,
+                    LogVerbosity.Normal);
             }
         }
     }

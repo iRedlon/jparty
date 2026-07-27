@@ -1,6 +1,6 @@
 
 # [jparty!](https://jparty.io)
-### _a couch co-op Jeopardy! game_
+### _a free couch co-op Jeopardy! game_
 
 ## [Patch Notes](documentation/patch-notes.md)
 ## [Known Issues](documentation/known-issues.md)

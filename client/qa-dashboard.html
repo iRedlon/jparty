@@ -141,7 +141,9 @@
         <label>player font px <input id="player-font-size" type="number" min="8" max="48"></label>
         <button id="add-player">+ player</button>
         <button id="reset" class="secondary">reset all</button>
+        <button id="cheat-skip-end-round-1" class="cheat" title="cheat: complete every clue in round 1 except the first category">skip to end of round 1</button>
         <button id="cheat-skip-round-2" class="cheat" title="cheat: skip the game to round 2">skip to round 2</button>
+        <button id="cheat-skip-end-round-2" class="cheat" title="cheat: complete every clue in round 2 except the first category">skip to end of round 2</button>
         <button id="cheat-skip-round-3" class="cheat" title="cheat: skip the game to round 3">skip to round 3</button>
         <button id="cheat-skip-timeout" class="cheat" title="cheat: skip the active timeout as though it expired naturally">skip timeout</button>
     </div>
@@ -375,7 +377,9 @@
 
     $("#add-player").addEventListener("click", addPlayer);
     $("#reset").addEventListener("click", () => location.reload());
+    $("#cheat-skip-end-round-1").addEventListener("click", () => sendCheat(hostFrame, "cheat_skip_to_end_of_round_1"));
     $("#cheat-skip-round-2").addEventListener("click", () => sendCheat(hostFrame, "cheat_skip_to_round_2"));
+    $("#cheat-skip-end-round-2").addEventListener("click", () => sendCheat(hostFrame, "cheat_skip_to_end_of_round_2"));
     $("#cheat-skip-round-3").addEventListener("click", () => sendCheat(hostFrame, "cheat_skip_to_round_3"));
     $("#cheat-skip-timeout").addEventListener("click", () => sendCheat(hostFrame, "cheat_skip_timeout"));
     scaleInput.addEventListener("input", applyPlayerScale);

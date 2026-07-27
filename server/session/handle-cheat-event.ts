@@ -1,8 +1,10 @@
 
-import { CheatSocket, HostServerSocket, ServerSocket, SessionAnnouncement, SessionState, SessionTimeoutType, TriviaClueDecision } from "jparty-shared";
+import { CheatSocket, HostServerSocket, ServerSocket, SessionAnnouncement, SessionState, SessionTimeoutType, TriviaClueBonus, TriviaClueDecision, VoiceLineType } from "jparty-shared";
 import { Socket } from "socket.io";
 
+import { playVoiceLine } from "./audio.js";
 import { attemptForceSelectFinalClue, recursiveReadCategoryName } from "./handle-player-event.js";
+import { Session } from "./session.js";
 import { emitServerError, emitStateUpdate, emitTriviaRoundUpdate, getSession, restartTimeout, showAnnouncement, startPositionChangeAnimation } from "./session-utils.js";
 import { io } from "../controller.js";
 
@@ -20,7 +22,26 @@ function handleAdjustMoney(socket: Socket, sessionName: string, increment: numbe
     startPositionChangeAnimation(sessionName);
 }
 
-function handleSkipToRound(socket: Socket, sessionName: string, targetRoundIndex: number) {
+function completeRoundExceptFirstCategory(session: Session, roundIndex: number) {
+    const round = session.triviaGame?.rounds[roundIndex];
+    if (!round) {
+        return;
+    }
+
+    for (let categoryIndex = 1; categoryIndex < round.categories.length; categoryIndex++) {
+        const category = round.categories[categoryIndex];
+
+        for (let clueIndex = 0; clueIndex < category.clues.length; clueIndex++) {
+            if (category.clues[clueIndex].bonus === TriviaClueBonus.Wager) {
+                session.wagerBonusCount++;
+            }
+
+            round.setClueCompleted(categoryIndex, clueIndex);
+        }
+    }
+}
+
+function handleSkipToRound(socket: Socket, sessionName: string, targetRoundIndex: number, completeBoard: boolean = false) {
     let session = getSession(sessionName);
     if (!session || !session.triviaGame) {
         return;
@@ -42,6 +63,11 @@ function handleSkipToRound(socket: Socket, sessionName: string, targetRoundIndex
 
     session.roundIndex = targetRoundIndex;
     session.wagerBonusCount = (targetRoundIndex === 1) ? 1 : 3;
+
+    if (completeBoard) {
+        completeRoundExceptFirstCategory(session, targetRoundIndex);
+    }
+
     session.resetClueSelection();
     session.resetPlayerSubmissions();
 
@@ -78,6 +104,47 @@ function handleSkipToRound(socket: Socket, sessionName: string, targetRoundIndex
     });
 }
 
+function handleSkipToEndOfRound(socket: Socket, sessionName: string, targetRoundIndex: number) {
+    let session = getSession(sessionName);
+    if (!session || !session.triviaGame) {
+        return;
+    }
+
+    if ((session.state === SessionState.Lobby) || (session.state === SessionState.GameOver)) {
+        return;
+    }
+
+    if ((targetRoundIndex < session.roundIndex) || (targetRoundIndex >= session.triviaGame.rounds.length)) {
+        return;
+    }
+
+    if (targetRoundIndex > session.roundIndex) {
+        handleSkipToRound(socket, sessionName, targetRoundIndex, true /* completeBoard */);
+        return;
+    }
+
+    session.stopAllTimeouts();
+    io.in(sessionName).emit(ServerSocket.StopTimeout);
+    session.setCurrentAnnouncement(undefined);
+    io.in(sessionName).emit(HostServerSocket.HideAnnouncement, true);
+
+    completeRoundExceptFirstCategory(session, targetRoundIndex);
+
+    session.resetClueSelection();
+    session.resetPlayerSubmissions();
+
+    io.to(Object.keys(session.hosts)).emit(HostServerSocket.UpdateReadingCategoryIndex, -1);
+    emitTriviaRoundUpdate(sessionName);
+
+    const didForceSelectFinalClue = attemptForceSelectFinalClue(sessionName);
+    if (!didForceSelectFinalClue) {
+        session.promptClueSelection();
+        playVoiceLine(sessionName, VoiceLineType.PromptClueSelection);
+    }
+
+    emitStateUpdate(sessionName);
+}
+
 function handleSkipTimeout(socket: Socket, sessionName: string) {
     let session = getSession(sessionName);
     if (!session) {
@@ -97,7 +164,9 @@ function handleSkipTimeout(socket: Socket, sessionName: string) {
 const handlers: Record<CheatSocket, Function> = {
     [CheatSocket.AddMoney]: (socket: Socket, sessionName: string) => handleAdjustMoney(socket, sessionName, CHEAT_MONEY_INCREMENT),
     [CheatSocket.SubtractMoney]: (socket: Socket, sessionName: string) => handleAdjustMoney(socket, sessionName, -CHEAT_MONEY_INCREMENT),
+    [CheatSocket.SkipToEndOfRound1]: (socket: Socket, sessionName: string) => handleSkipToEndOfRound(socket, sessionName, 0),
     [CheatSocket.SkipToRound2]: (socket: Socket, sessionName: string) => handleSkipToRound(socket, sessionName, 1),
+    [CheatSocket.SkipToEndOfRound2]: (socket: Socket, sessionName: string) => handleSkipToEndOfRound(socket, sessionName, 1),
     [CheatSocket.SkipToRound3]: (socket: Socket, sessionName: string) => handleSkipToRound(socket, sessionName, 2),
     [CheatSocket.SkipTimeout]: (socket: Socket, sessionName: string) => handleSkipTimeout(socket, sessionName)
 }

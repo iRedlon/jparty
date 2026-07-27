@@ -53,6 +53,12 @@ let pendingMusicAudioType: AudioType | undefined;
 let musicPlaying = false;
 const muteStateListeners = new Set<(muted: boolean) => void>();
 
+let musicEndingAfterCurrentTrack = false;
+
+export function setMusicEndingAfterCurrentTrack(ending: boolean) {
+    musicEndingAfterCurrentTrack = ending;
+}
+
 const MUSIC_SILENCE_GRACE_MS = 500;
 let musicSilenceTimeout: NodeJS.Timeout | undefined;
 
@@ -77,6 +83,10 @@ function recomputeMusicPlaying() {
         }
 
         setMusicPlaying(true);
+        return;
+    }
+
+    if (musicEndingAfterCurrentTrack) {
         return;
     }
 
@@ -288,6 +298,10 @@ updateVolume(VolumeType.SoundEffects, getVolume(VolumeType.SoundEffects));
 export function playAudio(audioType: AudioType) {
     if (audioType === AudioType.GameMusic) {
         audioType = currentGameMusicAudioType;
+    }
+
+    if (musicEndingAfterCurrentTrack && GAME_MUSIC_ROTATION.includes(audioType)) {
+        return;
     }
 
     const musicAudio = musicAudios[audioType];
