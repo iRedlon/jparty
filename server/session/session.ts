@@ -209,6 +209,7 @@ export class Session {
             return AttemptReconnectResult.InvalidClientID;
         }
 
+        const wasStillConnected = disconnectedHost.connected;
 
         this.hosts[newHostID] = disconnectedHost;
         delete this.hosts[oldHostID];
