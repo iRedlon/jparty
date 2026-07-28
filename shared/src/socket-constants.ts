@@ -16,7 +16,7 @@ export enum ReservedEvent {
 // messages that can be received by any client
 export enum ServerSocket {
     EnableDebugMode = "server_enable_debug_mode",
-    BeginSpectate = "server_update_begin_spectate",
+    UpdateSpectatorStatus = "server_update_spectator_status",
     Message = "server_message",
     CancelGame = "server_cancel_game",
     UpdateSessionName = "server_update_session_name",

@@ -51,7 +51,7 @@ export default function Layout() {
         socket.on(ReservedEvent.Connect, handleConnect);
         socket.on(ReservedEvent.Disconnect, handleDisconnect);
         socket.on(ServerSocket.EnableDebugMode, handleEnableDebugMode);
-        socket.on(ServerSocket.BeginSpectate, handleBeginSpectate);
+        socket.on(ServerSocket.UpdateSpectatorStatus, handleUpdateSpectatorStatus);
         socket.on(ServerSocket.CancelGame, handleCancelGame);
         socket.on(ServerSocket.UpdateSessionName, handleUpdateSessionName);
         socket.on(ServerSocket.UpdateSessionState, handleUpdateSessionState);
@@ -73,7 +73,7 @@ export default function Layout() {
             socket.off(ReservedEvent.Connect, handleConnect);
             socket.off(ReservedEvent.Disconnect, handleDisconnect);
             socket.off(ServerSocket.EnableDebugMode, handleEnableDebugMode);
-            socket.off(ServerSocket.BeginSpectate, handleBeginSpectate);
+            socket.off(ServerSocket.UpdateSpectatorStatus, handleUpdateSpectatorStatus);
             socket.off(ServerSocket.CancelGame, handleCancelGame);
             socket.off(ServerSocket.UpdateSessionName, handleUpdateSessionName);
             socket.off(ServerSocket.UpdateSessionState, handleUpdateSessionState);
@@ -138,8 +138,8 @@ export default function Layout() {
         setDebugMode(true);
     }
 
-    const handleBeginSpectate = () => {
-        setIsSpectator(true);
+    const handleUpdateSpectatorStatus = (isSpectator: boolean) => {
+        setIsSpectator(isSpectator);
     }
 
     const handleCancelGame = (serverCrashed?: boolean) => {

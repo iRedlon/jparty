@@ -123,9 +123,7 @@ export function joinSessionAsHost(socket: Socket, sessionName: string) {
     socket.emit(HostServerSocket.UpdateVoiceType, session.voiceType, !process.env.USE_OPENAI_TTS /* modernVoicesDisabled */);
     socket.emit(HostServerSocket.UpdateVoiceSpeed, session.voiceSpeed);
 
-    if (socket.id !== session.creatorSocketID) {
-        socket.emit(ServerSocket.BeginSpectate);
-    }
+    socket.emit(ServerSocket.UpdateSpectatorStatus, socket.id !== session.creatorSocketID);
 
     emitLeaderboardUpdate(socket);
     socket.emit(HostServerSocket.UpdateGameSettingsPreset, session.triviaGameSettingsPreset, true /* fromServer */);

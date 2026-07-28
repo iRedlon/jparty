@@ -209,21 +209,13 @@ export class Session {
             return AttemptReconnectResult.InvalidClientID;
         }
 
-        if (disconnectedHost.connected) {
-            return AttemptReconnectResult.AlreadyConnected;
-        }
-
-        if (oldHostID === newHostID) {
-            this.players[newHostID].connected = true;
-            return AttemptReconnectResult.AlreadyConnected;
-        }
 
         this.hosts[newHostID] = disconnectedHost;
         delete this.hosts[oldHostID];
         this.hosts[newHostID].connected = true;
         this.updateHostSocketID(oldHostID, newHostID);
 
-        return AttemptReconnectResult.HostSuccess;
+        return wasStillConnected ? AttemptReconnectResult.AlreadyConnected : AttemptReconnectResult.HostSuccess;
     }
 
     updateHostSocketID(oldHostID: SocketID, newHostID: SocketID) {
