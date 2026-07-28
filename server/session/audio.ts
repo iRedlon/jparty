@@ -1,7 +1,8 @@
 
 import {
     ALL_PLAY_REVEAL_CLUE_DECISION_VOICE_LINES, AudioType, CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES,
-    DISPLAY_CORRECT_ANSWER_VOICE_LINES, FIRST_WAGER_BONUS_VOICE_LINES, getOrdinalString, getRandomChoiceNoRepeat, HostServerSocket,
+    DISPLAY_CORRECT_ANSWER_VOICE_LINES, FIRST_PROMPT_CLUE_SELECTION_VOICE_LINES, FIRST_WAGER_BONUS_VOICE_LINES, getOrdinalString,
+    getRandomChoiceNoRepeat, HostServerSocket,
     INTRODUCE_ALL_WAGER_CLUE_VOICE_LINES, LAST_WAGER_BONUS_VOICE_LINES, LEADERBOARD_GAME_OVER_VOICE_LINES, LEADERBOARD_TYPE_DISPLAY_NAMES,
     PROMPT_CLUE_SELECTION_VOICE_LINES, QUOTED_LETTER_CATEGORY_VOICE_LINES, QUOTED_MULTIPLE_CATEGORY_VOICE_LINES, QUOTED_OTHER_CATEGORY_VOICE_LINES,
     QUOTED_WORD_CATEGORY_VOICE_LINES, READ_CLUE_SELECTION_VOICE_LINE, READ_FIRST_CATEGORY_NAME_VOICE_LINES, READ_LAST_CATEGORY_NAME_VOICE_LINES,
@@ -135,7 +136,8 @@ export async function playVoiceLine(sessionName: string, type: VoiceLineType, de
                     voiceLine = getRandomChoiceNoRepeat(CLEARED_CATEGORY_PROMPT_CLUE_SELECTION_VOICE_LINES);
                 }
                 else if (session.hasNewClueSelector() || keptControlAfterWagerBonus) {
-                    voiceLine = getRandomChoiceNoRepeat(PROMPT_CLUE_SELECTION_VOICE_LINES);
+                    voiceLine = getRandomChoiceNoRepeat(session.isFirstClueSelection() ?
+                        FIRST_PROMPT_CLUE_SELECTION_VOICE_LINES : PROMPT_CLUE_SELECTION_VOICE_LINES);
                 }
             }
             break;

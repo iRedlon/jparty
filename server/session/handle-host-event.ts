@@ -13,6 +13,16 @@ import { debugLog, LogCategory, LogVerbosity } from "../misc/log.js";
 import { formatText } from "../misc/text-utils.js";
 
 function handleConnect(socket: Socket, clientID: string) {
+    // a host that asks for a session twice on the same socket (i.e. a buffered emit that lands right before a second request)
+    // should get the session it already has. otherwise we'd strand its first session and generate a second trivia game for no reason
+    const existingSessionName = (socket as any).sessionName;
+    const existingSession = existingSessionName && getSession(existingSessionName);
+
+    if (existingSession && (existingSession.creatorSocketID === socket.id)) {
+        joinSessionAsHost(socket, existingSessionName);
+        return;
+    }
+
     let sessionName = "";
 
     do {

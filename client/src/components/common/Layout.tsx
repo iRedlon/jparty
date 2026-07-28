@@ -3,7 +3,7 @@ import {
     AttemptReconnectResult, ClientSocket, cloneSessionPlayers, HostSocket,
     ReservedEvent, ServerSocket, SessionPlayers, SessionState, SocketID, TriviaRound
 } from "jparty-shared";
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useRef, useState } from "react";
 import { isMobile } from "react-device-detect";
 
 import HostLayout from "../host/HostLayout";
@@ -43,10 +43,13 @@ export default function Layout() {
     const [clueIndex, setClueIndex] = useState(-1);
     const [spotlightResponderID, setSpotlightResponderID] = useState<SocketID>("");
 
+    const requestedHostSessionRef = useRef(false);
+
     useEffect(() => {
         window.addEventListener(ReservedEvent.VisibilityChange, handleVisibilityChange);
 
         socket.on(ReservedEvent.Connect, handleConnect);
+        socket.on(ReservedEvent.Disconnect, handleDisconnect);
         socket.on(ServerSocket.EnableDebugMode, handleEnableDebugMode);
         socket.on(ServerSocket.BeginSpectate, handleBeginSpectate);
         socket.on(ServerSocket.CancelGame, handleCancelGame);
@@ -68,6 +71,7 @@ export default function Layout() {
             window.removeEventListener(ReservedEvent.VisibilityChange, handleVisibilityChange);
 
             socket.off(ReservedEvent.Connect, handleConnect);
+            socket.off(ReservedEvent.Disconnect, handleDisconnect);
             socket.off(ServerSocket.EnableDebugMode, handleEnableDebugMode);
             socket.off(ServerSocket.BeginSpectate, handleBeginSpectate);
             socket.off(ServerSocket.CancelGame, handleCancelGame);
@@ -118,8 +122,15 @@ export default function Layout() {
                 }
             });
         }
-        else if (!isPlayer) {
+        else if (!isPlayer && !requestedHostSessionRef.current) {
+            requestedHostSessionRef.current = true;
             socket.emit(HostSocket.Connect, getClientID());
+        }
+    }
+
+    const handleDisconnect = () => {
+        if (!localStorage[LocalStorageKey.SessionName]) {
+            requestedHostSessionRef.current = false;
         }
     }
 

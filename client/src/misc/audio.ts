@@ -386,16 +386,25 @@ export interface ClassicVoiceGroups {
     feminine: SpeechSynthesisVoice[];
 }
 
+export function getSpeechSynthesisVoices(): SpeechSynthesisVoice[] {
+    if (!window.speechSynthesis) {
+        return [];
+    }
+
+    try {
+        return window.speechSynthesis.getVoices() || [];
+    }
+    catch (e) {
+        return [];
+    }
+}
+
 export function getAvailableClassicVoices(): ClassicVoiceGroups {
     const groups: ClassicVoiceGroups = { masculine: [], feminine: [] };
 
-    if (!window.speechSynthesis) {
-        return groups;
-    }
-
     const seenVoiceURIs = new Set<string>();
 
-    for (const voice of window.speechSynthesis.getVoices()) {
+    for (const voice of getSpeechSynthesisVoices()) {
         if (!voice.lang.toLowerCase().startsWith("en") || seenVoiceURIs.has(voice.voiceURI)) {
             continue;
         }
@@ -449,7 +458,7 @@ export function getAutomaticClassicVoice(voiceType: VoiceType) {
 }
 
 function getSpeechSynthesisVoice(voiceType: VoiceType) {
-    const voices = window.speechSynthesis.getVoices();
+    const voices = getSpeechSynthesisVoices();
     if (!voices.length) {
         return;
     }

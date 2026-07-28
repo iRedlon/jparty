@@ -214,15 +214,19 @@ export const LEADERBOARD_GAME_OVER_VOICE_LINES = [
     `Your j-party champion is ${VoiceLineVariable.LeaderName}, and they claimed ${VoiceLineVariable.ClaimedLeaderboardSpot}. You rock! Thanks for playing!`
 ];
 
+const WHERE_TO_NEXT_VOICE_LINE = `Where to next ${VoiceLineVariable.ClueSelectorName}?`;
+
 export const PROMPT_CLUE_SELECTION_VOICE_LINES = [
     `Make a selection ${VoiceLineVariable.ClueSelectorName}.`,
     `${VoiceLineVariable.ClueSelectorName} controls the board.`,
     `It's up to you ${VoiceLineVariable.ClueSelectorName}.`,
     `Go ahead ${VoiceLineVariable.ClueSelectorName}.`,
     `Where are we headed ${VoiceLineVariable.ClueSelectorName}?`,
-    `Where to next ${VoiceLineVariable.ClueSelectorName}?`,
+    WHERE_TO_NEXT_VOICE_LINE,
     `It's all yours ${VoiceLineVariable.ClueSelectorName}.`,
 ];
+
+export const FIRST_PROMPT_CLUE_SELECTION_VOICE_LINES = PROMPT_CLUE_SELECTION_VOICE_LINES.filter(voiceLine => voiceLine !== WHERE_TO_NEXT_VOICE_LINE);
 
 export const READ_CLUE_SELECTION_VOICE_LINE = `${VoiceLineVariable.CategoryName} for ${VoiceLineVariable.ClueValue}`;
 

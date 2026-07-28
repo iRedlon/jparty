@@ -864,6 +864,15 @@ export class Session {
         this.setPlayersIdle();
     }
 
+    isFirstClueSelection() {
+        const currentRound = this.getCurrentRound();
+        if (!currentRound) {
+            return false;
+        }
+
+        return !currentRound.categories.some(category => category.clues.some(clue => clue.completed));
+    }
+
     hasNewClueSelector() {
         const clueSelector = this.players[this.clueSelectorID];
         if (!clueSelector) {

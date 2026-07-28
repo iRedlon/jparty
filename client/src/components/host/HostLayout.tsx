@@ -15,7 +15,7 @@ import Announcement from "./HostAnnouncement";
 import { LayoutContext } from "../common/Layout";
 import ServerMessageAlert from "../common/ServerMessage";
 import Timer from "../common/Timer";
-import { playAudio, playOpenAIVoice, playSpeechSynthesisVoice, setMusicEndingAfterCurrentTrack, subscribeToMuteState, isAudioMuted, unlockVoiceAudio } from "../../misc/audio";
+import { getSpeechSynthesisVoices, playAudio, playOpenAIVoice, playSpeechSynthesisVoice, setMusicEndingAfterCurrentTrack, subscribeToMuteState, isAudioMuted, unlockVoiceAudio } from "../../misc/audio";
 import { addMockSocketEventHandler, removeMockSocketEventHandler } from "../../misc/mock-socket";
 import { estimateClientTimeMs, socket } from "../../misc/socket";
 import { Layer } from "../../misc/ui-constants";
@@ -56,7 +56,7 @@ export default function HostLayout() {
     const [responseWindowOpen, setResponseWindowOpen] = useState(false);
 
     useEffect(() => {
-        window.speechSynthesis.getVoices();
+        getSpeechSynthesisVoices();
         
         socket.on(HostServerSocket.UpdateLeaderboardPlayers, handleUpdateLeaderboardPlayers);
         socket.on(HostServerSocket.UpdateLeaderboardStats, handleUpdateLeaderboardStats);
